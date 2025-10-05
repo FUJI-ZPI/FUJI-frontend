@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "FUJI-frontend",
-    "slug": "FUJI-frontend",
+    "slug": "test",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,10 +21,17 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.tommil.test"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "da0d8bde-69c1-4ab3-8f77-5aded34ee7ff"
+      }
+    },
+    "owner": "tommil"
   }
 }
