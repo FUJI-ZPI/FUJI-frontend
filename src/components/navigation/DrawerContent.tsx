@@ -3,6 +3,8 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { Ionicons } from "@expo/vector-icons";
 import { ComponentType } from "react";
+import { mockUser } from '../../data/mockData';
+import { useTranslation } from "react-i18next";
 
 const LOGO_IMAGE = require('../../../assets/fuji-logo-kanji.jpeg')
 
@@ -37,25 +39,27 @@ export interface DrawerContentProps {
 }
 
 export const DrawerContent = ({ navigation, state, navItems }: DrawerContentProps) => {
+  const { t } = useTranslation();
+
   return (
     <DrawerContentScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
       <Image 
         source={LOGO_IMAGE} 
         style={styles.logoPlaceholder}
-        accessibilityLabel="App Logo"
+        accessibilityLabel={t('drawer.app_subtitle')}
       />
         <View>
-          <Text style={styles.title}>FUJI</Text>
-          <Text style={styles.subtitle}>Kanji Learning Platform</Text>
+          <Text style={styles.title}>{t('drawer.app_title')}</Text>
+          <Text style={styles.subtitle}>{t('drawer.app_subtitle')}</Text>
         </View>
       </View>
 
       <View style={styles.user}>
-        <Text style={styles.avatar}>👤</Text>
+        <Text style={styles.avatar}>{mockUser.avatar}</Text>
         <View>
-          <Text style={styles.username}>学習者</Text>
-          <Text style={styles.userLevel}>Beginner Level</Text>
+          <Text style={styles.username}>{mockUser.name}</Text>
+          <Text style={styles.userLevel}>{mockUser.level_name}</Text>
         </View>
       </View>
 
@@ -87,7 +91,7 @@ export const DrawerContent = ({ navigation, state, navItems }: DrawerContentProp
       <View style={styles.footer}>
         <TouchableOpacity style={styles.button} onPress={() => console.log("Logout pressed")}>
           <Ionicons name="log-out-outline" size={20} style={styles.icon} />
-          <Text style={[styles.label, { color: "#C92C2C" }]}>Logout</Text>
+          <Text style={[styles.label, { color: "#C92C2C" }]}>{t('drawer.logout')}</Text>
         </TouchableOpacity>
       </View>
     </DrawerContentScrollView>

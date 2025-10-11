@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Header } from '.././components/navigation/Header'; 
 
 interface ScreenProps {
     route: any;
@@ -23,7 +22,6 @@ const screenStyles = StyleSheet.create({
 export function PlaceholderScreen({ route, navigation }: ScreenProps) {
   return (
     <View style={{ flex: 1 }}>
-      <Header navigation={navigation} />
       <View style={screenStyles.container}>
         <Text style={screenStyles.title}>{route.name} Screen</Text>
       </View>

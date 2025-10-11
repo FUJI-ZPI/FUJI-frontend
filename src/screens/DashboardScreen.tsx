@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Header } from '../components/navigation/Header'
 import { StatCard } from '../components/dashboard/StatCard';
 import { LevelSelector } from '../components/dashboard/LevelSelector';
 import { ActionButtons } from '../components/dashboard/ActionButtons';
 import { themeStyles, colors } from '../theme/styles';
 import { mockUser, mockKanji, totalKanjiCount } from '../data/mockData';
+import { useTranslation } from 'react-i18next'; 
 
 interface ScreenProps {
     navigation: any;
@@ -14,6 +13,8 @@ interface ScreenProps {
 }
 
 export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }) => {
+
+  const { t } = useTranslation();
   
   const { learnedKanji, totalKanji } = useMemo(() => {
     const learnedKanji = mockKanji.filter(k => k.learned).length;
@@ -31,16 +32,14 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }) => {
 
   return (
     <View style={themeStyles.flex1}>
-      <Header navigation={navigation}/> 
-
       <ScrollView style={themeStyles.flex1} contentContainerStyle={themeStyles.scrollContent}> 
         <View style={themeStyles.paddingContainer}>
           
           <View style={styles.header}>
             <Text style={styles.headerTitle}>
-              おはよう, {mockUser.name}! 👋
+              {t('dashboard.greeting', { userName: mockUser.name })}
             </Text>
-            <Text style={themeStyles.textSubtitle}>Ready to continue your Japanese journey?</Text>
+            <Text style={themeStyles.textSubtitle}>{t('dashboard.subtitle')}</Text>
           </View>
 
           <View style={styles.statsGrid}>
@@ -49,14 +48,14 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }) => {
               iconSet="Ionicons" 
               iconColor={colors.warning} 
               value={mockUser.streak} 
-              label="Day Streak"
+              label={t('common.streak_label')}
             />
             <StatCard 
               iconName="target" 
               iconSet="Feather" 
               iconColor={colors.secondary} 
               value={mockUser.level} 
-              label="Current Level"
+              label={t('common.level_label')}
             />
           </View>
 

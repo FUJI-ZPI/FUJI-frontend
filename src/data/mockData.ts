@@ -9,6 +9,7 @@ export const mockUser = {
   avatar: '学',
   streak: 7,
   level: 5,
+  level_name: 'Beginner Level',
   rank: 12,
   experience: 1050,
 };
@@ -16,8 +17,8 @@ export const mockUser = {
 export const mockKanji = Array.from({ length: totalKanjiCount }, (_, i) => ({
   id: i + 1,
   character: String.fromCharCode(0x4e00 + (i % 80)),
-  learned: i % 3 !== 0, // Ok. 66% nauczonych
-  level: Math.floor(i / KANJI_PER_LEVEL) + 1, // Przypisanie do poziomów 1-60
+  learned: i % 3 !== 0,
+  level: Math.floor(i / KANJI_PER_LEVEL) + 1,
 }));
 
 

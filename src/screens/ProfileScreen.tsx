@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
-import { Feather, Ionicons } from '@expo/vector-icons';
-import { Header } from '../components/navigation/Header';
+import { Toast } from 'toastify-react-native'; 
+import { useTranslation } from 'react-i18next';
 import { Card } from '../components/ui/Card';
 import { StatCard } from '../components/dashboard/StatCard';
 import { ProfileHeader } from '../components/profile/ProfileHeader'
@@ -16,7 +16,9 @@ interface ScreenProps {
     route: any;
 }
 
-const ProfileScreen: React.FC<ScreenProps> = ({ navigation }) => {
+const ProfileScreen: React.FC<ScreenProps> = () => {
+  const { t } = useTranslation();
+    
   const [notifications, setNotifications] = useState(true);
   const [practiceReminders, setPracticeReminders] = useState(true);
   
@@ -28,17 +30,16 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation }) => {
 
   const handleNotificationChange = (value: boolean) => {
     setNotifications(value);
-    Alert.alert("Settings Updated", "Notification preferences saved");
+    Toast.success(t('profile.notifications_saved'));
   };
 
   const handleRemindersChange = (value: boolean) => {
     setPracticeReminders(value);
-    Alert.alert("Settings Updated", "Practice reminders updated");
+    Toast.success(t('profile.reminders_updated'));
   };
 
   return (
     <ScrollView style={themeStyles.flex1} contentContainerStyle={styles.scrollContent}>
-        <Header navigation={navigation}/> 
       <View style={themeStyles.paddingContainer}>
         
         <ProfileHeader user={mockUser} />
@@ -49,7 +50,7 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation }) => {
             iconSet="Ionicons" 
             iconColor={colors.warning} 
             value={mockUser.streak} 
-            label="Day Streak"
+            label={t('common.streak_label')}
           />
 
           <StatCard
@@ -57,7 +58,7 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation }) => {
             iconSet="Feather"
             iconColor={colors.secondary}
             value={learnedKanji}
-            label="Kanji Learned"
+            label={t('common.kanji_learned_label')}
           />
         </View>
 
@@ -65,24 +66,24 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation }) => {
 
         <StatsSummaryCard
           stats={[
-            { iconSet: 'Feather', iconName: 'calendar', label: 'Joined', value: 'January 2024' },
-            { iconSet: 'Ionicons', iconName: 'trophy-outline', label: 'Best Rank', value: '#2' },
-            { iconSet: 'Feather', iconName: 'target', label: 'Accuracy', value: '87%' },
-            { iconSet: 'Ionicons', iconName: 'flame-outline', label: 'Best Streak', value: '12 days' },
+            { iconSet: 'Feather', iconName: 'calendar', label: t('profile.joined'), value: 'January 2024' },
+            { iconSet: 'Ionicons', iconName: 'trophy-outline', label: t('profile.best_rank'), value: '#2' },
+            { iconSet: 'Feather', iconName: 'target', label: t('profile.accuracy'), value: '87%' },
+            { iconSet: 'Ionicons', iconName: 'flame-outline', label: t('profile.best_streak'), value: '12 days' },
         ]}
         />
 
-        <Card title="Notifications">
+        <Card title={t('profile.notifications_card_title')}>
           <SettingItem
-            label="Push Notifications"
-            description="Receive important updates and reminders"
+            label={t('profile.push_notifications_label')}
+            description={t('profile.push_notifications_desc')}
             value={notifications}
             onValueChange={handleNotificationChange}
             isFirst={true}
           />
           <SettingItem
-            label="Practice Reminders"
-            description="Daily reminders to keep your streak"
+            label={t('profile.reminders_label')}
+            description={t('profile.reminders_desc')}
             value={practiceReminders}
             onValueChange={handleRemindersChange}
           />
