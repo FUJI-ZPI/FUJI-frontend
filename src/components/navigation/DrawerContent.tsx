@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ComponentType } from "react";
 import { mockUser } from '../../data/mockData';
 import { useTranslation } from "react-i18next";
+import * as SecureStore from 'expo-secure-store';
 
 const LOGO_IMAGE = require('../../../assets/fuji-logo-kanji.jpeg')
 
@@ -35,11 +36,20 @@ export type ScreenComponentType = ComponentType<any>;
 export interface DrawerContentProps {
   navigation: any;
   state: any;
-  navItems: NavItem[]; 
+  navItems: NavItem[];
+  onLogout: () => void; 
 }
 
-export const DrawerContent = ({ navigation, state, navItems }: DrawerContentProps) => {
+
+export const DrawerContent = ({ navigation, state, navItems, onLogout }: DrawerContentProps) => {
   const { t } = useTranslation();
+
+  const handleLogoutPress = async () => {
+    await SecureStore.deleteItemAsync("accessToken");
+    await SecureStore.deleteItemAsync("refreshToken");
+    console.log("User logged out");
+    onLogout();
+  };
 
   return (
     <DrawerContentScrollView contentContainerStyle={styles.container}>
@@ -89,7 +99,7 @@ export const DrawerContent = ({ navigation, state, navItems }: DrawerContentProp
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.button} onPress={() => console.log("Logout pressed")}>
+        <TouchableOpacity style={styles.button} onPress={handleLogoutPress}>
           <Ionicons name="log-out-outline" size={20} style={styles.icon} />
           <Text style={[styles.label, { color: "#C92C2C" }]}>{t('drawer.logout')}</Text>
         </TouchableOpacity>
