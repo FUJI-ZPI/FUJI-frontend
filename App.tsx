@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View, Text } from "react-native";
 import { DrawerContent } from "./src/components/navigation/DrawerContent";
 import { NavItem, ScreenComponentType } from "./src/components/navigation/DrawerContent";
 import { DashboardScreen } from "./src/screens/DashboardScreen";
@@ -13,21 +13,28 @@ import ToastProvider from "./src/providers/ToastProvider";
 import "./src/i18n/i18n";
 import { useTranslation } from "react-i18next";
 import * as SecureStore from "expo-secure-store";
+import { UserProvider } from "./src/context/UserContex";
+import KanjiLevelsScreen from "./src/screens/KanjiLevelScreen";
+import ChatbotScreen from "./src/screens/ChatbotScreen";
+import SettingsCard from "./src/screens/SettingsScreen";
+import KanjiMountainPage from "./src/screens/KanjiMountainScreen";
 
 const Stack = createNativeStackNavigator();
+
 const Drawer = createDrawerNavigator();
 
 function AppDrawer({ onLogout }: { onLogout: () => void }) {
   const { t } = useTranslation();
-
+    
   const navItems: NavItem[] = [
     { id: "Dashboard", label: t("nav.dashboard"), icon: "home-outline", component: DashboardScreen as ScreenComponentType },
     { id: "Practice", label: t("nav.practice"), icon: "pencil-sharp", component: PlaceholderScreen as ScreenComponentType },
-    { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: PlaceholderScreen as ScreenComponentType },
-    { id: "Chat", label: t("nav.chat"), icon: "chatbubble-ellipses-outline", component: PlaceholderScreen as ScreenComponentType },
+    { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: KanjiLevelsScreen as ScreenComponentType },
+    { id: "Chat", label: t("nav.chat"), icon: "chatbubble-ellipses-outline", component: ChatbotScreen as ScreenComponentType },
     { id: "Leaderboard", label: t("nav.leaderboard"), icon: "trophy-outline", component: PlaceholderScreen as ScreenComponentType },
     { id: "Profile", label: t("nav.profile"), icon: "person-outline", component: ProfileScreen as ScreenComponentType },
-    { id: "Settings", label: t("nav.settings"), icon: "settings-outline", component: PlaceholderScreen as ScreenComponentType },
+    { id: "Settings", label: t("nav.settings"), icon: "settings-outline", component: SettingsCard as ScreenComponentType },
+    { id: "Mountain", label: 'Mountain', icon: "mountain-outline", component: KanjiMountainPage as ScreenComponentType },
   ];
 
   return (
@@ -96,23 +103,25 @@ useEffect(() => {
 
 
   return (
-    <ToastProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {!isAuthenticated ? (
-            <Stack.Screen name="Login">
-              {(props) => (
-                <LoginScreen {...props} onLogin={() => setIsAuthenticated(true)} />
-              )}
-            </Stack.Screen>
-          ) : (
-            <Stack.Screen name="App">
-              {(props) => <AppDrawer {...props} onLogout={handleLogout} />}
-            </Stack.Screen>
-          )}
-        </Stack.Navigator>
-      </NavigationContainer>
-    </ToastProvider>
+    <UserProvider>
+      <ToastProvider>
+        <NavigationContainer>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            {!isAuthenticated ? (
+              <Stack.Screen name="Login">
+                {(props) => (
+                  <LoginScreen {...props} onLogin={() => setIsAuthenticated(true)} />
+                )}
+              </Stack.Screen>
+            ) : (
+              <Stack.Screen name="App">
+                {(props) => <AppDrawer {...props} onLogout={handleLogout} />}
+              </Stack.Screen>
+            )}
+          </Stack.Navigator>
+        </NavigationContainer>
+      </ToastProvider>
+    </UserProvider>
   );
 }
 
@@ -126,4 +135,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  loadingText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  }
 });

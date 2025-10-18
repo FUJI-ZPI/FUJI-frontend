@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { Toast } from 'toastify-react-native'; 
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,8 @@ import { SettingItem } from '../components/profile/SettingItem';
 import { StatsSummaryCard } from '../components/profile/StatsSummaryCard';
 import { themeStyles, colors, spacing } from '../theme/styles';
 import { mockUser, mockKanji, mockAchievements } from '../data/mockData';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { UserContext } from '../context/UserContex';
 
 interface ScreenProps {
     navigation: any;
@@ -18,6 +20,7 @@ interface ScreenProps {
 
 const ProfileScreen: React.FC<ScreenProps> = () => {
   const { t } = useTranslation();
+  const { user } = useContext(UserContext)!
     
   const [notifications, setNotifications] = useState(true);
   const [practiceReminders, setPracticeReminders] = useState(true);
@@ -39,57 +42,59 @@ const ProfileScreen: React.FC<ScreenProps> = () => {
   };
 
   return (
-    <ScrollView style={themeStyles.flex1} contentContainerStyle={styles.scrollContent}>
-      <View style={themeStyles.paddingContainer}>
-        
-        <ProfileHeader user={mockUser} />
+    <SafeAreaView style={themeStyles.flex1}>
+      <ScrollView style={themeStyles.flex1} contentContainerStyle={styles.scrollContent}>
+        <View style={themeStyles.paddingContainer}>
+          
+          <ProfileHeader user={user} />
 
-        <View style={styles.statsGrid}>
-          <StatCard 
-            iconName="flame" 
-            iconSet="Ionicons" 
-            iconColor={colors.warning} 
-            value={mockUser.streak} 
-            label={t('common.streak_label')}
+          <View style={styles.statsGrid}>
+            <StatCard 
+              iconName="flame" 
+              iconSet="Ionicons" 
+              iconColor={colors.warning} 
+              value={mockUser.streak} 
+              label={t('common.streak_label')}
+            />
+
+            <StatCard
+              iconName="book-open"
+              iconSet="Feather"
+              iconColor={colors.secondary}
+              value={learnedKanji}
+              label={t('common.kanji_learned_label')}
+            />
+          </View>
+
+          <AchievementList achievements={mockAchievements} />
+
+          <StatsSummaryCard
+            stats={[
+              { iconSet: 'Feather', iconName: 'calendar', label: t('profile.joined'), value: 'January 2024' },
+              { iconSet: 'Ionicons', iconName: 'trophy-outline', label: t('profile.best_rank'), value: '#2' },
+              { iconSet: 'Feather', iconName: 'target', label: t('profile.accuracy'), value: '87%' },
+              { iconSet: 'Ionicons', iconName: 'flame-outline', label: t('profile.best_streak'), value: '12 days' },
+          ]}
           />
 
-          <StatCard
-            iconName="book-open"
-            iconSet="Feather"
-            iconColor={colors.secondary}
-            value={learnedKanji}
-            label={t('common.kanji_learned_label')}
-          />
+          <Card title={t('profile.notifications_card_title')}>
+            <SettingItem
+              label={t('profile.push_notifications_label')}
+              description={t('profile.push_notifications_desc')}
+              value={notifications}
+              onValueChange={handleNotificationChange}
+              isFirst={true}
+            />
+            <SettingItem
+              label={t('profile.reminders_label')}
+              description={t('profile.reminders_desc')}
+              value={practiceReminders}
+              onValueChange={handleRemindersChange}
+            />
+          </Card>
         </View>
-
-        <AchievementList achievements={mockAchievements} />
-
-        <StatsSummaryCard
-          stats={[
-            { iconSet: 'Feather', iconName: 'calendar', label: t('profile.joined'), value: 'January 2024' },
-            { iconSet: 'Ionicons', iconName: 'trophy-outline', label: t('profile.best_rank'), value: '#2' },
-            { iconSet: 'Feather', iconName: 'target', label: t('profile.accuracy'), value: '87%' },
-            { iconSet: 'Ionicons', iconName: 'flame-outline', label: t('profile.best_streak'), value: '12 days' },
-        ]}
-        />
-
-        <Card title={t('profile.notifications_card_title')}>
-          <SettingItem
-            label={t('profile.push_notifications_label')}
-            description={t('profile.push_notifications_desc')}
-            value={notifications}
-            onValueChange={handleNotificationChange}
-            isFirst={true}
-          />
-          <SettingItem
-            label={t('profile.reminders_label')}
-            description={t('profile.reminders_desc')}
-            value={practiceReminders}
-            onValueChange={handleRemindersChange}
-          />
-        </Card>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,6 +6,7 @@ import { ComponentType } from "react";
 import { mockUser } from '../../data/mockData';
 import { useTranslation } from "react-i18next";
 import * as SecureStore from 'expo-secure-store';
+import { UserContext } from "../../context/UserContex";
 
 const LOGO_IMAGE = require('../../../assets/fuji-logo-kanji.jpeg')
 
@@ -44,10 +45,12 @@ export interface DrawerContentProps {
 export const DrawerContent = ({ navigation, state, navItems, onLogout }: DrawerContentProps) => {
   const { t } = useTranslation();
 
+  const { user, setUser } = useContext(UserContext)!
+
   const handleLogoutPress = async () => {
     await SecureStore.deleteItemAsync("accessToken");
     await SecureStore.deleteItemAsync("refreshToken");
-    console.log("User logged out");
+    setUser(null);
     onLogout();
   };
 
@@ -66,9 +69,9 @@ export const DrawerContent = ({ navigation, state, navItems, onLogout }: DrawerC
       </View>
 
       <View style={styles.user}>
-        <Text style={styles.avatar}>{mockUser.avatar}</Text>
+        <Image source={{ uri: user?.photo }} style={styles.avatar} />
         <View>
-          <Text style={styles.username}>{mockUser.name}</Text>
+          <Text style={styles.username}>{user?.name}</Text>
           <Text style={styles.userLevel}>{mockUser.level_name}</Text>
         </View>
       </View>
@@ -109,14 +112,14 @@ export const DrawerContent = ({ navigation, state, navItems, onLogout }: DrawerC
 };
 
 const styles = StyleSheet.create({
-    container: { flexGrow: 1, paddingVertical: 20, justifyContent: "space-between", backgroundColor: "rgb(245, 246, 247)" }, // --background
+    container: { flexGrow: 1, paddingVertical: 20, justifyContent: "space-between", backgroundColor: "rgb(245, 246, 247)" },
     header: {
       flexDirection: "row",
       alignItems: "center",
       padding: 24,
       borderBottomWidth: 1,
       borderColor: "rgb(198, 211, 199)",
-      backgroundColor: "rgb(198, 211, 199)",
+      backgroundColor: "#ebf4f0",
     },
     logoPlaceholder: { width: 48, height: 48, borderRadius: 12, marginRight: 12, backgroundColor: '#fff', borderWidth: 1, borderColor: 'lightgray' },
     title: { fontSize: 20, fontWeight: "700", color: "rgb(54,138,89)" },
@@ -127,7 +130,6 @@ const styles = StyleSheet.create({
       padding: 24,
       borderBottomWidth: 1,
       borderColor: "rgb(198, 211, 199)",
-      backgroundColor: "rgb(240, 249, 255)",
     },
     avatar: {
       fontSize: 32,
@@ -168,6 +170,6 @@ const styles = StyleSheet.create({
       padding: 16,
       borderTopWidth: 1,
       borderColor: "rgb(198,211,199)",
-      backgroundColor: "rgb(240,249,255)",
+      backgroundColor: "#ebf4f0",
     },
   });

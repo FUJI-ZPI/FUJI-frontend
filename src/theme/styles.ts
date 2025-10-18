@@ -1,48 +1,53 @@
-// src/theme/styles.ts
-
 import { StyleSheet } from 'react-native';
 
-// --- Kolory w stylu Tailwind ---
+
 export const colors = {
-  primary: '#3B82F6', // Blue-500
-  secondary: '#10B981', // Emerald-500
-  warning: '#F59E0B', // Amber-500
-  danger: '#EF4444', // Red-500
-  background: '#f9fafb', // Gray-50
+  primary: '#3B82F6',
+  secondary: '#10B981',
+  warning: '#F59E0B',
+  danger: '#EF4444',
+  background: '#f2f7f5',
   cardBackground: '#fff',
-  text: '#1F2937', // Gray-800
-  textMuted: '#6B7280', // Gray-500
-  border: '#E5E7EB', // Gray-200
-  lightBackground: '#F9FAFB', // Gray-50 for buttons/elements
+  text: '#1F2937',
+  textMuted: '#6B7280',
+  border: '#E5E7EB',
+  lightBackground: '#F9FAFB',
 };
 
-// --- Stałe do stylów ---
+export const chatbotColors = {
+  primary: '#368A59',       
+  primaryForeground: '#FFFFFF', 
+  background: '#F5F5F5',    
+  card: '#FFFFFF',          
+  foreground: '#1F2937',    
+  mutedForeground: '#6B7280', 
+  border: '#E5E7EB',        
+  red: '#EF4444',
+  translationBackground: '#E0F2F1',
+  translationBorder: '#00796B',
+};
+
 export const spacing = {
   base: 16,
   small: 8,
   large: 24,
 };
 
-// --- StyleSheet dla reużywalnych stylów ---
 export const themeStyles = StyleSheet.create({
-  // Layout
   flex1: { flex: 1 },
   paddingContainer: { padding: spacing.base },
   scrollContent: { paddingBottom: 80, backgroundColor: colors.background, paddingTop: spacing.base },
   
-  // Typography
   textBase: { fontSize: 14, color: colors.text },
   textTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
   textSubtitle: { fontSize: 14, color: colors.textMuted },
   textMutedSmall: { fontSize: 12, color: colors.textMuted },
   
-  // Flex Utilities
   flexRow: { flexDirection: 'row', alignItems: 'center' },
   justifyBetween: { justifyContent: 'space-between' },
   gap8: { gap: 8 },
   gap16: { gap: 16 },
 
-  // Base Card Styles (używane w Card.tsx)
   cardBase: {
     backgroundColor: colors.cardBackground,
     borderRadius: 12,
@@ -58,7 +63,7 @@ export const themeStyles = StyleSheet.create({
   },
 });
 
-// --- Style dla Level Selector (aby uniknąć powtarzania logiki kolorów) ---
+
 export const levelStyles = {
   getColors: (lvl: number) => {
     if (lvl <= 20) return { color: colors.secondary, background: '#D1FAE5', border: colors.secondary }; 

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { StatCard } from '../components/dashboard/StatCard';
 import { LevelSelector } from '../components/dashboard/LevelSelector';
@@ -6,6 +6,8 @@ import { ActionButtons } from '../components/dashboard/ActionButtons';
 import { themeStyles, colors } from '../theme/styles';
 import { mockUser, mockKanji, totalKanjiCount } from '../data/mockData';
 import { useTranslation } from 'react-i18next'; 
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { UserContext } from '../context/UserContex';
 
 interface ScreenProps {
     navigation: any;
@@ -15,6 +17,8 @@ interface ScreenProps {
 export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }) => {
 
   const { t } = useTranslation();
+
+  const { user } = useContext(UserContext)!
   
   const { learnedKanji, totalKanji } = useMemo(() => {
     const learnedKanji = mockKanji.filter(k => k.learned).length;
@@ -31,13 +35,13 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }) => {
   }
 
   return (
-    <View style={themeStyles.flex1}>
+    <SafeAreaView style={themeStyles.flex1}>
       <ScrollView style={themeStyles.flex1} contentContainerStyle={themeStyles.scrollContent}> 
         <View style={themeStyles.paddingContainer}>
           
           <View style={styles.header}>
             <Text style={styles.headerTitle}>
-              {t('dashboard.greeting', { userName: mockUser.name })}
+              {t('dashboard.greeting', { userName: user?.name })}
             </Text>
             <Text style={themeStyles.textSubtitle}>{t('dashboard.subtitle')}</Text>
           </View>
@@ -71,7 +75,7 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }) => {
 
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

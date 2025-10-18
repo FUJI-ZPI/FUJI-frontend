@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "FUJI-frontend",
+    "name": "FUJI",
     "slug": "test",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/fuji-logo-kanji.jpeg",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/fuji-logo-kanji.jpeg",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/fuji-logo-kanji.jpeg",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -26,11 +26,11 @@
       "package": "com.tommil.test"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/fuji-logo-kanji.jpeg"
     },
     "extra": {
       "eas": {
-        "projectId": "da0d8bde-69c1-4ab3-8f77-5aded34ee7ff"
+        "projectId": "ba3ad6a0-fa27-4c73-b9bc-2bef71ec0891"
       }
     },
     "owner": "tommil"

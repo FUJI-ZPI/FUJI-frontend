@@ -1,35 +1,28 @@
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Badge } from '../ui/Badge';
 import { themeStyles, colors, spacing } from '../../theme/styles';
+import { User } from '../../context/UserContex';
 
-interface User {
-  name: string;
-  email: string;
-  avatar: string;
-  level: number;
-  rank: number;
-  experience: number;
-}
 
 interface ProfileHeaderProps {
-  user: User;
+  user: User | null;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user }) => {  
   return (
     <View style={[themeStyles.cardBase, styles.profileHeaderCard]}>
       <View style={styles.profileHeaderContent}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarFallback}>{user.avatar}</Text>
+        <View>
+          <Image source={{ uri: user?.photo }} style={styles.avatar}/>
         </View>
         <View style={themeStyles.flex1}>
-          <Text style={styles.userName}>{user.name}</Text>
-          <Text style={styles.userEmail}>{user.email}</Text>
+          <Text style={styles.userName}>{user?.name}</Text>
+          <Text style={styles.userEmail}>{user?.email}</Text>
           <View style={styles.badgesRow}>
-            <Badge variant="secondary">Level {user.level}</Badge>
-            <Badge variant="secondary">Rank #{user.rank}</Badge>
+            <Badge variant="secondary">Level {5}</Badge>
+            <Badge variant="secondary">Rank #{2}</Badge>
           </View>
         </View>
       </View>

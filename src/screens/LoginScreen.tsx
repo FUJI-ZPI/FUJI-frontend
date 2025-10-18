@@ -1,14 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { 
   View, Text, Image, TouchableOpacity, 
   StyleSheet, ActivityIndicator, Alert 
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { User, UserContext } from '../context/UserContex';
+import { Toast } from 'toastify-react-native';
+import { useTranslation } from 'react-i18next';
 
+const FUJI_LOGO = require('../../assets/fuji-logo-kanji.jpeg');
+const GOOGLE_LOGO = require('../../assets/google-icon.png')
 
 const LoginScreen = ({ navigation, onLogin }: any) => {
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
+  const { setUser } = useContext(UserContext)!;
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -40,7 +47,15 @@ const LoginScreen = ({ navigation, onLogin }: any) => {
       await SecureStore.setItemAsync('accessToken', data.access);
       await SecureStore.setItemAsync('refreshToken', data.refresh);
 
-      Alert.alert('Logged in!', 'You have successfully logged in via Google.');
+      const user: User = {
+        name: userInfo.data?.user?.name || "",
+        email: userInfo.data?.user?.email || "",
+        photo: userInfo.data?.user?.photo || "",
+      };
+
+      setUser(user)
+
+      Toast.success('You have successfully logged in via Google.');
       onLogin();
     } catch (error) {
       console.error('Error logging in to the backend:', error);
@@ -53,22 +68,22 @@ const LoginScreen = ({ navigation, onLogin }: any) => {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Image source={require('../../assets/fuji-logo-mountain.png')} style={styles.logo} />
-        <Text style={styles.title}>Welcome to FUJI</Text>
-        <Text style={styles.subtitle}>Master Japanese characters with interactive learning</Text>
+        <Image source={FUJI_LOGO} style={styles.logo} />
+        <Text style={styles.title}>{t("login.card_title")}</Text>
+        <Text style={styles.subtitle}>{t("login.card_description")}</Text>
 
         <TouchableOpacity
           disabled={loading}
           onPress={handleGoogleLogin}
           style={styles.googleButton}
         >
-          <Image source={require('../../assets/google-icon.png')} style={styles.googleIcon} />
-          <Text style={styles.googleText}>Continue with Google</Text>
+          <Image source={GOOGLE_LOGO} style={styles.googleIcon} />
+          <Text style={styles.googleText}>{t("login.button")}</Text>
         </TouchableOpacity>
     
         {loading && <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />}
         
-        <Text style={styles.note}>DO TESTÓW, POTEM WYWALIĆ</Text>
+        <Text style={styles.note}>DO TESTÓW</Text>
 
         <TouchableOpacity
         disabled={loading}
@@ -83,14 +98,12 @@ const LoginScreen = ({ navigation, onLogin }: any) => {
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
             const data = await res.json();
-            console.log('MOCK login response:', data);
 
             await SecureStore.setItemAsync('accessToken', data.access);
             await SecureStore.setItemAsync('refreshToken', data.refresh);
-            console.log('Saved data:', await SecureStore.getItemAsync('accessToken'), await SecureStore.getItemAsync('refreshToken'));
-
-            Alert.alert('Mock login', 'Test logged in without Google! (mock)');
-            onLogin(); // to samo co przy prawdziwym logowaniu
+          
+            Toast.success('Test logged in without Google! (mock)');
+            onLogin();
           } catch (e) {
             console.error('Error logging in with mock:', e);
             Alert.alert('Mock login error', String(e));
@@ -100,16 +113,8 @@ const LoginScreen = ({ navigation, onLogin }: any) => {
         }}
         style={styles.googleButton}
       >
-        <Text style={styles.googleText}>🔧 Wejdź testowo (mock)</Text>
+        <Text style={styles.googleText}>🔧 Mock Login</Text>
       </TouchableOpacity>
-
-        <TouchableOpacity
-          disabled={loading}
-          onPress={onLogin}
-          style={styles.googleButton}
-        >
-          <Text style={styles.googleText}>Wejdź bez logowania (bez backendu)</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
