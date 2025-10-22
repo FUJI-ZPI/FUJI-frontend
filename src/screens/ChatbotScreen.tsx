@@ -5,8 +5,9 @@ import {
   Platform,
   KeyboardAvoidingView,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
-
+import * as SecureStore from 'expo-secure-store';
 import MessageBubble, { MessageBubbleProps } from '../components/chatbot/MessageBubble'
 import ChatInput from '../components/chatbot/ChatInput';
 import { chatbotColors } from '../theme/styles';
@@ -15,10 +16,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Message {
   id: string;
-  text: string;
+  text: string; // To będzie japońska odpowiedź
   isUser: boolean;
   timestamp: Date;
   isJapanese?: boolean;
+  english?: string; // Dodane pole
+  note?: string;    // Dodane pole
 }
 
 const ChatbotScreen: React.FC<any> = () => {
@@ -34,25 +37,10 @@ const ChatbotScreen: React.FC<any> = () => {
     }
   ]);
   const [inputText, setInputText] = useState('');
+  const [loading, setLoading] = useState(false);
   const [showTranslation, setShowTranslation] = useState<{messageId: string, translation: string} | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const mockAIResponses = [
-    'とても良いですね！もっと教えてください。',
-    '面白いですね。日本語でどう言いますか？',
-    'そうですね。他に何か質問がありますか？',
-    '素晴らしい！続けてください。',
-    'はい、分かりました。次は何を練習しましょうか？'
-  ];
-
-  const mockTranslations: { [key: string]: string } = {
-    'こんにちは！日本語の練習をしましょう。何について話したいですか？': 'Hello! Let\'s practice Japanese. What would you like to talk about?',
-    'とても良いですね！もっと教えてください。': 'That\'s very good! Please tell me more.',
-    '面白いですね。日本語でどう言いますか？': 'That\'s interesting. How do you say it in Japanese?',
-    'そうですね。他に何か質問がありますか？': 'I see. Do you have any other questions?',
-    '素晴らしい！続けてください。': 'Wonderful! Please continue.',
-    'はい、分かりました。次は何を練習しましょうか？': 'Yes, I understand. What shall we practice next?'
-  };
 
   useEffect(() => {
     if (scrollViewRef.current) {
@@ -60,40 +48,89 @@ const ChatbotScreen: React.FC<any> = () => {
     }
   }, [messages]);
 
-  const sendMessage = () => {
-    if (!inputText.trim()) return;
+const sendMessage = async () => { // Zmień na async
+  if (!inputText.trim()) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText,
-      isUser: true,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputText('');
-
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: mockAIResponses[Math.floor(Math.random() * mockAIResponses.length)],
-        isUser: false,
-        timestamp: new Date(),
-        isJapanese: true
-      };
-      setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
+  const userMessage: Message = {
+    id: Date.now().toString(),
+    text: inputText,
+    isUser: true,
+    timestamp: new Date(),
+    isJapanese: false,
   };
 
-  const handleLongPress: MessageBubbleProps['handleLongPress'] = (messageId, text) => {
-    if (showTranslation?.messageId === messageId) {
-      setShowTranslation(null);
+  const updatedMessages = [...messages, userMessage];
+  setMessages(updatedMessages);
+  setInputText('');
+
+  try {
+    setLoading(true)
+    const accessToken = await SecureStore.getItemAsync('accessToken');
+    if (!accessToken) {
+      console.error("Brak tokenu dostępu.");
       return;
     }
-    
-    const translation = mockTranslations[text] || t('chat.translation_not_available');
-    setShowTranslation({ messageId, translation });
-  };
+
+    const historyPayload = updatedMessages.map(msg => ({
+      messageType: msg.isUser ? 'USER' : 'BOT',
+      message: msg.text,
+      dateTime: msg.timestamp.toISOString()
+    }));
+
+    const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/chatbot/v1/ask`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({ messages: historyPayload })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Błąd API: ${response.status}`);
+    }
+
+    const data = await response.json();
+    setLoading(false)
+    if (data.success && data.response) {
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        text: data.response.japanese,
+        isUser: false,
+        timestamp: new Date(),
+        isJapanese: true,
+        english: data.response.english,
+        note: data.response.note
+      };
+      setMessages(prev => [...prev, aiResponse]);
+    } else {
+      console.error("API zwróciło błąd lub niekompletną odpowiedź:", data);
+    }
+
+  } catch (error) {
+    console.error("Błąd podczas wysyłania wiadomości:", error);
+    setMessages(messages);
+  } finally {
+    setLoading(false)
+  }
+};
+
+
+const handleLongPress: MessageBubbleProps['handleLongPress'] = (messageId, text) => {
+  if (showTranslation?.messageId === messageId) {
+    setShowTranslation(null); // Ukryj, jeśli już jest widoczne
+    return;
+  }
+
+  const messageToTranslate = messages.find(msg => msg.id === messageId);
+
+  if (messageToTranslate && messageToTranslate.english) {
+    setShowTranslation({ messageId, translation: messageToTranslate.english });
+  } else {
+    setShowTranslation({ messageId, translation: t('chat.translation_not_available') });
+  }
+};
+
 
   
   return (
@@ -102,6 +139,8 @@ const ChatbotScreen: React.FC<any> = () => {
       style={styles.fullScreen}
     >
       <SafeAreaView style={styles.fullScreen}>
+
+        {loading && <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />}
         
         <ScrollView 
           ref={scrollViewRef} 
