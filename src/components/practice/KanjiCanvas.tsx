@@ -300,8 +300,6 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({targetKanji, onComplete, onSki
                     <G stroke="#E5E7EB" strokeWidth="1">
                         <Line x1="150" y1="0" x2="150" y2="300"/>
                         <Line x1="0" y1="150" x2="300" y2="150"/>
-                        <Line x1="0" y1="0" x2="300" y2="300"/>
-                        <Line x1="300" y1="0" x2="0" y2="300"/>
                     </G>
 
                     {/* Drawn paths */}
@@ -321,7 +319,7 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({targetKanji, onComplete, onSki
                     {currentPath.length > 0 && (
                         <Path
                             d={pointsToPath(currentPath)}
-                            stroke="#3B82F6"
+                            stroke="#10B981"
                             strokeWidth="4"
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -405,8 +403,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     modeButtonActive: {
-        backgroundColor: '#4A90E2',
-        borderColor: '#4A90E2',
+        backgroundColor: '#10B981',
+        borderColor: '#10B981',
     },
     modeButtonText: {
         fontSize: 12,
@@ -431,7 +429,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#22C55E',
     },
     dotCurrent: {
-        backgroundColor: '#4A90E2',
+        backgroundColor: '#10B981',
     },
     canvasContainer: {
         borderWidth: 2,
@@ -442,6 +440,7 @@ const styles = StyleSheet.create({
         width: CANVAS_SIZE,
         height: CANVAS_SIZE,
         backgroundColor: '#fff',
+        alignSelf: 'center',
     },
     canvas: {
         backgroundColor: '#fff',
