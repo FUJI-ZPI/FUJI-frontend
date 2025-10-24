@@ -3,6 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { StyleSheet, View, Text } from "react-native";
+//import { ZenDots_400Regular, useFonts } from '@expo-google-fonts/zen-dots';
 import { DrawerContent } from "./src/components/navigation/DrawerContent";
 import { NavItem, ScreenComponentType } from "./src/components/navigation/DrawerContent";
 import { DashboardScreen } from "./src/screens/DashboardScreen";
@@ -15,13 +16,30 @@ import { useTranslation } from "react-i18next";
 import * as SecureStore from "expo-secure-store";
 import { UserProvider } from "./src/context/UserContex";
 import KanjiLevelsScreen from "./src/screens/KanjiLevelScreen";
+import KanjiDetailScreen from './src/screens/KanjiDetailScreen';
+import KanjiListScreen from './src/screens/KanjiListScreen';
 import ChatbotScreen from "./src/screens/ChatbotScreen";
 import SettingsCard from "./src/screens/SettingsScreen";
 import KanjiMountainPage from "./src/screens/KanjiMountainScreen";
+import { CustomHeaderTitle } from './src/components/navigation/CustomHeaderTitle';
+import { colors } from './src/theme/styles';
 
 const Stack = createNativeStackNavigator();
-
 const Drawer = createDrawerNavigator();
+
+function KanjiFlow() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false 
+      }}
+    >
+      <Stack.Screen name="KanjiLevels" component={KanjiLevelsScreen} />
+      <Stack.Screen name="KanjiList" component={KanjiListScreen} />
+      <Stack.Screen name="KanjiDetail" component={KanjiDetailScreen} />
+    </Stack.Navigator>
+  );
+}
 
 function AppDrawer({ onLogout }: { onLogout: () => void }) {
   const { t } = useTranslation();
@@ -29,7 +47,7 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
   const navItems: NavItem[] = [
     { id: "Dashboard", label: t("nav.dashboard"), icon: "home-outline", component: DashboardScreen as ScreenComponentType },
     { id: "Practice", label: t("nav.practice"), icon: "pencil-sharp", component: PlaceholderScreen as ScreenComponentType },
-    { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: KanjiLevelsScreen as ScreenComponentType },
+    { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: KanjiFlow as ScreenComponentType },
     { id: "Chat", label: t("nav.chat"), icon: "chatbubble-ellipses-outline", component: ChatbotScreen as ScreenComponentType },
     { id: "Leaderboard", label: t("nav.leaderboard"), icon: "trophy-outline", component: PlaceholderScreen as ScreenComponentType },
     { id: "Profile", label: t("nav.profile"), icon: "person-outline", component: ProfileScreen as ScreenComponentType },
@@ -40,20 +58,26 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
   return (
     <Drawer.Navigator
       drawerContent={(props) => (
-        <DrawerContent {...props} navItems={navItems} onLogout={onLogout} />
+        <DrawerContent {...props} navItems={navItems} />
     )}
       screenOptions={{
-        headerShown: true,
-        headerTitle: "",
+        headerTitleAlign: 'center',
+        headerTitle: () => <CustomHeaderTitle />,
       }}
     >
-      {navItems.map((item: NavItem) => (
+      {navItems
+      .filter((item) => item.id !== "Profile")
+      .map((item: NavItem) => (
         <Drawer.Screen
           key={item.id}
           name={item.id}
           component={item.component}
         />
       ))}
+
+      <Drawer.Screen name="Profile">
+        {(props) => <ProfileScreen {...props} onLogout={onLogout} />}
+      </Drawer.Screen>
     </Drawer.Navigator>
   );
 }
@@ -115,7 +139,7 @@ useEffect(() => {
               </Stack.Screen>
             ) : (
               <Stack.Screen name="App">
-                {(props) => <AppDrawer {...props} onLogout={handleLogout} />}
+                {(props) => < AppDrawer {...props} onLogout={handleLogout} />}
               </Stack.Screen>
             )}
           </Stack.Navigator>
