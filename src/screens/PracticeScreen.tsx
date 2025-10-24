@@ -3,7 +3,6 @@ import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native
 import {Ionicons} from '@expo/vector-icons';
 import {Card} from '../components/ui/Card';
 import {Button} from '../components/ui/Button';
-import {Progress} from '../components/ui/Progress';
 import {mockKanji} from '../data/mockData';
 import KanjiCanvas from '../components/practice/KanjiCanvas';
 import {useToast} from '../hooks/use-toast';
@@ -19,7 +18,6 @@ export default function PracticeScreen({navigation}: any) {
     const practiceKanji = mockKanji.filter(k => !k.learned);
     const currentKanji = practiceKanji[currentKanjiIndex];
     const totalKanji = practiceKanji.length;
-    const progress = (completedKanji / totalKanji) * 100;
 
     const handleKanjiComplete = (accuracy: number) => {
         setLastAccuracy(accuracy);
@@ -117,14 +115,6 @@ export default function PracticeScreen({navigation}: any) {
             </View>
 
             <Card style={styles.card}>
-                <Progress value={progress} height={8}/>
-                <View style={styles.progressTextContainer}>
-                    <Text style={styles.progressText}>Session Progress</Text>
-                    <Text style={styles.progressText}>{Math.round(progress)}%</Text>
-                </View>
-            </Card>
-
-            <Card style={styles.card}>
                 <Text style={styles.sectionTitle}>Learn This Kanji</Text>
                 <View style={styles.kanjiDisplay}>
                     <Text style={styles.kanjiCharacter}>{currentKanji.character}</Text>
@@ -141,21 +131,6 @@ export default function PracticeScreen({navigation}: any) {
                         <Text style={styles.readingValue}>{currentKanji.readings.kunyomi.join(', ')}</Text>
                     </View>
                 </View>
-
-                <View style={styles.difficultyContainer}>
-                    <Text style={styles.difficultyLabel}>Difficulty:</Text>
-                    <View style={styles.stars}>
-                        {[...Array(3)].map((_, i) => (
-                            <Ionicons
-                                key={i}
-                                name={i < (currentKanji.difficulty === 'beginner' ? 1 : currentKanji.difficulty === 'intermediate' ? 2 : 3) ? 'star' : 'star-outline'}
-                                size={16}
-                                color={i < (currentKanji.difficulty === 'beginner' ? 1 : currentKanji.difficulty === 'intermediate' ? 2 : 3) ? '#F59E0B' : '#D1D5DB'}
-                            />
-                        ))}
-                    </View>
-                    <Text style={styles.difficultyText}>{currentKanji.difficulty}</Text>
-                </View>
             </Card>
 
             {showResult ? (
@@ -171,19 +146,6 @@ export default function PracticeScreen({navigation}: any) {
                 <KanjiCanvas targetKanji={currentKanji.character} onComplete={handleKanjiComplete} onSkip={handleSkip}/>
             )}
 
-            <Card style={styles.card}>
-                <View style={styles.statsContainer}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statValue}>{completedKanji}</Text>
-                        <Text style={styles.statLabel}>Completed</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text
-                            style={[styles.statValue, styles.statValueAccent]}>{completedKanji > 0 ? Math.round(sessionScore / completedKanji) : 0}%</Text>
-                        <Text style={styles.statLabel}>Avg. Accuracy</Text>
-                    </View>
-                </View>
-            </Card>
 
             <View style={styles.bottomSpacer}/>
         </ScrollView>
@@ -200,8 +162,6 @@ const styles = StyleSheet.create({
     progressLabel: {fontSize: 12, color: '#666'},
     progressValue: {fontSize: 16, fontWeight: '600', color: '#333'},
     card: {padding: 16, marginBottom: 16},
-    progressTextContainer: {flexDirection: 'row', justifyContent: 'space-between', marginTop: 8},
-    progressText: {fontSize: 12, color: '#666'},
     sectionTitle: {fontSize: 18, fontWeight: '600', color: '#333', textAlign: 'center', marginBottom: 16},
     kanjiDisplay: {alignItems: 'center', marginBottom: 16},
     kanjiCharacter: {fontSize: 56, fontWeight: 'bold', color: '#4A90E2', marginBottom: 8},
@@ -210,21 +170,12 @@ const styles = StyleSheet.create({
     readingItem: {flex: 1},
     readingLabel: {fontSize: 12, fontWeight: '500', color: '#666', marginBottom: 4},
     readingValue: {fontSize: 14, color: '#333'},
-    difficultyContainer: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8},
-    difficultyLabel: {fontSize: 14, color: '#666'},
-    stars: {flexDirection: 'row', gap: 4},
-    difficultyText: {fontSize: 14, fontWeight: '600', color: '#333', textTransform: 'capitalize'},
     resultCard: {padding: 24, alignItems: 'center', marginBottom: 16},
     resultEmoji: {fontSize: 64, marginBottom: 16},
     resultTitle: {fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 8},
     resultAccuracy: {fontSize: 18, color: '#666', marginBottom: 8},
     resultAccuracyValue: {fontWeight: 'bold', color: '#4A90E2'},
     resultMessage: {fontSize: 14, color: '#999'},
-    statsContainer: {flexDirection: 'row', justifyContent: 'space-around'},
-    statItem: {alignItems: 'center'},
-    statValue: {fontSize: 24, fontWeight: 'bold', color: '#4A90E2', marginBottom: 4},
-    statValueAccent: {color: '#F59E0B'},
-    statLabel: {fontSize: 12, color: '#666'},
     emptyContainer: {flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24},
     emptyTitle: {fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 8},
     emptyText: {fontSize: 16, color: '#666', marginBottom: 24, textAlign: 'center'},

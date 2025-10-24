@@ -224,7 +224,6 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({targetKanji, onComplete, onSki
     return (
         <Card style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.kanjiText}>{targetKanji}</Text>
                 <Text style={styles.instructionText}>
                     {practiceMode === 'guided'
                         ? `Stroke ${currentStroke + 1}/${strokes.length}`
