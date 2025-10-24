@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useContext } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, Platform } from 'react-native';
 import { Toast } from 'toastify-react-native'; 
 import { useTranslation } from 'react-i18next';
 import { Card } from '../components/ui/Card';
@@ -8,46 +8,43 @@ import { ProfileHeader } from '../components/profile/ProfileHeader'
 import { AchievementList } from '../components/profile/AchivmentList';
 import { SettingItem } from '../components/profile/SettingItem';
 import { StatsSummaryCard } from '../components/profile/StatsSummaryCard';
+import { SettingsCard } from '../components/profile/SettingsCard';
 import { themeStyles, colors, spacing } from '../theme/styles';
 import { mockUser, mockKanji, mockAchievements } from '../data/mockData';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { UserContext } from '../context/UserContex';
+import { Ionicons } from "@expo/vector-icons";
 
 interface ScreenProps {
     navigation: any;
     route: any;
+    onLogout: () => void;
 }
 
-const ProfileScreen: React.FC<ScreenProps> = () => {
+const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }: any) => {
   const { t } = useTranslation();
-  const { user } = useContext(UserContext)!
+  const { user, setUser } = useContext(UserContext)!
+
+  const handleLogoutPress = async () => {
+    setUser(null);
+    onLogout();
+  };
     
-  const [notifications, setNotifications] = useState(true);
-  const [practiceReminders, setPracticeReminders] = useState(true);
-  
   const { learnedKanji, totalKanji } = useMemo(() => {
     const learnedKanji = mockKanji.filter(k => k.learned).length;
     const totalKanji = mockKanji.length;
     return { learnedKanji, totalKanji };
   }, []);
 
-  const handleNotificationChange = (value: boolean) => {
-    setNotifications(value);
-    Toast.success(t('profile.notifications_saved'));
-  };
-
-  const handleRemindersChange = (value: boolean) => {
-    setPracticeReminders(value);
-    Toast.success(t('profile.reminders_updated'));
-  };
-
   return (
     <SafeAreaView style={themeStyles.flex1}>
       <ScrollView style={themeStyles.flex1} contentContainerStyle={styles.scrollContent}>
         <View style={themeStyles.paddingContainer}>
           
+          {/* 1. Karta użytkownika */}
           <ProfileHeader user={user} />
 
+          {/* 2. Day Streak i Kanji Learned */}
           <View style={styles.statsGrid}>
             <StatCard 
               iconName="flame" 
@@ -66,8 +63,7 @@ const ProfileScreen: React.FC<ScreenProps> = () => {
             />
           </View>
 
-          <AchievementList achievements={mockAchievements} />
-
+          {/* 3. Statistics */}
           <StatsSummaryCard
             stats={[
               { iconSet: 'Feather', iconName: 'calendar', label: t('profile.joined'), value: 'January 2024' },
@@ -77,21 +73,25 @@ const ProfileScreen: React.FC<ScreenProps> = () => {
           ]}
           />
 
-          <Card title={t('profile.notifications_card_title')}>
-            <SettingItem
-              label={t('profile.push_notifications_label')}
-              description={t('profile.push_notifications_desc')}
-              value={notifications}
-              onValueChange={handleNotificationChange}
-              isFirst={true}
-            />
-            <SettingItem
-              label={t('profile.reminders_label')}
-              description={t('profile.reminders_desc')}
-              value={practiceReminders}
-              onValueChange={handleRemindersChange}
-            />
-          </Card>
+          {/* 4. Nowa Karta Ustawień (z ../components/profile/SettingsCard') */}
+          <SettingsCard  />
+
+          {/* 5. Achievements */}
+          <AchievementList achievements={mockAchievements} />
+
+          {/* 6. Przycisk wylogowania */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={handleLogoutPress}
+            style={styles.logoutButtonContainer}
+          >
+            <Card>
+              <View style={styles.logoutContent}>
+                <Ionicons name="log-out-outline" size={22} color="#c0392b" />
+                <Text style={styles.logoutText}>{t("drawer.logout")}</Text>
+              </View>
+            </Card>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -99,7 +99,7 @@ const ProfileScreen: React.FC<ScreenProps> = () => {
 };
 
 const styles = StyleSheet.create({
-  scrollContent: { backgroundColor: colors.background, minHeight: '100%' },
+  scrollContent: { backgroundColor: colors.background, minHeight: '100%', paddingBottom: spacing.base },
 
   statsGrid: { 
     ...themeStyles.flexRow, 
@@ -138,6 +138,20 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 22, 
     color: colors.text,
+  },
+  logoutButtonContainer: {
+    marginTop: spacing.base,
+  },
+  logoutContent: {
+    ...themeStyles.flexRow,
+    ...themeStyles.gap8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutText: {
+    color: '#c0392b',
+    fontSize: 16,
+    fontWeight: '500',
   },
 
 });

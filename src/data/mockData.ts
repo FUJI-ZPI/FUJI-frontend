@@ -277,3 +277,132 @@ export const mockKanji2: Kanji[] = [
     { id: '49', character: '立', meaning: 'stand', learned: true },
     { id: '50', character: '休', meaning: 'rest', learned: false },
 ];
+
+
+// KanjiLevelsScreen
+export interface KanjiLevel {
+  id: number;
+  level: number;
+  title: string;
+  kanjiLearned: number;
+  kanjiTotal: number;
+}
+
+// KanjiListScreen
+export interface KanjiCharacter {
+  id: string;
+  level: number;
+  character: string;
+  learned: boolean;
+}
+
+// KanjiDetailScreen
+export interface KanjiDetail {
+  id: string;
+  character: string;
+  strokeCount: number;
+
+  meanings: string[];
+  mnemonic: string;
+
+  readings: {
+    onyomi: { reading: string; label: string }[];
+    kunyomi: { reading: string; label: string }[];
+  };
+
+  examples: {
+    word: string;
+    reading: string;
+    meaning: string;
+  }[];
+}
+
+
+// KanjiLevelsScreen.tsx
+export const mockKanjiLevels: KanjiLevel[] = [
+  { id: 1, level: 1, title: 'Beginner', kanjiLearned: 10, kanjiTotal: 60 },
+  { id: 2, level: 2, title: 'Beginner', kanjiLearned: 7, kanjiTotal: 60 },
+  { id: 3, level: 3, title: 'Beginner', kanjiLearned: 7, kanjiTotal: 60 },
+  { id: 4, level: 4, title: 'Beginner', kanjiLearned: 7, kanjiTotal: 60 },
+  { id: 5, level: 5, title: 'Beginner', kanjiLearned: 7, kanjiTotal: 60 },
+  { id: 6, level: 6, title: 'Beginner', kanjiLearned: 7, kanjiTotal: 60 },
+];
+
+export const mockKanjiList_Level1: KanjiCharacter[] = [
+  { id: 'k1', level: 1, character: '一', learned: true },
+  { id: 'k2', level: 1, character: '二', learned: true },
+  { id: 'k3', level: 1, character: '三', learned: false },
+  { id: 'k4', level: 1, character: '四', learned: true },
+  { id: 'k5', level: 1, character: '五', learned: false },
+  { id: 'k6', level: 1, character: '六', learned: true },
+  { id: 'k7', level: 1, character: '七', learned: true },
+  { id: 'k8', level: 1, character: '八', learned: false },
+  { id: 'k9', level: 1, character: '九', learned: true },
+  { id: 'k10', level: 1, character: '十', learned: true },
+  { id: 'k11', level: 1, character: '人', learned: false },
+  { id: 'k13', level: 1, character: '日', learned: true },
+  { id: 'k23', level: 1, character: '上', learned: true },
+  { id: 'k-mizu', level: 1, character: '水', learned: true },
+];
+
+
+// KanjiDetailScreen.tsx
+export const mockKanjiDetails: { [key: string]: KanjiDetail } = {
+  
+  'k23': {
+    id: 'k23',
+    character: '上',
+    strokeCount: 3,
+    meanings: ['Above', 'Up', 'Over'],
+    mnemonic: 'You find a toe on the ground. It\'s weird, because it\'s above the ground, not where toes belong.',
+    readings: {
+      onyomi: [{ reading: 'ジョウ', label: 'Chinese' }],
+      kunyomi: [
+        { reading: 'うえ', label: 'Japanese' },
+        { reading: 'あ', label: 'Japanese' },
+        { reading: 'のぼ', label: 'Japanese' },
+        { reading: 'うわ', label: 'Japanese' },
+        { reading: 'かみ', label: 'Japanese' },
+      ],
+    },
+    examples: [
+      { word: '上', reading: 'うえ', meaning: 'Above, up, on top' },
+      { word: '上げる', reading: 'あげる', meaning: 'To Lift Something' },
+      { word: '上手', reading: 'じょうず', meaning: 'Good At, skillful' },
+      { word: '上る', reading: 'のぼる', meaning: 'To Climb, to go up' },
+    ],
+  },
+  
+  'k1': {
+    id: 'k1',
+    character: '一',
+    strokeCount: 1,
+    meanings: ['One', '1'],
+    mnemonic: 'Lying on the ground is something that looks just like the ground, the number One. Why is this One lying down? It\'s been shot by the number two.',
+    readings: {
+      onyomi: [{ reading: 'いち', label: 'Chinese' }, { reading: 'いつ', label: 'Chinese' }],
+      kunyomi: [{ reading: 'ひと', label: 'Japanese' }],
+    },
+    examples: [
+      { word: '一つ', reading: 'ひとつ', meaning: 'One thing' },
+      { word: '一日', reading: 'いちにち', meaning: 'One day' },
+      { word: '一番', reading: 'いちばん', meaning: 'Number one, the best' },
+    ],
+  },
+  
+  'k-mizu': { 
+    id: 'k-mizu',
+    character: '水',
+    strokeCount: 4,
+    meanings: ['Water'],
+    mnemonic: 'A big splash of water in the middle, with smaller drops flying off to the sides.',
+    readings: {
+      onyomi: [{ reading: 'スイ', label: 'Chinese' }],
+      kunyomi: [{ reading: 'みず', label: 'Japanese' }],
+    },
+    examples: [
+      { word: '水', reading: 'みず', meaning: 'Water' },
+      { word: '水曜日', reading: 'すいようび', meaning: 'Wednesday' },
+    ],
+  },
+};

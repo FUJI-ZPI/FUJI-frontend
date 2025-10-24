@@ -5,7 +5,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { ComponentType } from "react";
 import { mockUser } from '../../data/mockData';
 import { useTranslation } from "react-i18next";
-import * as SecureStore from 'expo-secure-store';
 import { UserContext } from "../../context/UserContex";
 
 const LOGO_IMAGE = require('../../../assets/fuji-logo-kanji.jpeg')
@@ -33,51 +32,31 @@ export interface NavItem {
 
 export type ScreenComponentType = ComponentType<any>;
 
-
 export interface DrawerContentProps {
   navigation: any;
   state: any;
   navItems: NavItem[];
-  onLogout: () => void; 
 }
 
-
-export const DrawerContent = ({ navigation, state, navItems, onLogout }: DrawerContentProps) => {
+export const DrawerContent = ({ navigation, state, navItems}: DrawerContentProps) => {
   const { t } = useTranslation();
-
-  const { user, setUser } = useContext(UserContext)!
-
-  const handleLogoutPress = async () => {
-    await SecureStore.deleteItemAsync("accessToken");
-    await SecureStore.deleteItemAsync("refreshToken");
-    setUser(null);
-    onLogout();
-  };
+  const { user } = useContext(UserContext)!
 
   return (
     <DrawerContentScrollView contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-      <Image 
-        source={LOGO_IMAGE} 
-        style={styles.logoPlaceholder}
-        accessibilityLabel={t('drawer.app_subtitle')}
-      />
-        <View>
-          <Text style={styles.title}>{t('drawer.app_title')}</Text>
-          <Text style={styles.subtitle}>{t('drawer.app_subtitle')}</Text>
-        </View>
-      </View>
 
-      <View style={styles.user}>
+      <TouchableOpacity style={styles.user} onPress={() => navigation.navigate("Profile")}>
         <Image source={{ uri: user?.photo }} style={styles.avatar} />
         <View>
           <Text style={styles.username}>{user?.name}</Text>
           <Text style={styles.userLevel}>{mockUser.level_name}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.navItems}>
-        {navItems.map((item) => {
+        {navItems
+        .filter((item) => item.id !== "Profile" && item.id !== "Settings" && item.id !== "Dashboard")
+        .map((item) => {
           const routeName = item.id;
           const isFocused = state.routeNames[state.index] === routeName;
           const iconName = iconMap[routeName] || "help-circle-outline";
@@ -101,19 +80,13 @@ export const DrawerContent = ({ navigation, state, navItems, onLogout }: DrawerC
         })}
       </View>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.button} onPress={handleLogoutPress}>
-          <Ionicons name="log-out-outline" size={20} style={styles.icon} />
-          <Text style={[styles.label, { color: "#C92C2C" }]}>{t('drawer.logout')}</Text>
-        </TouchableOpacity>
-      </View>
     </DrawerContentScrollView>
   );
 };
 
 const styles = StyleSheet.create({
     container: { flexGrow: 1, paddingVertical: 20, justifyContent: "space-between", backgroundColor: "rgb(245, 246, 247)" },
-    header: {
+    user: {
       flexDirection: "row",
       alignItems: "center",
       padding: 24,
@@ -121,16 +94,7 @@ const styles = StyleSheet.create({
       borderColor: "rgb(198, 211, 199)",
       backgroundColor: "#ebf4f0",
     },
-    logoPlaceholder: { width: 48, height: 48, borderRadius: 12, marginRight: 12, backgroundColor: '#fff', borderWidth: 1, borderColor: 'lightgray' },
-    title: { fontSize: 20, fontWeight: "700", color: "rgb(54,138,89)" },
-    subtitle: { fontSize: 12, color: "rgb(107, 114, 128)" }, 
-    user: {
-      flexDirection: "row",
-      alignItems: "center",
-      padding: 24,
-      borderBottomWidth: 1,
-      borderColor: "rgb(198, 211, 199)",
-    },
+
     avatar: {
       fontSize: 32,
       marginRight: 12,
@@ -138,11 +102,13 @@ const styles = StyleSheet.create({
       height: 48,
       textAlignVertical: 'center',
       backgroundColor: "rgb(54, 138, 89, 0.2)",
+      borderWidth: 0.5,
+      borderColor: 'lightgray',
       borderRadius: 24,
       textAlign: "center",
       lineHeight: 48,
     },
-    username: { fontSize: 16, fontWeight: "500", color: "rgb(17, 24, 39)" },
+    username: { fontSize: 18, fontWeight: "500", color: "rgb(17, 24, 39)" },
     userLevel: { fontSize: 12, color: "rgb(107, 114, 128)" },
     navItems: { flex: 1, paddingHorizontal: 16, marginTop: 12 },
     button: {
