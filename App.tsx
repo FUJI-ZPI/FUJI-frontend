@@ -1,23 +1,23 @@
-import React, { useState, useEffect } from "react";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createDrawerNavigator } from "@react-navigation/drawer";
-import { StyleSheet, View, Text } from "react-native";
-import { DrawerContent } from "./src/components/navigation/DrawerContent";
-import { NavItem, ScreenComponentType } from "./src/components/navigation/DrawerContent";
-import { DashboardScreen } from "./src/screens/DashboardScreen";
-import { PlaceholderScreen } from "./src/screens/PlaceholderScreen";
+import React, {useEffect, useState} from "react";
+import {NavigationContainer} from "@react-navigation/native";
+import {createNativeStackNavigator} from "@react-navigation/native-stack";
+import {createDrawerNavigator} from "@react-navigation/drawer";
+import {StyleSheet} from "react-native";
+import {DrawerContent, NavItem, ScreenComponentType} from "./src/components/navigation/DrawerContent";
+import {DashboardScreen} from "./src/screens/DashboardScreen";
+import {PlaceholderScreen} from "./src/screens/PlaceholderScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 import LoginScreen from "./src/screens/LoginScreen";
 import ToastProvider from "./src/providers/ToastProvider";
 import "./src/i18n/i18n";
-import { useTranslation } from "react-i18next";
+import {useTranslation} from "react-i18next";
 import * as SecureStore from "expo-secure-store";
-import { UserProvider } from "./src/context/UserContex";
+import {UserProvider} from "./src/context/UserContex";
 import KanjiLevelsScreen from "./src/screens/KanjiLevelScreen";
 import ChatbotScreen from "./src/screens/ChatbotScreen";
 import SettingsCard from "./src/screens/SettingsScreen";
 import KanjiMountainPage from "./src/screens/KanjiMountainScreen";
+import PracticeScreen from "./src/screens/PracticeScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -28,7 +28,12 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
     
   const navItems: NavItem[] = [
     { id: "Dashboard", label: t("nav.dashboard"), icon: "home-outline", component: DashboardScreen as ScreenComponentType },
-    { id: "Practice", label: t("nav.practice"), icon: "pencil-sharp", component: PlaceholderScreen as ScreenComponentType },
+      {
+          id: "Practice",
+          label: t("nav.practice"),
+          icon: "pencil-sharp",
+          component: PracticeScreen as ScreenComponentType
+      },
     { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: KanjiLevelsScreen as ScreenComponentType },
     { id: "Chat", label: t("nav.chat"), icon: "chatbubble-ellipses-outline", component: ChatbotScreen as ScreenComponentType },
     { id: "Leaderboard", label: t("nav.leaderboard"), icon: "trophy-outline", component: PlaceholderScreen as ScreenComponentType },
