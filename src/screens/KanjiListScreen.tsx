@@ -1,12 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react'; // <-- Dodaj useMemo
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { themeStyles, colors, spacing } from '../theme/styles';
 import { useTranslation } from 'react-i18next';
-import { mockKanji2 } from '../data/mockData'
+import { mockKanjiList_Level1, KanjiCharacter } from '../data/mockData' 
 import KanjiItem from '../components/kanji-list/KanjiItem'; 
-
 
 const { width } = Dimensions.get('window');
 const GRID_PADDING = spacing.base * 2;
@@ -26,11 +25,21 @@ const KanjiListScreen: React.FC<ScreenProps> = ({ navigation, route }) => {
     const { level } = route.params;
 
     const onBack = () => {
-        navigation.navigate("Vocabulary");
+        navigation.goBack();
     };
 
+    const kanjiList = useMemo(() => {
+        return mockKanjiList_Level1.filter(k => k.level === level);
+    }, [level]);
+
     const onSelectKanji = (kanjiId: string) => {
-        console.log(`Wybrano Kanji ID: ${kanjiId}, Poziom: ${level}`);
+        const selectedKanji = kanjiList.find(k => k.id === kanjiId);
+        if (!selectedKanji) return;
+
+        navigation.navigate('KanjiDetail', { 
+            kanjiId: selectedKanji.id,
+            character: selectedKanji.character 
+        });
     };
 
     return (
@@ -53,11 +62,11 @@ const KanjiListScreen: React.FC<ScreenProps> = ({ navigation, route }) => {
                     </View>
 
                     <Text style={localStyles.pageInfo}>
-                        {t('Tap a kanji to learn more ({{count}} found)', { count: mockKanji2.length }) || `Tap a kanji to learn more (${kanjiForLevel.length} found)`}
+                        {t('Tap a kanji to learn more ({{count}} found)', { count: kanjiList.length })}
                     </Text>
 
                     <View style={localStyles.kanjiGrid}>
-                        {mockKanji2.map((kanji) => (
+                        {kanjiList.map((kanji) => (
                             <KanjiItem
                                 key={kanji.id}
                                 kanji={kanji}
