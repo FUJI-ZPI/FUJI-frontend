@@ -14,9 +14,9 @@ import "./src/i18n/i18n";
 import {useTranslation} from "react-i18next";
 import * as SecureStore from "expo-secure-store";
 import {UserProvider} from "./src/context/UserContex";
-import KanjiLevelsScreen from "./src/screens/KanjiLevelScreen";
-import KanjiDetailScreen from './src/screens/KanjiDetailScreen';
-import KanjiListScreen from './src/screens/KanjiListScreen';
+import VocabularyLevelScreen from "./src/screens/VocabularyLevelScreen";
+import VocabularyDetailScreen from "./src/screens/VocabularyDetailScreen";
+import VocabularyListScreen from "./src/screens/VocabularyListScreen";
 import ChatbotScreen from "./src/screens/ChatbotScreen";
 import SettingsCard from "./src/screens/SettingsScreen";
 import KanjiMountainPage from "./src/screens/KanjiMountainScreen";
@@ -27,16 +27,16 @@ import {colors} from './src/theme/styles';
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
-function KanjiFlow() {
+function VocabularyFlow() {
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false 
       }}
     >
-      <Stack.Screen name="KanjiLevels" component={KanjiLevelsScreen} />
-      <Stack.Screen name="KanjiList" component={KanjiListScreen} />
-      <Stack.Screen name="KanjiDetail" component={KanjiDetailScreen} />
+      <Stack.Screen name="VocabularyLevels" component={VocabularyLevelScreen} />
+      <Stack.Screen name="VocabularyList" component={VocabularyListScreen} />
+      <Stack.Screen name="VocabularyDetail" component={VocabularyDetailScreen} />
     </Stack.Navigator>
   );
 }
@@ -47,7 +47,7 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
   const navItems: NavItem[] = [
     { id: "Dashboard", label: t("nav.dashboard"), icon: "home-outline", component: DashboardScreen as ScreenComponentType },
     { id: "Practice", label: t("nav.practice"), icon: "pencil-sharp", component: PracticeScreen as ScreenComponentType },
-    { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: KanjiFlow as ScreenComponentType },
+    { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: VocabularyFlow as ScreenComponentType },
     { id: "Chat", label: t("nav.chat"), icon: "chatbubble-ellipses-outline", component: ChatbotScreen as ScreenComponentType },
     { id: "Leaderboard", label: t("nav.leaderboard"), icon: "trophy-outline", component: PlaceholderScreen as ScreenComponentType },
     { id: "Profile", label: t("nav.profile"), icon: "person-outline", component: ProfileScreen as ScreenComponentType },
