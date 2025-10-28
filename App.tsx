@@ -1,8 +1,9 @@
-import React, {useEffect, useState} from "react";
+import React, {useState, useEffect} from "react";
 import {NavigationContainer} from "@react-navigation/native";
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {createDrawerNavigator} from "@react-navigation/drawer";
-import {StyleSheet} from "react-native";
+import {StyleSheet, View, Text} from "react-native";
+//import { ZenDots_400Regular, useFonts } from '@expo-google-fonts/zen-dots';
 import {DrawerContent, NavItem, ScreenComponentType} from "./src/components/navigation/DrawerContent";
 import {DashboardScreen} from "./src/screens/DashboardScreen";
 import {PlaceholderScreen} from "./src/screens/PlaceholderScreen";
@@ -13,28 +14,40 @@ import "./src/i18n/i18n";
 import {useTranslation} from "react-i18next";
 import * as SecureStore from "expo-secure-store";
 import {UserProvider} from "./src/context/UserContex";
-import KanjiLevelsScreen from "./src/screens/KanjiLevelScreen";
+import VocabularyLevelScreen from "./src/screens/VocabularyLevelScreen";
+import VocabularyDetailScreen from "./src/screens/VocabularyDetailScreen";
+import VocabularyListScreen from "./src/screens/VocabularyListScreen";
 import ChatbotScreen from "./src/screens/ChatbotScreen";
 import SettingsCard from "./src/screens/SettingsScreen";
 import KanjiMountainPage from "./src/screens/KanjiMountainScreen";
 import PracticeScreen from "./src/screens/PracticeScreen";
+import {CustomHeaderTitle} from './src/components/navigation/CustomHeaderTitle';
+import {colors} from './src/theme/styles';
 
 const Stack = createNativeStackNavigator();
-
 const Drawer = createDrawerNavigator();
+
+function VocabularyFlow() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false 
+      }}
+    >
+      <Stack.Screen name="VocabularyLevels" component={VocabularyLevelScreen} />
+      <Stack.Screen name="VocabularyList" component={VocabularyListScreen} />
+      <Stack.Screen name="VocabularyDetail" component={VocabularyDetailScreen} />
+    </Stack.Navigator>
+  );
+}
 
 function AppDrawer({ onLogout }: { onLogout: () => void }) {
   const { t } = useTranslation();
     
   const navItems: NavItem[] = [
     { id: "Dashboard", label: t("nav.dashboard"), icon: "home-outline", component: DashboardScreen as ScreenComponentType },
-      {
-          id: "Practice",
-          label: t("nav.practice"),
-          icon: "pencil-sharp",
-          component: PracticeScreen as ScreenComponentType
-      },
-    { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: KanjiLevelsScreen as ScreenComponentType },
+    { id: "Practice", label: t("nav.practice"), icon: "pencil-sharp", component: PracticeScreen as ScreenComponentType },
+    { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: VocabularyFlow as ScreenComponentType },
     { id: "Chat", label: t("nav.chat"), icon: "chatbubble-ellipses-outline", component: ChatbotScreen as ScreenComponentType },
     { id: "Leaderboard", label: t("nav.leaderboard"), icon: "trophy-outline", component: PlaceholderScreen as ScreenComponentType },
     { id: "Profile", label: t("nav.profile"), icon: "person-outline", component: ProfileScreen as ScreenComponentType },
@@ -45,20 +58,26 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
   return (
     <Drawer.Navigator
       drawerContent={(props) => (
-        <DrawerContent {...props} navItems={navItems} onLogout={onLogout} />
+        <DrawerContent {...props} navItems={navItems} />
     )}
       screenOptions={{
-        headerShown: true,
-        headerTitle: "",
+        headerTitleAlign: 'center',
+        headerTitle: () => <CustomHeaderTitle />,
       }}
     >
-      {navItems.map((item: NavItem) => (
+      {navItems
+      .filter((item) => item.id !== "Profile")
+      .map((item: NavItem) => (
         <Drawer.Screen
           key={item.id}
           name={item.id}
           component={item.component}
         />
       ))}
+
+      <Drawer.Screen name="Profile">
+        {(props) => <ProfileScreen {...props} onLogout={onLogout} />}
+      </Drawer.Screen>
     </Drawer.Navigator>
   );
 }
@@ -120,7 +139,7 @@ useEffect(() => {
               </Stack.Screen>
             ) : (
               <Stack.Screen name="App">
-                {(props) => <AppDrawer {...props} onLogout={handleLogout} />}
+                {(props) => < AppDrawer {...props} onLogout={handleLogout} />}
               </Stack.Screen>
             )}
           </Stack.Navigator>

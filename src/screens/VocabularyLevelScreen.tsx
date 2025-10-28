@@ -1,23 +1,21 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import { themeStyles, colors, spacing } from '../theme/styles';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {Ionicons} from '@expo/vector-icons';
+import {useTranslation} from 'react-i18next';
+import {themeStyles, colors, spacing} from '../theme/styles';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
-const { width } = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 const GRID_PADDING = spacing.base * 2;
 const ITEM_MARGIN = spacing.base;
 const ITEMS_PER_ROW = 2;
 const ITEM_WIDTH = (width - GRID_PADDING - (ITEM_MARGIN * (ITEMS_PER_ROW - 1))) / ITEMS_PER_ROW;
 
-
 interface ScreenProps {
     navigation: any;
-    route: any;
 }
 
-const KanjiLevelsScreen: React.FC<ScreenProps> = ({ navigation }) => {
+const VocabularyLevelScreen: React.FC<ScreenProps> = ({ navigation }) => {
     const { t } = useTranslation();
     
     const [currentPage, setCurrentPage] = useState(0);
@@ -63,18 +61,17 @@ const KanjiLevelsScreen: React.FC<ScreenProps> = ({ navigation }) => {
     };
 
     const handleSelectLevel = (level: number) => {
-        navigation.navigate('KanjiList', { level: level });
+        navigation.navigate('VocabularyList', { level: level });
     };
 
-
     return (
-        <SafeAreaView style={themeStyles.flex1}>
+        <SafeAreaView style={themeStyles.flex1} edges={['bottom', 'left', 'right']}>
             <ScrollView style={themeStyles.flex1} contentContainerStyle={localStyles.scrollContent}>
                 <View style={themeStyles.paddingContainer}>
                     
                     <View style={localStyles.header}>
-
-                        <Text style={localStyles.title}>{t('Kanji Levels') || 'Poziomy Kanji'}</Text>
+                        {/* ZMIANA: Tytuł */}
+                        <Text style={localStyles.title}>{t('Vocabulary Levels') || 'Poziomy Słownictwa'}</Text>
 
                         <View style={localStyles.paginationControls}>
                             <TouchableOpacity
@@ -151,19 +148,6 @@ const localStyles = StyleSheet.create({
         textAlign: 'center',
         flex: 1,
     },
-    backButton: {
-        ...themeStyles.flexRow,
-        padding: spacing.small,
-        borderRadius: 8,
-        position: 'absolute',
-        left: -spacing.small, 
-        zIndex: 10,
-    },
-    backButtonText: {
-        fontSize: 14,
-        color: colors.text,
-        marginLeft: 4,
-    },
     paginationControls: {
         ...themeStyles.flexRow,
         gap: spacing.small,
@@ -233,4 +217,4 @@ const localStyles = StyleSheet.create({
     }
 });
 
-export default KanjiLevelsScreen;
+export default VocabularyLevelScreen;

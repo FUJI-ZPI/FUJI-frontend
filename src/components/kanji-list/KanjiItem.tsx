@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors, spacing } from '../../theme/styles';
-import { Kanji } from '../../data/mockData';
+import { KanjiCharacter } from '../../data/mockData';
 
 interface KanjiItemProps {
-    kanji: Kanji;
+    kanji: KanjiCharacter;
     itemWidth: number;
     onSelect: (kanjiId: string) => void;
 }
