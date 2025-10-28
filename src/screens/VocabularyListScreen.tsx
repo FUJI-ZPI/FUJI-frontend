@@ -1,11 +1,8 @@
-import React, {useState, useEffect} from 'react';
-import {
-    View, Text, StyleSheet, TouchableOpacity,
-    Dimensions, ActivityIndicator, FlatList, Alert
-} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, Alert, Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {themeStyles, colors, spacing} from '../theme/styles';
+import {colors, spacing, themeStyles} from '../theme/styles';
 import {useTranslation} from 'react-i18next';
 import * as SecureStore from 'expo-secure-store';
 import {Card} from '../components/ui/Card';
@@ -55,7 +52,7 @@ const VocabularyListScreen: React.FC<ScreenProps> = ({ navigation, route }) => {
             };
 
             const res = await fetch(
-                `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/vocabulary/v1/vocabulary/${level}`,
+                `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/vocabulary/${level}`,
                 { headers }
             );
 

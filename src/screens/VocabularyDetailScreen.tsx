@@ -1,11 +1,8 @@
-import React, {useState, useEffect} from 'react';
-import {
-    View, Text, StyleSheet, ScrollView, TouchableOpacity,
-    ActivityIndicator, Alert
-} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
-import {themeStyles, colors, spacing, levelStyles} from '../theme/styles';
+import {colors, spacing, themeStyles} from '../theme/styles';
 import {useTranslation} from 'react-i18next';
 import * as SecureStore from 'expo-secure-store';
 import {Card} from '../components/ui/Card';
@@ -95,7 +92,7 @@ const CollapsibleSection: React.FC<{ title: string, count: number, children: Rea
                 <Text style={localStyles.collapsibleTitle}>
                     {`${title} (${count})`}
                 </Text>
-                
+
                 <Ionicons
                     name={isCollapsed ? "chevron-down-outline" : "chevron-up-outline"}
                     size={20}
@@ -127,7 +124,9 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({ navigation, route }) =>
             const token = await SecureStore.getItemAsync('accessToken');
             if (!token) throw new Error("Authentication token not found. Please log in again.");
             const headers = { 'Authorization': `Bearer ${token}` };
-            const res = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/vocabulary/v1/vocabulary/details/${uuid}`, { headers });
+            const url = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/vocabulary/details/${uuid}`;
+            console.log(url);
+            const res = await fetch(url, {headers});
             if (!res.ok) {
                 if (res.status === 401 || res.status === 403) throw new Error("Authorization error. Please try logging in again.");
                 throw new Error(`Server error: ${res.status}`);
@@ -185,14 +184,14 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({ navigation, route }) =>
                 )}
 
                 {whitelistMeanings.length > 0 && (
-                    <CollapsibleSection 
-                        title="Auxiliary Meanings (Synonyms)" 
+                    <CollapsibleSection
+                        title="Auxiliary Meanings (Synonyms)"
                         count={whitelistMeanings.length}
                     >
                         <Text style={localStyles.auxiliaryInfoText}>
                             These are synonyms or alternative answers that are also accepted.
                         </Text>
-                        
+
                         <View style={[localStyles.tagContainer, { marginTop: spacing.base }]}>
                             {whitelistMeanings.map(m => (
                                 <View key={m.meaning} style={[localStyles.tag, localStyles.auxiliaryTag]}>
@@ -202,7 +201,7 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({ navigation, route }) =>
                         </View>
                     </CollapsibleSection>
                 )}
-                
+
                 <Text style={[localStyles.groupTitle, { marginTop: spacing.base }]}>Part of Speech</Text>
                 <View style={localStyles.tagContainer}>
                     {vocabData.parts_of_speech.map(pos => (
@@ -367,7 +366,7 @@ const localStyles = StyleSheet.create({
         paddingVertical: spacing.small,
         paddingHorizontal: spacing.base,
         borderRadius: 8,
-        ...themeStyles.gap4,
+        ...themeStyles.gap8,
         flex: 1,
     },
     tabButtonActive: { backgroundColor: '#D1FAE5', },
@@ -401,33 +400,40 @@ const localStyles = StyleSheet.create({
     kanjiTileText: { marginTop: spacing.small, fontSize: 12, color: primaryGreen, },
     sentenceRow: { paddingVertical: spacing.base, borderBottomWidth: 1, borderBottomColor: colors.border, },
     sentenceJa: { fontSize: 18, fontWeight: '500', color: colors.text, marginBottom: spacing.small, },
-    sentenceEn: { fontSize: 14, color: colors.textMuted, marginTop: spacing.tiny },
-    toggleButton: { flexDirection: 'row', alignItems: 'center', marginTop: 4, marginBottom: 8, ...themeStyles.gap4, alignSelf: 'flex-start', paddingVertical: 2 },
+    sentenceEn: {fontSize: 14, color: colors.textMuted, marginTop: spacing.base},
+    toggleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+        marginBottom: 8, ...themeStyles.gap8,
+        alignSelf: 'flex-start',
+        paddingVertical: 2
+    },
     toggleTranslation: { color: primaryGreen, fontSize: 12, },
     mnemonicIconTouchable: { padding: 4, },
     tooltipContent: { backgroundColor: 'rgba(0,0,0,0.85)', borderRadius: 8, padding: spacing.base, maxWidth: '80%' },
     tooltipText: { color: 'white', fontSize: 14 },
     tooltipArrow: { borderTopColor: 'rgba(0,0,0,0.85)' },
-    collapsibleContainer: { 
-        marginTop: spacing.base, 
-        borderTopWidth: 1, 
-        borderTopColor: colors.border 
+    collapsibleContainer: {
+        marginTop: spacing.base,
+        borderTopWidth: 1,
+        borderTopColor: colors.border
     },
-    collapsibleHeader: { 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        paddingVertical: spacing.base, 
+    collapsibleHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: spacing.base,
     },
-    collapsibleTitle: { 
-        fontSize: 14, 
-        fontWeight: '500', 
+    collapsibleTitle: {
+        fontSize: 14,
+        fontWeight: '500',
         color: colors.textMuted,
     },
-    collapsibleContent: { 
-        paddingTop: spacing.small, 
+    collapsibleContent: {
+        paddingTop: spacing.small,
         paddingBottom: spacing.base,
-        paddingHorizontal: spacing.small, 
+        paddingHorizontal: spacing.small,
     },
     auxiliaryInfoText: {
         fontSize: 13,
