@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   buttonOutline: {
-    backgroundColor: 'transparent',
+    backgroundColor: "#fff",
     borderWidth: 2,
     borderColor: colors.primary,
   },

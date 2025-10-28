@@ -37,7 +37,7 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }: any) => 
   }, []);
 
   return (
-    <SafeAreaView style={themeStyles.flex1}>
+    <SafeAreaView style={themeStyles.flex1} edges={['bottom', 'left', 'right']}>
       <ScrollView style={themeStyles.flex1} contentContainerStyle={styles.scrollContent}>
         <View style={themeStyles.paddingContainer}>
           
