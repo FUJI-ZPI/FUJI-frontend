@@ -1,7 +1,6 @@
 import React, { useRef, useState, useLayoutEffect } from 'react';
 import { Alert } from 'react-native';
-import Svg, { Defs, Path, Circle, Rect, G, Text as TextSvg } from 'react-native-svg';
-import { Pressable } from 'react-native';
+import Svg, { Defs, Path, Circle, Rect, G, Text as TextSvg, TSpan } from 'react-native-svg';
 
 interface FujiIllustrationProps {
     style?: any;
@@ -10,13 +9,13 @@ interface FujiIllustrationProps {
 }
 
 const milestones = [
-    { level: 1, label: 'Baza', icon: '⛰️' },
-    { level: 10, label: 'Obóz 1', icon: '🏕️' },
-    { level: 20, label: 'Obóz 2', icon: '🌲' },
-    { level: 30, label: 'Obóz 3', icon: '⛩️' },
-    { level: 40, label: 'Obóz 4', icon: '♨️' },
-    { level: 50, label: 'Obóz 5', icon: '❄️' },
-    { level: 60, label: 'Szczyt', icon: '☀️' },
+    { level: 1, label: 'Base', icon: '🌲' },
+    { level: 10, label: 'Camp 1', icon: '🥾' },
+    { level: 20, label: 'Camp 2', icon: '⛺' },
+    { level: 30, label: 'Camp 3', icon: '⛏️' },
+    { level: 40, label: 'Camp 4', icon: '🧗‍♂️' },
+    { level: 50, label: 'Camp 5', icon: '❄️' },
+    { level: 60, label: 'Summit', icon: '🚩' }, // ☀️
 ];
 
 export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
@@ -65,12 +64,30 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
 
     const handleMilestonePress = (milestone: typeof milestonePositions[0]) => {
         Alert.alert(
-            `Kamień Milowy: ${milestone.label}`,
-            `Osiągnięto poziom ${milestone.level}!`
+            `${milestone.icon} ${milestone.label}`,
+            `Achieve level ${milestone.level}!`,
+            [ { text: 'OK' } ],
+            { cancelable: true }
         );
     };
 
-    const progressPathData = "M 50,300 C 80,250 120,260 160,200 S 240,180 280,100";
+    const handlePlayerPress = () => {
+        Alert.alert(
+            "🏆 This is you!",
+            `Current level: ${currentLevel}\n\nKeep climbing!`,
+            [ { text: 'Got it!' } ],
+            { cancelable: true }
+        );
+    };
+
+    // Dynamiczne obliczanie szerokości dymka
+    const isTwoDigit = currentLevel >= 10;
+    const bubbleWidth = isTwoDigit ? 34 : 28; // Szerszy dla 2 cyfr
+    const bubbleHeight = 22;
+    const bubbleCenterX = bubbleWidth / 2;
+    const bubbleCenterY = 15; // Pozycja Y tekstu w pionie
+
+    const progressPathData = "m 185.27017,265.48059 c -3.12395,-2.34886 1.0356,4.47982 -7.23951,0.22382 -12.79186,-6.57902 -37.2043,-11.98595 -65.1511,-16.56827 C 74.127125,242.78206 33.68335,232.29688 35.7,209.525 c 2.205921,-24.90911 36.761208,-17.63618 88.87899,-21.95085 39.02464,-3.23073 71.86616,-7.57352 69.64601,-24.79915 -1.46986,-11.40428 -27.79822,-18.26915 -51.82224,-26.43172 -18.6678,-6.3427 -35.94423,-13.46896 -39.08496,-24.11747 -5.426065,-18.39685 49.91716,-34.187855 49.91716,-34.187855"
 
     return (
         <Svg
@@ -122,42 +139,100 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                 ref={pathRef}
                 d={progressPathData}
                 fill="none"
-                stroke="#FFFF00"
+                stroke="#ffff0096"
                 strokeWidth={4}
-                strokeDasharray="8, 8" // Zmień kreskowanie dla testu
+                strokeDasharray="8, 8"
                 id="progressPath"
             />
 
             {pathLength !== null && pathLength > 0 && (
                 <>
+                    <Path
+                        d={progressPathData}
+                        fill="none"
+                        stroke="#FFFF00"
+                        strokeWidth={4}
+                        strokeDasharray={pathLength}
+                        strokeDashoffset={pathLength - (pathLength * (currentLevel - 1)) / (maxLevel - 1 || 1)}
+                    />
+
                     {/* Kamienie milowe */}
-                    {milestonePositions.map(m => (
-                        <Pressable key={m.level} onPress={() => handleMilestonePress(m)}>
-                            <G x={m.x} y={m.y}>
-                                <Circle cx="0" cy="0" r="10" fill="orange" stroke="black" strokeWidth="1" />
-                                <TextSvg
-                                    x="0"
-                                    y="4"
-                                    fontSize="10"
-                                    fill="black"
-                                    fontWeight="bold"
-                                    textAnchor="middle"
-                                >
-                                    {m.icon || m.level}
-                                </TextSvg>
+                    {milestonePositions.map((m) => {
+                        const isPassed = currentLevel >= m.level;
+                        return (
+                            <G key={m.level} onPress={() => handleMilestonePress(m)}>
+                                <G x={m.x} y={m.y}>
+                                    <Circle
+                                        cx="0"
+                                        cy="0"
+                                        r="9"
+                                        fill={isPassed ? "#FFFF00" : "#ffffffb6"}
+                                    />
+                                    <TextSvg
+                                        x="0"
+                                        y="4"
+                                        fontSize="11"
+                                        fill={isPassed ? "white" : "black"}
+                                        fontWeight="bold"
+                                        textAnchor="middle"
+                                    >
+                                        {m.icon || m.level}
+                                    </TextSvg>
+                                </G>
                             </G>
-                        </Pressable>
-                    ))}
+                        );
+                    })}
 
                     {/* Awatar gracza */}
-                    <Circle
-                        cx={playerPos.x}
-                        cy={playerPos.y}
-                        r="7"
-                        fill="red"
-                        stroke="white"
-                        strokeWidth="2"
-                    />
+                    <G onPress={handlePlayerPress}>
+                        <Circle
+                            cx={playerPos.x}
+                            cy={playerPos.y}
+                            r="7"
+                            fill="red"
+                            stroke="white"
+                            strokeWidth="2"
+                        />
+                    </G>
+
+                    {/* Dymek nad graczem */}
+                    <G
+                        x={playerPos.x} // Pozycja X (środek)
+                        y={playerPos.y - 37} // Pozycja Y (nad kropką)
+                        transform={`translate(-${bubbleWidth / 2}, 0)`} // Centrowanie dymka nad kropką
+                    >
+                        {/* Tło dymka */}
+                        <Rect
+                            x="0"
+                            y="0"
+                            width={bubbleWidth}
+                            height={bubbleHeight}
+                            rx="8"
+                            ry="8"
+                            fill="#FFFFFF"
+                        />
+                        
+                        {/* Wskaźnik dymka (trójkąt) */}
+                        <Path
+                            // Symetryczny trójkąt na środku
+                            d={`M ${bubbleCenterX - 4},${bubbleHeight - 1} L ${bubbleCenterX + 4},${bubbleHeight - 1} L ${bubbleCenterX},${bubbleHeight + 7} z`} 
+                            fill="#FFFFFF"
+                        />
+
+                        {/* Tekst w dymku (Ikona + Level) */}
+                        <TextSvg
+                            x={bubbleCenterX - 4} // Wyśrodkowany w poziomie
+                            y={bubbleCenterY} // Wyśrodkowany w pionie
+                            fontSize="11" // Domyślny rozmiar (dla numeru)
+                            fill="black"
+                            fontWeight="bold"
+                            textAnchor="middle" 
+                        >
+                            {/* Dwa oddzielne TSpany dla różnych rozmiarów */}
+                            <TSpan dx={-2} fontSize="11">🏆</TSpan> 
+                            <TSpan fontSize="11" dx={isTwoDigit ? 0.5 : -0.5}>{currentLevel}</TSpan>
+                        </TextSvg>
+                    </G>
                 </>
             )}
 

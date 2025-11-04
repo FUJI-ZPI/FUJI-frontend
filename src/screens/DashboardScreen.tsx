@@ -1,16 +1,15 @@
 import React, { useContext, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Dimensions, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { StatCard } from '../components/dashboard/StatCard';
-import { LevelSelector } from '../components/dashboard/LevelSelector';
-import { ActionButtons } from '../components/dashboard/ActionButtons';
 import { FujiIllustration } from '../components/dashboard/FujiIllustration';
 import { UserContext } from '../context/UserContex';
 import { themeStyles, colors } from '../theme/styles';
 import { mockUser, mockKanji, totalKanjiCount } from '../data/mockData';
 import { FlyingClouds } from '../components/dashboard/FlyingClouds';
+import { Feather } from '@expo/vector-icons';
+import { CloudStatCard } from '../components/dashboard/CloudStatCard';
 
 interface ScreenProps {
   navigation: any;
@@ -38,9 +37,9 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* 🌄 TŁO - gradient zawsze pod wszystkim */}
+      {/* TŁO - gradient zawsze pod wszystkim */}
       <LinearGradient
-        colors={[ '#ffd1ffb6', '#fad0c48a']}
+        colors={['#ffd1ffb6', '#fad0c48a']}
         // colors={[ '#ffd1ffb6', '#fad0c48a']}
         // colors={['#A1C4FD', '#C2E9FB']}
         // colors={['#E0EAFC', '#CFDEF3']}
@@ -50,12 +49,40 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* 📱 GŁÓWNA TREŚĆ */}
-      <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }} edges={['left', 'right']}>
-        <ScrollView
-          style={{ flex: 1, backgroundColor: 'transparent' }}
-          contentContainerStyle={{ paddingBottom: 0, paddingTop: themeStyles.paddingContainer.padding }}
-        >
+
+      {/* GŁÓWNA TREŚĆ */}
+      <SafeAreaView style={styles.mainContainer} edges={['left', 'right']}>
+
+        {/* Kontener na chmury statystyk, pozycjonowany absolutnie */}
+        <View style={styles.absoluteStatsContainer}>
+          <View style={{ position: 'absolute', top: 160, right: -55 }}>
+            <CloudStatCard
+              cloudType={2}
+              iconName="flame"
+              iconSet="Ionicons"
+              iconColor={colors.warning}
+              value={mockUser.streak}
+              label={t('common.streak_label')}
+
+              contentStyle={{ paddingRight: 72, paddingTop: 5 }}
+            />
+          </View>
+          <View style={{ position: 'absolute', top: 175, left: 0 }}>
+            <CloudStatCard
+              cloudType={1}
+              iconName="book-open"
+              iconSet="Feather"
+              iconColor={colors.secondary}
+              value={learnedKanji}
+              label={t('common.kanji_learned_label')}
+
+              contentStyle={{ paddingRight: 72, paddingTop: 20 }}
+            />
+          </View>
+        </View>
+
+
+        <View>
           {/* Nagłówek */}
           <View style={[styles.header, themeStyles.paddingContainer]}>
             <Text style={styles.headerTitle}>
@@ -63,86 +90,101 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
             </Text>
             <Text style={themeStyles.textSubtitle}>{t('dashboard.subtitle')}</Text>
           </View>
+        </View>
 
-          {/* Statystyki */}
-          <View style={[styles.statsGrid, themeStyles.paddingContainer]}>
-            <StatCard
-              iconName="flame"
-              iconSet="Ionicons"
-              iconColor={colors.warning}
-              value={mockUser.streak}
-              label={t('common.streak_label')}
-            />
-            <StatCard
-              iconName="target"
-              iconSet="Feather"
-              iconColor={colors.secondary}
-              value={mockUser.level}
-              label={t('common.level_label')}
-            />
-          </View>
 
-          <FlyingClouds />
+        <FlyingClouds />
+
+        <View>
 
           {/* Fuji */}
           <View style={styles.mountainContainer}>
             <View style={{ width: '100%', height: FUJI_HEIGHT }}>
-              <FujiIllustration 
-                    currentLevel={mockUser.level} 
-                    maxLevel={60}
-                  />
+              <FujiIllustration
+                currentLevel={mockUser.level}
+                maxLevel={60}
+              />
             </View>
           </View>
 
-          {/* Sekcja trawy */}
+          {/* Sekcja trawy 学 读 勉*/}
           <View style={styles.grassSection}>
-            <ActionButtons
-              onStartPractice={handleStartPractice}
-              onNavigateToVocabulary={handleNavigateToVocabulary}
-            />
-            
-            <LevelSelector mockKanji={mockKanji} TOTAL_LEVELS={60} />
+            <View style={styles.buttonRow}>
+              <Pressable style={[styles.buttonBase, styles.buttonSecondary]} onPress={handleNavigateToVocabulary}>
+                <View style={styles.buttonContentWrapper}>
+                  <Text style={styles.buttonTextSecondary}>Learn Kanji</Text>
+                  <View style={[styles.iconCircle, styles.iconCircleSecondary]}>
+                    <Text style={styles.kanjiIconText}>勉</Text>
+                  </View>
+                </View>
+              </Pressable>
+              <Pressable style={[styles.buttonBase, styles.buttonPrimary]} onPress={handleStartPractice}>
+                <View style={styles.buttonContentWrapper}>
+                  <Text style={styles.buttonTextPrimary}>Start Practice</Text>
+                  <View style={[styles.iconCircle, styles.iconCirclePrimary]}>
+                    <Feather name="arrow-right" size={22} color='#ffffff' />
+                  </View>
+                </View>
+              </Pressable>
+            </View>
           </View>
-        </ScrollView>
+        </View>
       </SafeAreaView>
       {/* Dolny pasek (inne tło dla bottom edge) */}
-    <SafeAreaView
-      style={{
-        backgroundColor: '#698779', // np. kolor trawy
-      }}
-      edges={['bottom']}
-    />
+      <SafeAreaView
+        style={{
+          backgroundColor: '#698779',
+        }}
+        edges={['bottom']}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    justifyContent: 'space-between',
+  },
+  absoluteStatsContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 15,
+    pointerEvents: 'box-none',
+  },
   header: {
     textAlign: 'center',
     paddingVertical: 16,
+    marginTop: themeStyles.paddingContainer.padding * 2,
     alignItems: 'center',
     backgroundColor: 'transparent',
+    zIndex: 40
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 25,
+    zIndex: 40
   },
-  statsGrid: { 
-    ...themeStyles.flexRow, 
-    ...themeStyles.gap16, 
-    marginBottom: themeStyles.paddingContainer.padding, 
-    justifyContent: 'space-between' 
+  statsGrid: {
+    marginTop: 40,
+    ...themeStyles.flexRow,
+    ...themeStyles.gap16,
+    marginBottom: themeStyles.paddingContainer.padding,
+    justifyContent: 'space-between',
   },
-
   totalProgressCard: {
     marginBottom: themeStyles.paddingContainer.padding,
   },
-    totalProgressSection: { 
-    paddingVertical: 4, 
+  totalProgressSection: {
+    paddingVertical: 4,
     gap: 8,
-  }, 
+  },
   fontSemibold: { fontWeight: '600', color: colors.text },
   mountainContainer: {
     marginHorizontal: 0,
@@ -150,16 +192,71 @@ const styles = StyleSheet.create({
   },
   grassSection: {
     backgroundColor: '#698779',
-    paddingTop: 0,
+    paddingTop: themeStyles.paddingContainer.padding,
     paddingHorizontal: themeStyles.paddingContainer.padding,
-    paddingBottom: themeStyles.paddingContainer.padding,
-    gap: themeStyles.paddingContainer.padding,
-    marginTop: -themeStyles.paddingContainer.padding*2
+    paddingBottom: themeStyles.paddingContainer.padding * 1.5,
+    marginTop: -themeStyles.paddingContainer.padding * 2
   },
   gradient: {
-        flex: 1,
-        position: 'relative',
-      },
+    flex: 1,
+    position: 'relative',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: themeStyles.paddingContainer.padding,
+  },
+  buttonBase: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingLeft: themeStyles.paddingContainer.padding,
+    paddingRight: themeStyles.paddingContainer.padding - 5,
+    borderRadius: 26,
+    elevation: 6,
+  },
+  buttonContentWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  buttonPrimary: {
+    backgroundColor: '#4673aa',
+
+  },
+  buttonSecondary: {
+    backgroundColor: '#ffffff', // '#b5d4f4'
+  },
+  buttonTextPrimary: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 18,
+  },
+  buttonTextSecondary: {
+    color: 'black',
+    fontWeight: '800',
+    fontSize: 18,
+  },
+  kanjiIconText: {
+    color: 'black',
+    fontWeight: '600',
+    fontSize: 27,
+    transform: [{ translateY: -5 }]
+  },
+  iconCircle: {
+    width: 35,
+    height: 35,
+    borderRadius: 999,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'visible',
+  },
+  iconCirclePrimary: {
+    backgroundColor: "#f74f73",
+  },
+  iconCircleSecondary: {
+    backgroundColor: '#FFFFFF',
+  },
 });
 
 export default DashboardScreen;

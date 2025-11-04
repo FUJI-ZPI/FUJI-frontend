@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, Platform }
 import { Toast } from 'toastify-react-native'; 
 import { useTranslation } from 'react-i18next';
 import { Card } from '../components/ui/Card';
-import { StatCard } from '../components/dashboard/StatCard';
 import { ProfileHeader } from '../components/profile/ProfileHeader'
 import { AchievementList } from '../components/profile/AchivmentList';
 import { SettingItem } from '../components/profile/SettingItem';
@@ -43,25 +42,6 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }: any) => 
           
           {/* 1. Karta użytkownika */}
           <ProfileHeader user={user} />
-
-          {/* 2. Day Streak i Kanji Learned */}
-          <View style={styles.statsGrid}>
-            <StatCard 
-              iconName="flame" 
-              iconSet="Ionicons" 
-              iconColor={colors.warning} 
-              value={mockUser.streak} 
-              label={t('common.streak_label')}
-            />
-
-            <StatCard
-              iconName="book-open"
-              iconSet="Feather"
-              iconColor={colors.secondary}
-              value={learnedKanji}
-              label={t('common.kanji_learned_label')}
-            />
-          </View>
 
           {/* 3. Statistics */}
           <StatsSummaryCard

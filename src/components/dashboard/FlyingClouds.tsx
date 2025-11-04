@@ -116,7 +116,7 @@ export const FlyingClouds: React.FC = () => {
         left: 0,
         width: SCREEN_WIDTH,
         height: SCREEN_HEIGHT * 0.5,
-        zIndex: 20,
+        zIndex: 5,
       }}
     >
       {clouds.map(cloud => (
