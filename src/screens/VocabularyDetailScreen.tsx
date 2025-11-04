@@ -3,10 +3,10 @@ import {ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import {colors, spacing, themeStyles} from '../theme/styles';
-import {useTranslation} from 'react-i18next';
 import * as SecureStore from 'expo-secure-store';
 import {Card} from '../components/ui/Card';
 import {MnemonicTooltipButton} from '../components/ui/MnemonicTooltipButton';
+import {Audio} from 'expo-av';
 
 interface Meaning { meaning: string; primary: boolean; }
 interface Reading { primary: boolean; reading: string; }
@@ -110,13 +110,13 @@ const CollapsibleSection: React.FC<{ title: string, count: number, children: Rea
 };
 
 const VocabularyDetailScreen: React.FC<ScreenProps> = ({ navigation, route }) => {
-    const { t } = useTranslation();
-    const { vocabularyUuid, characters } = route.params;
+    const {vocabularyUuid} = route.params;
 
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<VocabularyDetailsDto | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<TabName>('meaning');
+    const [sound, setSound] = useState<Audio.Sound | null>(null);
 
     const fetchVocabularyDetails = async (uuid: string) => {
         setLoading(true); setError(null);
@@ -139,6 +139,80 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({ navigation, route }) =>
     };
 
     useEffect(() => { fetchVocabularyDetails(vocabularyUuid); }, [vocabularyUuid]);
+
+    // Cleanup sound on unmount
+    useEffect(() => {
+        return sound
+            ? () => {
+                sound.unloadAsync();
+            }
+            : undefined;
+    }, [sound]);
+
+    const playAudio = async (filename: string) => {
+        try {
+            // Unload previous sound
+            if (sound) {
+                await sound.unloadAsync();
+                setSound(null);
+            }
+
+            // Set audio mode
+            await Audio.setAudioModeAsync({
+                playsInSilentModeIOS: true,
+                staysActiveInBackground: false,
+                shouldDuckAndroid: true,
+            });
+
+            // Get auth token
+            const token = await SecureStore.getItemAsync('accessToken');
+            if (!token) {
+                throw new Error("Authentication token not found. Please log in again.");
+            }
+
+            // Fetch audio file from backend
+            const audioUrl = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/files/download/${filename}`;
+            console.log(`🔊 [AUDIO] Fetching audio from: ${audioUrl}`);
+
+            const response = await fetch(audioUrl, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch audio: ${response.status}`);
+            }
+
+            // Get the audio blob
+            const blob = await response.blob();
+
+            // Convert blob to base64
+            const reader = new FileReader();
+            const base64Promise = new Promise<string>((resolve, reject) => {
+                reader.onloadend = () => {
+                    const base64data = reader.result as string;
+                    resolve(base64data);
+                };
+                reader.onerror = reject;
+            });
+            reader.readAsDataURL(blob);
+            const base64data = await base64Promise;
+
+            // Create and play sound from URI
+            const {sound: newSound} = await Audio.Sound.createAsync(
+                {uri: base64data},
+                {shouldPlay: false}
+            );
+
+            setSound(newSound);
+            await newSound.playAsync();
+            console.log(`🔊 [AUDIO] Playing: ${filename}`);
+        } catch (error) {
+            console.error('Error playing audio:', error);
+            Alert.alert('Audio Error', `Failed to play audio: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    };
 
     const navigateToKanji = (kanjiId: number) => {
     console.log(`📘 [KANJI] Would navigate to Kanji #${kanjiId}`);
@@ -266,18 +340,14 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({ navigation, route }) =>
                     {/* FEMALE */}
                     <TouchableOpacity
                         style={localStyles.audioButton}
-                        onPress={() => {
-                        if (!data) return;
-                        const femaleAudio = data.details.data.pronunciation_audios.find(a => a.metadata.gender === 'female');
-                        if (femaleAudio) {
-                            console.log(`🔊 [AUDIO] Would play: ${femaleAudio.local_filename}`);
-                            Alert.alert(
-                            "Audio Placeholder",
-                            `Would play female voice: ${femaleAudio.local_filename}`
-                            );
-                        } else {
-                            Alert.alert("Audio Not Found", "No female audio file found.");
-                        }
+                        onPress={async () => {
+                            if (!data) return;
+                            const femaleAudio = data.details.data.pronunciation_audios.find(a => a.metadata.gender === 'female');
+                            if (femaleAudio) {
+                                await playAudio(femaleAudio.local_filename);
+                            } else {
+                                Alert.alert("Audio Not Found", "No female audio file found.");
+                            }
                         }}
                     >
                         <Ionicons name="volume-medium-outline" size={18} color={primaryGreen} />
@@ -287,18 +357,14 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({ navigation, route }) =>
                     {/* MALE */}
                     <TouchableOpacity
                         style={localStyles.audioButton}
-                        onPress={() => {
-                        if (!data) return;
-                        const maleAudio = data.details.data.pronunciation_audios.find(a => a.metadata.gender === 'male');
-                        if (maleAudio) {
-                            console.log(`🔊 [AUDIO] Would play: ${maleAudio.local_filename}`);
-                            Alert.alert(
-                            "Audio Placeholder",
-                            `Would play male voice: ${maleAudio.local_filename}`
-                            );
-                        } else {
-                            Alert.alert("Audio Not Found", "No male audio file found.");
-                        }
+                        onPress={async () => {
+                            if (!data) return;
+                            const maleAudio = data.details.data.pronunciation_audios.find(a => a.metadata.gender === 'male');
+                            if (maleAudio) {
+                                await playAudio(maleAudio.local_filename);
+                            } else {
+                                Alert.alert("Audio Not Found", "No male audio file found.");
+                            }
                         }}
                     >
                         <Ionicons name="volume-medium-outline" size={18} color={primaryGreen} />
