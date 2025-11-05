@@ -96,6 +96,7 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
             viewBox="0 0 320.0216 346.01524"
             preserveAspectRatio="xMidYMid meet"
             style={style}
+            pointerEvents='auto'
         >
             <Defs />
             <Circle cx="216.31267" cy="83.369278" r="83.369278" fill="#f74f73" strokeWidth="1.22255" id="circle1" />

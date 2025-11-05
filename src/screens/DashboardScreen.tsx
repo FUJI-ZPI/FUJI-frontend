@@ -54,8 +54,8 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
       <SafeAreaView style={styles.mainContainer} edges={['left', 'right']}>
 
         {/* Kontener na chmury statystyk, pozycjonowany absolutnie */}
-        <View style={styles.absoluteStatsContainer}>
-          <View style={{ position: 'absolute', top: 160, right: -55 }}>
+        <View style={styles.absoluteStatsContainer} pointerEvents='box-none'>
+          <View style={{ position: 'absolute', top: 160, right: -55 }} pointerEvents='box-none'>
             <CloudStatCard
               cloudType={2}
               iconName="flame"
@@ -67,7 +67,7 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
               contentStyle={{ paddingRight: 72, paddingTop: 5 }}
             />
           </View>
-          <View style={{ position: 'absolute', top: 175, left: 0 }}>
+          <View style={{ position: 'absolute', top: 175, left: 0 }} pointerEvents='box-none'>
             <CloudStatCard
               cloudType={1}
               iconName="book-open"
@@ -86,7 +86,7 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
           {/* Nagłówek */}
           <View style={[styles.header, themeStyles.paddingContainer]}>
             <Text style={styles.headerTitle}>
-              {t('dashboard.greeting', { userName: user?.name })}
+              {t('dashboard.greeting', { userName: user?.name?.split(' ')[0] })}
             </Text>
             <Text style={themeStyles.textSubtitle}>{t('dashboard.subtitle')}</Text>
           </View>
@@ -99,7 +99,7 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
 
           {/* Fuji */}
           <View style={styles.mountainContainer}>
-            <View style={{ width: '100%', height: FUJI_HEIGHT }}>
+            <View style={{ width: '100%', height: FUJI_HEIGHT }} pointerEvents='auto'>
               <FujiIllustration
                 currentLevel={mockUser.level}
                 maxLevel={60}
@@ -153,8 +153,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 15,
-    pointerEvents: 'box-none',
+    zIndex: 7,
   },
   header: {
     textAlign: 'center',
@@ -185,17 +184,22 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     gap: 8,
   },
-  fontSemibold: { fontWeight: '600', color: colors.text },
+  fontSemibold: { 
+    fontWeight: '600', 
+    color: colors.text 
+  },
   mountainContainer: {
     marginHorizontal: 0,
     backgroundColor: 'transparent',
+    zIndex: 3
   },
   grassSection: {
     backgroundColor: '#698779',
     paddingTop: themeStyles.paddingContainer.padding,
     paddingHorizontal: themeStyles.paddingContainer.padding,
     paddingBottom: themeStyles.paddingContainer.padding * 1.5,
-    marginTop: -themeStyles.paddingContainer.padding * 2
+    marginTop: -themeStyles.paddingContainer.padding * 2,
+    zIndex: 40
   },
   gradient: {
     flex: 1,
