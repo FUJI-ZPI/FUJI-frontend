@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Dimensions, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -49,13 +49,12 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
         style={StyleSheet.absoluteFillObject}
       />
 
-
       {/* GŁÓWNA TREŚĆ */}
       <SafeAreaView style={styles.mainContainer} edges={['left', 'right']}>
 
         {/* Kontener na chmury statystyk, pozycjonowany absolutnie */}
-        <View style={styles.absoluteStatsContainer} pointerEvents='box-none'>
-          <View style={{ position: 'absolute', top: 160, right: -55 }} pointerEvents='box-none'>
+        <View style={styles.absoluteStatsContainer} pointerEvents="none">
+          <View style={{ position: 'absolute', top: 160, right: -55 }}>
             <CloudStatCard
               cloudType={2}
               iconName="flame"
@@ -67,7 +66,7 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
               contentStyle={{ paddingRight: 72, paddingTop: 5 }}
             />
           </View>
-          <View style={{ position: 'absolute', top: 175, left: 0 }} pointerEvents='box-none'>
+          <View style={{ position: 'absolute', top: 175, left: 0 }} pointerEvents="none">
             <CloudStatCard
               cloudType={1}
               iconName="book-open"
@@ -81,7 +80,6 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
           </View>
         </View>
 
-
         <View>
           {/* Nagłówek */}
           <View style={[styles.header, themeStyles.paddingContainer]}>
@@ -92,11 +90,9 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
           </View>
         </View>
 
-
         <FlyingClouds />
 
         <View>
-
           {/* Fuji */}
           <View style={styles.mountainContainer}>
             <View style={{ width: '100%', height: FUJI_HEIGHT }} pointerEvents='auto'>
@@ -110,22 +106,22 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
           {/* Sekcja trawy 学 读 勉*/}
           <View style={styles.grassSection}>
             <View style={styles.buttonRow}>
-              <Pressable style={[styles.buttonBase, styles.buttonSecondary]} onPress={handleNavigateToVocabulary}>
+              <TouchableOpacity style={[styles.buttonBase, styles.buttonSecondary]} onPress={handleNavigateToVocabulary}>
                 <View style={styles.buttonContentWrapper}>
                   <Text style={styles.buttonTextSecondary}>Learn Kanji</Text>
                   <View style={[styles.iconCircle, styles.iconCircleSecondary]}>
                     <Text style={styles.kanjiIconText}>勉</Text>
                   </View>
                 </View>
-              </Pressable>
-              <Pressable style={[styles.buttonBase, styles.buttonPrimary]} onPress={handleStartPractice}>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.buttonBase, styles.buttonPrimary]} onPress={handleStartPractice}>
                 <View style={styles.buttonContentWrapper}>
                   <Text style={styles.buttonTextPrimary}>Start Practice</Text>
                   <View style={[styles.iconCircle, styles.iconCirclePrimary]}>
                     <Feather name="arrow-right" size={22} color='#ffffff' />
                   </View>
                 </View>
-              </Pressable>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -154,6 +150,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 7,
+    pointerEvents: "box-none"
   },
   header: {
     textAlign: 'center',
@@ -184,9 +181,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     gap: 8,
   },
-  fontSemibold: { 
-    fontWeight: '600', 
-    color: colors.text 
+  fontSemibold: {
+    fontWeight: '600',
+    color: colors.text
   },
   mountainContainer: {
     marginHorizontal: 0,

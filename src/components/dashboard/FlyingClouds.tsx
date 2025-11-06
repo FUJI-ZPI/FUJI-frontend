@@ -122,6 +122,7 @@ export const FlyingClouds: React.FC = () => {
       {clouds.map(cloud => (
         <Animated.View
           key={cloud.id}
+          pointerEvents="none"
           style={{
             position: 'absolute',
             top: cloud.y,
@@ -137,6 +138,7 @@ export const FlyingClouds: React.FC = () => {
                 top: '18%',
                 left: '25%',
                 zIndex: cloud.zIndex + 1,
+                pointerEvents: "none"
               }}
             >
               <Text
@@ -144,6 +146,7 @@ export const FlyingClouds: React.FC = () => {
                   fontSize: 22 * cloud.size,
                   fontWeight: 'bold',
                   color: "#c1cdfdff",
+                  pointerEvents: "none"
                 }}
               >
                 {cloud.kanji}

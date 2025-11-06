@@ -73,8 +73,8 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
 
     const handlePlayerPress = () => {
         Alert.alert(
-            "🏆 This is you!",
-            `Current level: ${currentLevel}\n\nKeep climbing!`,
+            "🔴 This is you!",
+            `Current level: 🏆 ${currentLevel}\n\nKeep climbing!`,
             [ { text: 'Got it!' } ],
             { cancelable: true }
         );
@@ -96,7 +96,7 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
             viewBox="0 0 320.0216 346.01524"
             preserveAspectRatio="xMidYMid meet"
             style={style}
-            pointerEvents='auto'
+            pointerEvents='box-none'
         >
             <Defs />
             <Circle cx="216.31267" cy="83.369278" r="83.369278" fill="#f74f73" strokeWidth="1.22255" id="circle1" />
@@ -161,8 +161,15 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                     {milestonePositions.map((m) => {
                         const isPassed = currentLevel >= m.level;
                         return (
-                            <G key={m.level} onPress={() => handleMilestonePress(m)}>
+                            <G key={m.level} onPressIn={() => handleMilestonePress(m)}>
                                 <G x={m.x} y={m.y}>
+                                    {/* Większy promień żeby łatwiej w to kliknąć */}
+                                    <Circle 
+                                        cx="0" 
+                                        cy="0" 
+                                        r="13" 
+                                        fill="transparent"
+                                    />
                                     <Circle
                                         cx="0"
                                         cy="0"
@@ -185,7 +192,14 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                     })}
 
                     {/* Awatar gracza */}
-                    <G onPress={handlePlayerPress}>
+                    <G onPressIn={handlePlayerPress}>
+                        {/* Większy promień żeby łatwiej w to kliknąć */}
+                        <Circle 
+                            cx={playerPos.x} 
+                            cy={playerPos.y} 
+                            r="13" 
+                            fill="transparent"
+                        />
                         <Circle
                             cx={playerPos.x}
                             cy={playerPos.y}
@@ -236,8 +250,6 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                     </G>
                 </>
             )}
-
-
         </Svg>
     );
 };
