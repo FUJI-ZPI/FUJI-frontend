@@ -12,6 +12,7 @@ const LOGO_IMAGE = require('../../../assets/fuji-logo-kanji.jpeg')
 export const iconMap: Record<string, string> = {
   Dashboard: "home-outline",
   Practice: "pencil-sharp",
+  Kanji: "language-outline",
   Vocabulary: "book-outline",
   Chat: "chatbubble-ellipses-outline",
   Leaderboard: "trophy-outline",
@@ -55,7 +56,7 @@ export const DrawerContent = ({ navigation, state, navItems}: DrawerContentProps
 
       <View style={styles.navItems}>
         {navItems
-        .filter((item) => item.id !== "Profile" && item.id !== "Settings" && item.id !== "Dashboard")
+        .filter((item) => item.id !== "Profile" && item.id !== "Settings")
         .map((item) => {
           const routeName = item.id;
           const isFocused = state.routeNames[state.index] === routeName;
@@ -139,3 +140,4 @@ const styles = StyleSheet.create({
       backgroundColor: "#ebf4f0",
     },
   });
+  

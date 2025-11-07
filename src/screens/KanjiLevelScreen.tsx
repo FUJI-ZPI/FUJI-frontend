@@ -8,20 +8,19 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 const {width} = Dimensions.get('window');
 const GRID_PADDING = spacing.base * 2;
 const ITEM_MARGIN = spacing.base;
-const ITEMS_PER_ROW = 3; 
+const ITEMS_PER_ROW = 3;
 const ITEM_WIDTH = (width - GRID_PADDING - (ITEM_MARGIN * (ITEMS_PER_ROW - 1))) / ITEMS_PER_ROW;
 
 interface ScreenProps {
     navigation: any;
 }
 
-const VocabularyLevelScreen: React.FC<ScreenProps> = ({ navigation }) => {
+const KanjiLevelScreen: React.FC<ScreenProps> = ({ navigation }) => {
     const { t } = useTranslation();
     
     const [currentPage, setCurrentPage] = useState(0);
     const totalLevels = 60;
-    // 20 poziomów na stronę
-    const levelsPerPage = 20; 
+    const levelsPerPage = 20;
     const totalPages = Math.ceil(totalLevels / levelsPerPage);
     
     const startLevel = currentPage * levelsPerPage + 1;
@@ -62,7 +61,7 @@ const VocabularyLevelScreen: React.FC<ScreenProps> = ({ navigation }) => {
     };
 
     const handleSelectLevel = (level: number) => {
-        navigation.navigate('VocabularyList', { level: level }); 
+        navigation.navigate('KanjiList', { level: level });
     };
 
     const currentGroupStyle = getLevelStyle(startLevel);
@@ -82,7 +81,7 @@ const VocabularyLevelScreen: React.FC<ScreenProps> = ({ navigation }) => {
                         </TouchableOpacity>
 
                         <Text style={localStyles.title} numberOfLines={1} adjustsFontSizeToFit>
-                            {t('Vocabulary') || 'Vocabulary'}{' '} 
+                            {t('Kanji') || 'Kanji'}{' '}
                             <Text style={{ color: currentGroupStyle.color }}>
                                 {currentGroupStyle.text}
                             </Text>
@@ -96,7 +95,7 @@ const VocabularyLevelScreen: React.FC<ScreenProps> = ({ navigation }) => {
                             <Ionicons name="chevron-forward" size={20} color={currentPage === totalPages - 1 ? colors.textMuted : colors.text} />
                         </TouchableOpacity>
                     </View>
-
+                    
                     <Text style={localStyles.pageInfo}>
                         {t('Levels {{start}}-{{end}} of {{total}}', { start: startLevel, end: endLevel, total: totalLevels })}
                     </Text>
@@ -121,6 +120,7 @@ const VocabularyLevelScreen: React.FC<ScreenProps> = ({ navigation }) => {
                                 </TouchableOpacity>
                             );
                         })}
+                        
                     </View>
                 </View>
             </ScrollView>
@@ -138,15 +138,15 @@ const localStyles = StyleSheet.create({
         justifyContent: 'space-between', 
         alignItems: 'center',
         paddingTop: spacing.base,
-        marginHorizontal: spacing.base,
+        marginHorizontal: spacing.base, 
     },
     title: {
         fontSize: 22,
         fontWeight: 'bold',
         color: colors.text,
         textAlign: 'center',
-        flex: 1,
-        marginHorizontal: spacing.small,
+        flex: 1, 
+        marginHorizontal: spacing.small, 
     },
     paginationButton: {
         width: 32,
@@ -194,4 +194,4 @@ const localStyles = StyleSheet.create({
     },
 });
 
-export default VocabularyLevelScreen;
+export default KanjiLevelScreen;

@@ -10,16 +10,16 @@ import {Card} from '../components/ui/Card';
 const { width } = Dimensions.get('window');
 const GRID_PADDING = spacing.base * 2;
 const ITEM_MARGIN = 8;
-const ITEMS_PER_ROW = 2;
+const ITEMS_PER_ROW = 4;
 const totalMargins = ITEM_MARGIN * (ITEMS_PER_ROW - 1);
 const ITEM_WIDTH = (width - GRID_PADDING - totalMargins) / ITEMS_PER_ROW;
 
-const ROWS_PER_PAGE = 6;
+const ROWS_PER_PAGE = 5;
 const ITEMS_PER_PAGE = ITEMS_PER_ROW * ROWS_PER_PAGE;
 
-type VocabularyItem = {
+type KanjiItem = {
     uuid: string;
-    characters: string;
+    character: string;
 };
 
 interface ScreenProps {
@@ -27,18 +27,18 @@ interface ScreenProps {
     route: { params: { level: number } };
 }
 
-const VocabularyListScreen: React.FC<ScreenProps> = ({ navigation, route }) => {
+const KanjiListScreen: React.FC<ScreenProps> = ({ navigation, route }) => {
     const { t } = useTranslation();
     const { level } = route.params;
 
     const [loading, setLoading] = useState(true);
-    const [vocabularyList, setVocabularyList] = useState<VocabularyItem[]>([]);
+    const [kanjiList, setKanjiList] = useState<KanjiItem[]>([]);
     const [error, setError] = useState<string | null>(null);
 
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
 
-    const fetchVocabularyList = async (level: number) => {
+    const fetchKanjiList = async (level: number) => {
         setLoading(true);
         setError(null);
         try {
@@ -52,7 +52,7 @@ const VocabularyListScreen: React.FC<ScreenProps> = ({ navigation, route }) => {
             };
 
             const res = await fetch(
-                `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/vocabulary/${level}`,
+                `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/kanji/level/${level}`,
                 { headers }
             );
 
@@ -63,15 +63,15 @@ const VocabularyListScreen: React.FC<ScreenProps> = ({ navigation, route }) => {
                 throw new Error(`Server error: ${res.status}`);
             }
 
-            const data: VocabularyItem[] = await res.json();
-            setVocabularyList(data);
+            const data: KanjiItem[] = await res.json();
+            setKanjiList(data);
 
             const totalItems = data.length;
             setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
             setCurrentPage(0);
 
         } catch (e: any) {
-            console.error('Failed to fetch word list:', e);
+            console.error('Failed to fetch kanji list:', e);
             setError(e.message || "An unknown error occurred.");
             Alert.alert('Error', e.message || "Unable to download data.");
         } finally {
@@ -80,17 +80,17 @@ const VocabularyListScreen: React.FC<ScreenProps> = ({ navigation, route }) => {
     };
 
     useEffect(() => {
-        fetchVocabularyList(level);
+        fetchKanjiList(level);
     }, [level]);
 
     const onBack = () => {
         navigation.goBack();
     };
 
-    const onSelectVocabulary = (item: VocabularyItem) => {
-        navigation.navigate('VocabularyDetail', {
-            vocabularyUuid: item.uuid,
-            characters: item.characters
+    const onSelectKanji = (item: KanjiItem) => {
+        navigation.navigate('KanjiDetail', {
+            kanjiUuid: item.uuid,
+            character: item.character
         });
     };
 
@@ -113,7 +113,7 @@ const VocabularyListScreen: React.FC<ScreenProps> = ({ navigation, route }) => {
                 edges={['bottom', 'left', 'right']}
             >
                 <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={localStyles.pageInfo}>Loading vocabulary...</Text>
+                <Text style={localStyles.pageInfo}>Loading kanji...</Text>
             </SafeAreaView>
         );
     }
@@ -125,23 +125,24 @@ const VocabularyListScreen: React.FC<ScreenProps> = ({ navigation, route }) => {
                 edges={['bottom', 'left', 'right']}
             >
                 <Text style={localStyles.errorText}>Error: {error}</Text>
-                <TouchableOpacity onPress={() => fetchVocabularyList(level)}>
+                <TouchableOpacity onPress={() => fetchKanjiList(level)}>
                     <Text style={{ color: colors.primary }}>Try again</Text>
                 </TouchableOpacity>
             </SafeAreaView>
         );
     }
 
-    const totalCount = vocabularyList.length;
+    const totalCount = kanjiList.length;
     const startIndex = currentPage * ITEMS_PER_PAGE;
     const endItemNumber = Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalCount);
-    const currentVocabularyPage = vocabularyList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const currentKanjiPage = kanjiList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     return (
         <SafeAreaView style={[themeStyles.flex1, { backgroundColor: colors.background }]} edges={['bottom', 'left', 'right']}>
             <View style={[themeStyles.paddingContainer, themeStyles.flex1]}>
 
                 <FlatList
+                    key={ITEMS_PER_ROW.toString()}
                     ListHeaderComponent={
                         <>
                             <View style={localStyles.header}>
@@ -165,13 +166,13 @@ const VocabularyListScreen: React.FC<ScreenProps> = ({ navigation, route }) => {
                                 </TouchableOpacity>
 
                                 <Text style={localStyles.pageInfo}>
-                                    {t('Words {{start}}-{{end}} of {{total}}', {
+                                    {t('Kanji {{start}}-{{end}} of {{total}}', {
                                         start: startIndex + 1,
                                         end: endItemNumber,
                                         total: totalCount
                                     })}
                                 </Text>
-                                
+
                                 <TouchableOpacity
                                     onPress={handleNextPage}
                                     disabled={currentPage >= totalPages - 1 || totalPages <= 1}
@@ -183,29 +184,32 @@ const VocabularyListScreen: React.FC<ScreenProps> = ({ navigation, route }) => {
                         </>
                     }
 
-                    data={currentVocabularyPage}
+                    data={currentKanjiPage}
                     keyExtractor={(item) => item.uuid}
                     numColumns={ITEMS_PER_ROW}
                     contentContainerStyle={localStyles.vocabGrid}
                     columnWrapperStyle={localStyles.gridRow}
-                    renderItem={({ item, index }) => ( 
+                    renderItem={({ item, index }) => (
                         <TouchableOpacity
-                            onPress={() => onSelectVocabulary(item)}
-                            style={{ width: ITEM_WIDTH }}
+                            onPress={() => onSelectKanji(item)}
                         >
-                            <Card style={localStyles.vocabCard}>
+                            <Card style={{
+                                ...localStyles.vocabCard,
+                                width: ITEM_WIDTH,
+                                height: ITEM_WIDTH
+                            }}>
                                 <Text style={localStyles.tileNumber}>
                                     {startIndex + index + 1}
                                 </Text>
                                 <Text style={localStyles.vocabText} numberOfLines={1} adjustsFontSizeToFit>
-                                    {item.characters}
+                                    {item.character}
                                 </Text>
                             </Card>
                         </TouchableOpacity>
                     )}
                     ListEmptyComponent={
                         <Text style={localStyles.noItemsText}>
-                            {t('No vocabulary found for this level.')}
+                            {t('No kanji found for this level.')}
                         </Text>
                     }
                 />
@@ -253,7 +257,7 @@ const localStyles = StyleSheet.create({
         fontWeight: 'bold',
         color: colors.text,
         textAlign: 'center',
-        flex: 1, 
+        flex: 1,
         marginHorizontal: spacing.small,
     },
     paginationContainer: {
@@ -267,7 +271,7 @@ const localStyles = StyleSheet.create({
         color: colors.textMuted,
         textAlign: 'center',
         marginHorizontal: spacing.large,
-        minWidth: 130,
+        minWidth: 130, 
     },
     vocabGrid: {
         paddingBottom: 40,
@@ -278,14 +282,13 @@ const localStyles = StyleSheet.create({
         marginBottom: ITEM_MARGIN,
     },
     vocabCard: {
-        height: 80,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: spacing.small,
-        position: 'relative',
+        position: 'relative', 
     },
     vocabText: {
-        fontSize: 22,
+        fontSize: 38,
         fontWeight: '600',
         color: colors.text,
         textAlign: 'center',
@@ -320,4 +323,4 @@ const localStyles = StyleSheet.create({
     },
 });
 
-export default VocabularyListScreen;
+export default KanjiListScreen;
