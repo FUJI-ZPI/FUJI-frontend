@@ -19,7 +19,6 @@ import VocabularyDetailScreen from "./src/screens/VocabularyDetailScreen";
 import VocabularyListScreen from "./src/screens/VocabularyListScreen";
 import ChatbotScreen from "./src/screens/ChatbotScreen";
 import SettingsCard from "./src/screens/SettingsScreen";
-import KanjiMountainPage from "./src/screens/KanjiMountainScreen";
 import PracticeScreen from "./src/screens/PracticeScreen";
 import {CustomHeaderTitle} from './src/components/navigation/CustomHeaderTitle';
 import {colors} from './src/theme/styles';
@@ -66,7 +65,6 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
     { id: "Leaderboard", label: t("nav.leaderboard"), icon: "trophy-outline", component: PlaceholderScreen as ScreenComponentType },
     { id: "Profile", label: t("nav.profile"), icon: "person-outline", component: ProfileScreen as ScreenComponentType },
     { id: "Settings", label: t("nav.settings"), icon: "settings-outline", component: SettingsCard as ScreenComponentType },
-    { id: "Mountain", label: 'Mountain', icon: "mountain-outline", component: KanjiMountainPage as ScreenComponentType },
   ];
 
   return (
