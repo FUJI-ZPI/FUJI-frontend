@@ -33,7 +33,7 @@ const LoginScreen = ({ navigation, onLogin }: any) => {
       const idToken = userInfo.data?.idToken;
       if (!idToken) throw new Error('No idToken from Google.');
 
-      const res = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/auth/v1/login`, {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: idToken }),
@@ -90,7 +90,7 @@ const LoginScreen = ({ navigation, onLogin }: any) => {
         onPress={async () => {
           setLoading(true);
           try {
-            const res = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/auth/v1/login-mock`, {
+            const res = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/auth/login-mock`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
             });

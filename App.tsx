@@ -23,9 +23,22 @@ import KanjiMountainPage from "./src/screens/KanjiMountainScreen";
 import PracticeScreen from "./src/screens/PracticeScreen";
 import {CustomHeaderTitle} from './src/components/navigation/CustomHeaderTitle';
 import {colors} from './src/theme/styles';
+import KanjiLevelScreen from "./src/screens/KanjiLevelScreen";
+import KanjiListScreen from "./src/screens/KanjiListScreen";
+import KanjiDetailScreen from "./src/screens/KanjiDetailScreen";
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
+
+function KanjiFlow() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="KanjiLevels" component={KanjiLevelScreen} />
+      <Stack.Screen name="KanjiList" component={KanjiListScreen} />
+      <Stack.Screen name="KanjiDetail" component={KanjiDetailScreen} />
+    </Stack.Navigator>
+  );
+}
 
 function VocabularyFlow() {
   return (
@@ -47,6 +60,7 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
   const navItems: NavItem[] = [
     { id: "Dashboard", label: t("nav.dashboard"), icon: "home-outline", component: DashboardScreen as ScreenComponentType },
     { id: "Practice", label: t("nav.practice"), icon: "pencil-sharp", component: PracticeScreen as ScreenComponentType },
+    { id: "Kanji", label: t("Kanji"), icon: "language-outline", component: KanjiFlow as ScreenComponentType },
     { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: VocabularyFlow as ScreenComponentType },
     { id: "Chat", label: t("nav.chat"), icon: "chatbubble-ellipses-outline", component: ChatbotScreen as ScreenComponentType },
     { id: "Leaderboard", label: t("nav.leaderboard"), icon: "trophy-outline", component: PlaceholderScreen as ScreenComponentType },

@@ -263,7 +263,7 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({ navigation, route }) =>
                         count={whitelistMeanings.length}
                     >
                         <Text style={localStyles.auxiliaryInfoText}>
-                            These are synonyms or alternative answers that are also accepted.
+                            These are synonyms or alternative meanings that are also accepted.
                         </Text>
 
                         <View style={[localStyles.tagContainer, { marginTop: spacing.base }]}>
