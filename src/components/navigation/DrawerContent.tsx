@@ -7,7 +7,7 @@ import { mockUser } from '../../data/mockData';
 import { useTranslation } from "react-i18next";
 import { UserContext } from "../../context/UserContex";
 
-const LOGO_IMAGE = require('../../../assets/fuji-logo-kanji.jpeg')
+const LOGO_IMAGE = require('../../../assets/fuji-logo-kanji.jpeg');
 
 export const iconMap: Record<string, string> = {
   Dashboard: "home-outline",
@@ -41,45 +41,66 @@ export interface DrawerContentProps {
 
 export const DrawerContent = ({ navigation, state, navItems}: DrawerContentProps) => {
   const { t } = useTranslation();
-  const { user } = useContext(UserContext)!
+  const { user, setUser } = useContext(UserContext)!;
 
   return (
     <DrawerContentScrollView contentContainerStyle={styles.container}>
-
-      <TouchableOpacity style={styles.user} onPress={() => navigation.navigate("Profile")}>
-        <Image source={{ uri: user?.photo }} style={styles.avatar} />
-        <View>
-          <Text style={styles.username}>{user?.name}</Text>
-          <Text style={styles.userLevel}>{mockUser.level_name}</Text>
+      
+      <View>
+        <View style={styles.header}>
+          <Image 
+            source={LOGO_IMAGE} 
+            style={styles.logoPlaceholder}
+            accessibilityLabel={t('drawer.app_subtitle')}
+          />
+          <View>
+            <Text style={styles.title}>{t('drawer.app_title')}</Text>
+            <Text style={styles.subtitle}>{t('drawer.app_subtitle')}</Text>
+          </View>
         </View>
-      </TouchableOpacity>
 
-      <View style={styles.navItems}>
-        {navItems
-        .filter((item) => item.id !== "Profile" && item.id !== "Settings")
-        .map((item) => {
-          const routeName = item.id;
-          const isFocused = state.routeNames[state.index] === routeName;
-          const iconName = iconMap[routeName] || "help-circle-outline";
+        <TouchableOpacity style={styles.user} onPress={() => navigation.navigate("Profile")}>
+          <Image source={{ uri: user?.photo }} style={styles.avatar} />
+          <View>
+            <Text style={styles.username}>{user?.name}</Text>
+            <Text style={styles.userLevel}>{mockUser.level_name}</Text>
+          </View>
+        </TouchableOpacity>
 
-          return (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.button, isFocused && styles.activeButton]}
-              onPress={() => navigation.navigate(routeName)}
-            >
-              <Ionicons 
-                name={iconName as any} 
-                size={20} 
-                style={[styles.icon, isFocused && styles.activeIcon]} 
-              />
-              <Text style={[styles.label, isFocused && styles.activeLabel]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        <View style={styles.navItems}>
+          {navItems
+          .filter((item) => item.id !== "Profile" && item.id !== "Settings")
+          .map((item) => {
+            const routeName = item.id;
+            const isFocused = state.routeNames[state.index] === routeName;
+            const iconName = iconMap[routeName] || "help-circle-outline";
+
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.button, isFocused && styles.activeButton]}
+                onPress={() => navigation.navigate(routeName)}
+              >
+                <Ionicons 
+                  name={iconName as any} 
+                  size={20} 
+                  style={[styles.icon, isFocused && styles.activeIcon]} 
+                />
+                <Text style={[styles.label, isFocused && styles.activeLabel]}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
+
+      {/* <View style={styles.footer}>
+        <TouchableOpacity style={styles.button} onPress={handleLogoutPress}>
+          <Ionicons name="log-out-outline" size={20} style={styles.icon} />
+          <Text style={[styles.label, { color: "#C92C2C" }]}>{t('drawer.logout')}</Text>
+        </TouchableOpacity>
+      </View> */}
 
     </DrawerContentScrollView>
   );
@@ -87,7 +108,7 @@ export const DrawerContent = ({ navigation, state, navItems}: DrawerContentProps
 
 const styles = StyleSheet.create({
     container: { flexGrow: 1, paddingVertical: 20, justifyContent: "space-between", backgroundColor: "rgb(245, 246, 247)" },
-    user: {
+    header: {
       flexDirection: "row",
       alignItems: "center",
       padding: 24,
@@ -95,7 +116,17 @@ const styles = StyleSheet.create({
       borderColor: "rgb(198, 211, 199)",
       backgroundColor: "#ebf4f0",
     },
-
+    logoPlaceholder: { width: 48, height: 48, borderRadius: 12, marginRight: 12, backgroundColor: '#fff', borderWidth: 1, borderColor: 'lightgray' },
+    title: { fontSize: 20, fontWeight: "700", color: "rgb(54,138,89)" },
+    subtitle: { fontSize: 12, color: "rgb(107, 114, 128)" }, 
+    user: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 24,
+      borderBottomWidth: 1,
+      borderColor: "rgb(198, 211, 199)",
+      // backgroundColor: "#ebf4f0",
+    },
     avatar: {
       fontSize: 32,
       marginRight: 12,
@@ -140,4 +171,3 @@ const styles = StyleSheet.create({
       backgroundColor: "#ebf4f0",
     },
   });
-  
