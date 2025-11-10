@@ -5,9 +5,9 @@ import {
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { User, UserContext } from '../context/UserContex';
 import { Toast } from 'toastify-react-native';
 import { useTranslation } from 'react-i18next';
+import { User } from '../utils/user';
 
 const FUJI_LOGO = require('../../assets/fuji-logo-kanji.jpeg');
 const GOOGLE_LOGO = require('../../assets/google-icon.png')
@@ -15,7 +15,6 @@ const GOOGLE_LOGO = require('../../assets/google-icon.png')
 const LoginScreen = ({ navigation, onLogin }: any) => {
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
-  const { setUser } = useContext(UserContext)!;
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -53,7 +52,7 @@ const LoginScreen = ({ navigation, onLogin }: any) => {
         photo: userInfo.data?.user?.photo || "",
       };
 
-      setUser(user)
+      await SecureStore.setItemAsync('user', JSON.stringify(user));
 
       Toast.success('You have successfully logged in via Google.');
       onLogin();

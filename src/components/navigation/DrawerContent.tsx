@@ -1,11 +1,12 @@
-import React, { useContext } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { Ionicons } from "@expo/vector-icons";
 import { ComponentType } from "react";
 import { mockUser } from '../../data/mockData';
 import { useTranslation } from "react-i18next";
-import { UserContext } from "../../context/UserContex";
+import { User } from "../../utils/user";
+import { loadUser } from "../../utils/user";
 
 const LOGO_IMAGE = require('../../../assets/fuji-logo-kanji.jpeg');
 
@@ -41,7 +42,18 @@ export interface DrawerContentProps {
 
 export const DrawerContent = ({ navigation, state, navItems}: DrawerContentProps) => {
   const { t } = useTranslation();
-  const { user, setUser } = useContext(UserContext)!;
+
+  const [user, setUser] = useState<User | null>(null);
+  
+    useEffect(() => {
+      async function init() {
+        const u = await loadUser();
+        if (u) {
+          setUser(u);
+        }
+      }
+      init();
+    }, []);
 
   return (
     <DrawerContentScrollView contentContainerStyle={styles.container}>
@@ -69,7 +81,6 @@ export const DrawerContent = ({ navigation, state, navItems}: DrawerContentProps
 
         <View style={styles.navItems}>
           {navItems
-          .filter((item) => item.id !== "Profile" && item.id !== "Settings")
           .map((item) => {
             const routeName = item.id;
             const isFocused = state.routeNames[state.index] === routeName;

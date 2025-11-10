@@ -8,6 +8,7 @@ interface ChatInputProps {
   setInputText: (text: string) => void;
   sendMessage: () => void;
   placeholder: string;
+  disabled?: boolean;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -15,6 +16,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   setInputText,
   sendMessage,
   placeholder,
+  disabled = false,
 }) => (
   <View style={styles.inputArea}>
     <View style={styles.inputContainer}>
@@ -25,14 +27,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
         placeholderTextColor={chatbotColors.mutedForeground}
         style={styles.textInput}
         multiline
+        editable={!disabled}
       />
     </View>
     <TouchableOpacity
       onPress={sendMessage}
-      disabled={!inputText.trim()}
+      disabled={!inputText.trim() || disabled}
       style={[
         styles.sendButton,
-        !inputText.trim() && styles.disabledSendButton,
+        (!inputText.trim() || disabled) && styles.disabledSendButton,
       ]}
     >
       <Ionicons name="send" size={20} color={chatbotColors.primaryForeground} />

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useContext } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, Platform } from 'react-native';
 import { Toast } from 'toastify-react-native'; 
 import { useTranslation } from 'react-i18next';
@@ -11,8 +11,9 @@ import { SettingsCard } from '../components/profile/SettingsCard';
 import { themeStyles, colors, spacing } from '../theme/styles';
 import { mockUser, mockKanji, mockAchievements } from '../data/mockData';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { UserContext } from '../context/UserContex';
 import { Ionicons } from "@expo/vector-icons";
+import { User } from '../utils/user';
+import { loadUser } from '../utils/user';
 
 interface ScreenProps {
     navigation: any;
@@ -22,7 +23,17 @@ interface ScreenProps {
 
 const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }: any) => {
   const { t } = useTranslation();
-  const { user, setUser } = useContext(UserContext)!
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    async function init() {
+      const u = await loadUser();
+      if (u) {
+        setUser(u);
+      }
+    }
+    init();
+  }, []);
 
   const handleLogoutPress = async () => {
     setUser(null);
