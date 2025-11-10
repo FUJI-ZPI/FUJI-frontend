@@ -13,19 +13,17 @@ import ToastProvider from "./src/providers/ToastProvider";
 import "./src/i18n/i18n";
 import {useTranslation} from "react-i18next";
 import * as SecureStore from "expo-secure-store";
-import {UserProvider} from "./src/context/UserContex";
 import VocabularyLevelScreen from "./src/screens/VocabularyLevelScreen";
 import VocabularyDetailScreen from "./src/screens/VocabularyDetailScreen";
 import VocabularyListScreen from "./src/screens/VocabularyListScreen";
 import ChatbotScreen from "./src/screens/ChatbotScreen";
-import SettingsCard from "./src/screens/SettingsScreen";
-import PracticeScreen from "./src/screens/PracticeScreen";
 import {CustomHeaderTitle} from './src/components/navigation/CustomHeaderTitle';
-import {colors} from './src/theme/styles';
 import KanjiLevelScreen from "./src/screens/KanjiLevelScreen";
 import KanjiListScreen from "./src/screens/KanjiListScreen";
 import KanjiDetailScreen from "./src/screens/KanjiDetailScreen";
 import RecognizerScreen from "./src/screens/RecognizerScreen";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { MenuProvider } from 'react-native-popup-menu';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -65,7 +63,6 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
     { id: "Chat", label: t("nav.chat"), icon: "chatbubble-ellipses-outline", component: ChatbotScreen as ScreenComponentType },
     { id: "Leaderboard", label: t("nav.leaderboard"), icon: "trophy-outline", component: PlaceholderScreen as ScreenComponentType },
     { id: "Profile", label: t("nav.profile"), icon: "person-outline", component: ProfileScreen as ScreenComponentType },
-    { id: "Settings", label: t("nav.settings"), icon: "settings-outline", component: SettingsCard as ScreenComponentType },
   ];
 
   return (
@@ -101,6 +98,7 @@ export default function AppNavigator() {
   const handleLogout = async () => {
     await SecureStore.deleteItemAsync("accessToken");
     await SecureStore.deleteItemAsync("refreshToken");
+    await SecureStore.deleteItemAsync('user');
     setIsAuthenticated(false);
   };
 
@@ -140,8 +138,9 @@ useEffect(() => {
 
 
   return (
-    <UserProvider>
+    <SafeAreaProvider>
       <ToastProvider>
+        <MenuProvider>
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             {!isAuthenticated ? (
@@ -157,8 +156,9 @@ useEffect(() => {
             )}
           </Stack.Navigator>
         </NavigationContainer>
+        </MenuProvider>
       </ToastProvider>
-    </UserProvider>
+    </SafeAreaProvider>
   );
 }
 

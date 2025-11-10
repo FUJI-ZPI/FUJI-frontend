@@ -16,12 +16,14 @@ export interface MessageBubbleProps {
   message: Message;
   handleLongPress: (messageId: string, text: string) => void;
   showTranslation: { messageId: string, translation: string } | null;
+  userAvatar: string | undefined
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ 
   message, 
   handleLongPress, 
-  showTranslation, 
+  showTranslation,
+  userAvatar 
 }) => {
   const isUser = message.isUser;
   const isTranslatable = message.isJapanese; 
@@ -56,18 +58,19 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 </View>
             )}
 
-            <View style={styles.messageContent}>
+            <View style={[styles.messageContent, isUser && styles.userMessageContent]}>
                 <TouchableOpacity
                     onLongPress={() => isTranslatable && handleLongPress(message.id, message.text)}
                     onPress={() => isTranslatable && handleLongPress(message.id, message.text)}
                     activeOpacity={0.8}
                     style={bubbleStyles}
                 >
-                    <View>
+                    <View style={styles.innerBubbleContent}>
                         <Text style={textStyles}>
                         {message.text}
                         </Text>
-                        <View style={styles.metadataRow}>
+                        
+                        <View style={[styles.metadataRow, isUser && styles.userMetadataWidthFix]}>
                         <Text style={isUser ? styles.userTimestamp : styles.aiTimestamp}>
                             {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </Text>
@@ -78,10 +81,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
             {isUser && (
                 <View style={styles.avatarContainer}>
-                <View style={styles.userAvatar}>
-                    <Text style={styles.userAvatarText}>👤</Text>
-                </View>
-                <Text style={styles.userAvatarLabel}>You</Text>
+                  <Image source={userAvatar ? { uri: userAvatar } : undefined} style={[styles.userAvatar, !userAvatar && { backgroundColor: "rgb(54, 138, 89, 0.2)" }]} />
+                  <Text style={styles.userAvatarLabel}>You</Text>
                 </View>
             )}
         </View>
@@ -146,24 +147,34 @@ const styles = StyleSheet.create({
     color: chatbotColors.mutedForeground,
     marginTop: 4,
   },
-  userAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: `${chatbotColors.primary}20`,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  userAvatarText: {
-    fontSize: 20,
-  },
   userAvatarLabel: {
     fontSize: 10,
     color: chatbotColors.mutedForeground,
     marginTop: 4,
   },
+  userAvatar: {
+    width: 40,
+    height: 40,
+    textAlignVertical: 'center',
+    backgroundColor: "rgb(54, 138, 89, 0.2)",
+    borderWidth: 0.5,
+    borderColor: 'lightgray',
+    borderRadius: 20,
+    textAlign: "center",
+    lineHeight: 48,
+  },
   messageContent: {
     flexShrink: 1,
+    alignItems: 'flex-start', 
+  },
+  userMessageContent: {
+    alignItems: 'flex-end',
+  },  
+  innerBubbleContent: {
+    width: '100%',
+  },
+  userMetadataWidthFix: {
+    width: '100%',
   },
   messageBubble: {
     padding: 12,

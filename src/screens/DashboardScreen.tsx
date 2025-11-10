@@ -1,15 +1,16 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { FujiIllustration } from '../components/dashboard/FujiIllustration';
-import { UserContext } from '../context/UserContex';
 import { themeStyles, colors } from '../theme/styles';
 import { mockUser, mockKanji, totalKanjiCount } from '../data/mockData';
 import { FlyingClouds } from '../components/dashboard/FlyingClouds';
 import { Feather } from '@expo/vector-icons';
 import { CloudStatCard } from '../components/dashboard/CloudStatCard';
+import { loadUser } from '../utils/user';
+import { User } from '../utils/user';
 
 interface ScreenProps {
   navigation: any;
@@ -24,7 +25,17 @@ const FUJI_HEIGHT = screenWidth * ASPECT_RATIO;
 
 export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
   const { t } = useTranslation();
-  const { user } = useContext(UserContext)!;
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    async function init() {
+      const u = await loadUser();
+      if (u) {
+        setUser(u);
+      }
+    }
+    init();
+  }, []);
 
   const { learnedKanji, totalKanji } = useMemo(() => {
     const learnedKanji = mockKanji.filter(k => k.learned).length;
@@ -37,22 +48,15 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* TŁO - gradient zawsze pod wszystkim */}
       <LinearGradient
         colors={['#ffd1ffb6', '#fad0c48a']}
-        // colors={[ '#ffd1ffb6', '#fad0c48a']}
-        // colors={['#A1C4FD', '#C2E9FB']}
-        // colors={['#E0EAFC', '#CFDEF3']}
-        // colors={['#a1c4fdbe', '#fad0c48a']}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.4 }}
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* GŁÓWNA TREŚĆ */}
       <SafeAreaView style={styles.mainContainer} edges={['left', 'right']}>
 
-        {/* Kontener na chmury statystyk, pozycjonowany absolutnie */}
         <View style={styles.absoluteStatsContainer} pointerEvents="none">
           <View style={{ position: 'absolute', top: 160, right: -55 }}>
             <CloudStatCard
@@ -81,10 +85,9 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
         </View>
 
         <View>
-          {/* Nagłówek */}
           <View style={[styles.header, themeStyles.paddingContainer]}>
             <Text style={styles.headerTitle}>
-              {t('dashboard.greeting', { userName: user?.name?.split(' ')[0] })}
+              {t('dashboard.greeting', { userName: user?.name?.split(' ')[0]})}
             </Text>
             <Text style={themeStyles.textSubtitle}>{t('dashboard.subtitle')}</Text>
           </View>
@@ -93,7 +96,6 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
         <FlyingClouds />
 
         <View>
-          {/* Fuji */}
           <View style={styles.mountainContainer}>
             <View style={{ width: '100%', height: FUJI_HEIGHT }} pointerEvents='auto'>
               <FujiIllustration
@@ -103,7 +105,6 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
             </View>
           </View>
 
-          {/* Sekcja trawy 学 读 勉*/}
           <View style={styles.grassSection}>
             <View style={styles.buttonRow}>
               <TouchableOpacity style={[styles.buttonBase, styles.buttonSecondary]} onPress={handleNavigateToVocabulary}>
@@ -126,7 +127,6 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
           </View>
         </View>
       </SafeAreaView>
-      {/* Dolny pasek (inne tło dla bottom edge) */}
       <SafeAreaView
         style={{
           backgroundColor: '#698779',
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 25,
+    marginBottom: 5,
     zIndex: 40
   },
   statsGrid: {
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
 
   },
   buttonSecondary: {
-    backgroundColor: '#ffffff', // '#b5d4f4'
+    backgroundColor: '#ffffff',
   },
   buttonTextPrimary: {
     color: '#FFFFFF',

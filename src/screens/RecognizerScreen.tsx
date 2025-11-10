@@ -10,9 +10,7 @@ const { width } = Dimensions.get("window");
 const CANVAS_SIZE = width - 40;
 
 const GRID_PADDING = 40;
-// --- ZMIANA 1: DODANIE ODSTĘPÓW MIĘDZY KARTAMI ---
 const ITEM_MARGIN = 8; 
-// --- ZMIANA 2: MNIEJ ELEMENTÓW W RZĘDZIE DLA WIĘKSZEJ CZYTELNOŚCI ---
 const ITEMS_PER_ROW = 4;
 const totalMargins = ITEM_MARGIN * (ITEMS_PER_ROW - 1);
 const ITEM_WIDTH = (width - GRID_PADDING - totalMargins) / ITEMS_PER_ROW;
@@ -31,7 +29,6 @@ type KanjiCandidatesGridProps = {
     onSelectKanji: (item: RecognizedKanjiDto) => void;
 };
 
-
 const KanjiCandidatesGrid = ({ kanjiList, onSelectKanji }: KanjiCandidatesGridProps) => {
     return (
         <View style={candidateStyles.gridContainer}>
@@ -40,10 +37,7 @@ const KanjiCandidatesGrid = ({ kanjiList, onSelectKanji }: KanjiCandidatesGridPr
                 keyExtractor={(item) => item.uuid}
                 numColumns={ITEMS_PER_ROW}
                 scrollEnabled={false}
-                // --- ZMIANA 3: UŻYWAMY vocabGrid DO WYŚRODKOWANIA CAŁEJ SIATKI ---
                 contentContainerStyle={candidateStyles.vocabGrid} 
-                // UWAGA: Usunęliśmy columnWrapperStyle z poprzednich wersji, aby uniknąć problemu z rozciąganiem 2 elementów. 
-                // Teraz wyśrodkowanie osiągamy przez 'alignItems: center' w vocabGrid i marginesy na kartach.
                 renderItem={({ item, index }) => (
                     <TouchableOpacity
                         onPress={() => onSelectKanji(item)}
@@ -138,15 +132,6 @@ export default function RecognizerScreen({ navigation }: { navigation: any }) {
 
       if (Array.isArray(data)) {
         setRecognizedKanjis(data);
-      } else {
-         if (typeof data === 'string') {
-             const characters = data.trim().split(/\s{2,}/).filter(c => c.length > 0);
-             const processedData = characters.map((c, index) => ({ 
-                 uuid: `temp-${index}`, 
-                 character: c 
-             }));
-             setRecognizedKanjis(processedData);
-         }
       }
 
     } catch (error) {
@@ -274,14 +259,10 @@ export default function RecognizerScreen({ navigation }: { navigation: any }) {
   );
 }
 
-// -------------------------------------------------------------------
-// --- STYLE KOMPONENTÓW ---
-// -------------------------------------------------------------------
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: colors.background,
     padding: 20,
     alignItems: "center",
     justifyContent: "space-between",
@@ -367,11 +348,9 @@ const candidateStyles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 2,
         elevation: 2,
-        // KLUCZOWA ZMIANA 4B: Dodanie marginesów do samej karty
         marginHorizontal: ITEM_MARGIN / 2, 
         marginBottom: ITEM_MARGIN,
     },
-    // --- ZMIANA 5: ZWIĘKSZAMY ROZMIAR ZNAKU ---
     vocabText: {
         fontSize: 24, 
         fontWeight: '600',
