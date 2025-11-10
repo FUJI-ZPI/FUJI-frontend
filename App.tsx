@@ -25,6 +25,7 @@ import {colors} from './src/theme/styles';
 import KanjiLevelScreen from "./src/screens/KanjiLevelScreen";
 import KanjiListScreen from "./src/screens/KanjiListScreen";
 import KanjiDetailScreen from "./src/screens/KanjiDetailScreen";
+import RecognizerScreen from "./src/screens/RecognizerScreen";
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -58,7 +59,7 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
     
   const navItems: NavItem[] = [
     { id: "Dashboard", label: t("nav.dashboard"), icon: "home-outline", component: DashboardScreen as ScreenComponentType },
-    { id: "Practice", label: t("nav.practice"), icon: "pencil-sharp", component: PracticeScreen as ScreenComponentType },
+    { id: "Practice", label: t("nav.practice"), icon: "pencil-sharp", component: RecognizerScreen as ScreenComponentType },
     { id: "Kanji", label: t("Kanji"), icon: "language-outline", component: KanjiFlow as ScreenComponentType },
     { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: VocabularyFlow as ScreenComponentType },
     { id: "Chat", label: t("nav.chat"), icon: "chatbubble-ellipses-outline", component: ChatbotScreen as ScreenComponentType },
