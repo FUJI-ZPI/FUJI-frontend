@@ -112,41 +112,6 @@ const RelatedSubjectTile: React.FC<{
     </TouchableOpacity>
 );
 
-const CollapsibleSection: React.FC<{
-    title: string;
-    count: number;
-    children: React.ReactNode;
-}> = ({title, count, children}) => {
-    const [isCollapsed, setIsCollapsed] = useState(true);
-
-    return (
-        <View style={localStyles.collapsibleContainer}>
-            <TouchableOpacity
-                style={localStyles.collapsibleHeader}
-                onPress={() => setIsCollapsed(!isCollapsed)}
-                activeOpacity={0.7}>
-                <Text style={localStyles.collapsibleTitle}>
-                    {`${title} (${count})`}
-                </Text>
-
-                <Ionicons
-                    name={
-                        isCollapsed
-                            ? 'chevron-down-outline'
-                            : 'chevron-up-outline'
-                    }
-                    size={20}
-                    color={colors.textMuted}
-                />
-            </TouchableOpacity>
-
-            {!isCollapsed && (
-                <View style={localStyles.collapsibleContent}>{children}</View>
-            )}
-        </View>
-    );
-};
-
 const RadicalDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
     const {radicalUuid} = route.params;
 
@@ -266,18 +231,19 @@ const RadicalDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
                 </>
             )}
             {whitelistMeanings.length > 0 && (
-                <CollapsibleSection
-                    title="Auxiliary Meanings (Synonyms)"
-                    count={whitelistMeanings.length}>
-                    <Text style={localStyles.auxiliaryInfoText}>
-                        These are synonyms or alternative meanings that are also
-                        accepted.
-                    </Text>
-                    <View
+                <>
+                    <Text
                         style={[
-                            localStyles.tagContainer,
-                            {marginTop: spacing.base},
+                            localStyles.groupTitle,
+                            {
+                                fontSize: 14,
+                                marginTop: spacing.base,
+                                marginBottom: spacing.small,
+                            },
                         ]}>
+                        Auxiliary Meanings
+                    </Text>
+                    <View style={localStyles.tagContainer}>
                         {whitelistMeanings.map(m => (
                             <View
                                 key={m.meaning}
@@ -291,7 +257,7 @@ const RadicalDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
                             </View>
                         ))}
                     </View>
-                </CollapsibleSection>
+                </>
             )}
         </Card>
     );
@@ -527,31 +493,6 @@ const localStyles = StyleSheet.create({
     primaryTagText: {
         color: primaryGreen,
         fontWeight: '600',
-    },
-    collapsibleContainer: {
-        marginTop: spacing.base,
-        borderTopWidth: 1,
-        borderTopColor: colors.border,
-        paddingTop: spacing.base,
-    },
-    collapsibleHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: spacing.small,
-    },
-    collapsibleTitle: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: colors.text,
-    },
-    collapsibleContent: {
-        paddingTop: spacing.small,
-    },
-    auxiliaryInfoText: {
-        fontSize: 13,
-        color: colors.textMuted,
-        fontStyle: 'italic',
     },
     kanjiGrid: {
         flexDirection: 'row',
