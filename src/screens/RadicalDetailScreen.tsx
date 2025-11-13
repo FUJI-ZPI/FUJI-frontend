@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import {colors, spacing, themeStyles} from '../theme/styles';
@@ -18,17 +18,6 @@ interface AuxiliaryMeaning {
     meaning: string;
 }
 
-interface CharacterImage {
-    url: string;
-    content_type: string;
-    metadata: {
-        inline_styles?: boolean;
-        color?: string;
-        dimensions?: string;
-        style_name?: string;
-    };
-}
-
 interface RadicalData {
     slug: string;
     level: number;
@@ -37,7 +26,6 @@ interface RadicalData {
     characters: string | null;
     document_url: string;
     meaning_mnemonic: string;
-    character_images: CharacterImage[];
     amalgamation_subject_ids: number[];
     hidden_at: string | null;
     created_at: string;
@@ -190,7 +178,6 @@ const RadicalDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
         m => m.type === 'whitelist',
     );
 
-    const characterImage = radicalData.character_images?.[0];
 
     const renderMeaningTab = () => (
         <Card style={localStyles.tabContentCard}>
@@ -309,17 +296,9 @@ const RadicalDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
                     contentContainerStyle={{paddingBottom: spacing.base * 2}}>
                     <Card style={localStyles.characterCard}>
                         <View style={localStyles.characterBox}>
-                            {characterImage ? (
-                                <Image
-                                    source={{uri: characterImage.url}}
-                                    style={{width: 120, height: 120}}
-                                    resizeMode="contain"
-                                />
-                            ) : (
-                                <Text style={localStyles.character}>
-                                    {data.character}
-                                </Text>
-                            )}
+                            <Text style={localStyles.character}>
+                                {data.character}
+                            </Text>
                         </View>
                         <Text style={localStyles.characterSubtitle}>
                             {primaryMeaning}
@@ -403,13 +382,13 @@ const localStyles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: primaryGreen,
+        borderColor: accentBlue,
         marginBottom: spacing.base,
     },
     character: {
         fontSize: 80,
         fontWeight: '700',
-        color: primaryGreen,
+        color: accentBlue,
     },
     characterSubtitle: {
         fontSize: 18,
