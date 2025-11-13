@@ -1,8 +1,8 @@
-import React, {useState, useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import {NavigationContainer} from "@react-navigation/native";
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {createDrawerNavigator} from "@react-navigation/drawer";
-import {StyleSheet, View, Text} from "react-native";
+import {StyleSheet} from "react-native";
 //import { ZenDots_400Regular, useFonts } from '@expo-google-fonts/zen-dots';
 import {DrawerContent, NavItem, ScreenComponentType} from "./src/components/navigation/DrawerContent";
 import {DashboardScreen} from "./src/screens/DashboardScreen";
@@ -21,16 +21,22 @@ import {CustomHeaderTitle} from './src/components/navigation/CustomHeaderTitle';
 import KanjiLevelScreen from "./src/screens/KanjiLevelScreen";
 import KanjiListScreen from "./src/screens/KanjiListScreen";
 import KanjiDetailScreen from "./src/screens/KanjiDetailScreen";
+import RadicalLevelScreen from "./src/screens/RadicalLevelScreen";
+import RadicalListScreen from "./src/screens/RadicalListScreen";
+import RadicalDetailScreen from "./src/screens/RadicalDetailScreen";
 import RecognizerScreen from "./src/screens/RecognizerScreen";
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { MenuProvider } from 'react-native-popup-menu';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {MenuProvider} from 'react-native-popup-menu';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
 function KanjiFlow() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+          initialRouteName="KanjiLevels"
+          screenOptions={{headerShown: false}}
+      >
       <Stack.Screen name="KanjiLevels" component={KanjiLevelScreen} />
       <Stack.Screen name="KanjiList" component={KanjiListScreen} />
       <Stack.Screen name="KanjiDetail" component={KanjiDetailScreen} />
@@ -38,9 +44,23 @@ function KanjiFlow() {
   );
 }
 
+function RadicalFlow() {
+    return (
+        <Stack.Navigator
+            initialRouteName="RadicalLevels"
+            screenOptions={{headerShown: false}}
+        >
+            <Stack.Screen name="RadicalLevels" component={RadicalLevelScreen}/>
+            <Stack.Screen name="RadicalList" component={RadicalListScreen}/>
+            <Stack.Screen name="RadicalDetail" component={RadicalDetailScreen}/>
+        </Stack.Navigator>
+    );
+}
+
 function VocabularyFlow() {
   return (
     <Stack.Navigator
+        initialRouteName="VocabularyLevels"
       screenOptions={{
         headerShown: false 
       }}
@@ -58,6 +78,7 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
   const navItems: NavItem[] = [
     { id: "Dashboard", label: t("nav.dashboard"), icon: "home-outline", component: DashboardScreen as ScreenComponentType },
     { id: "Practice", label: t("nav.practice"), icon: "pencil-sharp", component: RecognizerScreen as ScreenComponentType },
+      {id: "Radicals", label: t("Radicals"), icon: "grid-outline", component: RadicalFlow as ScreenComponentType},
     { id: "Kanji", label: t("Kanji"), icon: "language-outline", component: KanjiFlow as ScreenComponentType },
     { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: VocabularyFlow as ScreenComponentType },
     { id: "Chat", label: t("nav.chat"), icon: "chatbubble-ellipses-outline", component: ChatbotScreen as ScreenComponentType },
