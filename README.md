@@ -8,7 +8,7 @@ the [FUJI Backend](https://github.com/FuJI-ZPI/FUJI-backend).
 
 ## How It Looks
 
-<img src="https://github.com/user-attachments/assets/TODO" alt="Home Screen" width="250"/>
+<img src="https://github.com/user-attachments/assets/e6338f4e-f41c-40dd-a638-df8d7c0a54dc" alt="Home Screen" width="250"/>
 
 ## Core Features
 
