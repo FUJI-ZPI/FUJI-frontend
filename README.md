@@ -24,13 +24,11 @@ the [FUJI Backend](https://github.com/FuJI-ZPI/FUJI-backend).
 
 * **Core**: React Native, Expo, TypeScript
 * **Navigation**: Expo Router
-* **Styling**: NativeWind (Tailwind CSS for React Native)
 * **Drawing & Graphics**: React Native Skia
 * **Animations**: Lottie, React Native Reanimated
 * **API Client**: Axios
 * **Local Storage**: Async Storage
 * **Authentication**: Google Sign-in, JWT Decode
-* **Schema Validation**: Zod
 * **Internationalization**: i18next
 
 ## Authors
