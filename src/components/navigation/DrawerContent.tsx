@@ -1,18 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
-import { DrawerContentScrollView } from "@react-navigation/drawer";
-import { Ionicons } from "@expo/vector-icons";
-import { ComponentType } from "react";
-import { mockUser } from '../../data/mockData';
-import { useTranslation } from "react-i18next";
-import { User } from "../../utils/user";
-import { loadUser } from "../../utils/user";
+import React, {ComponentType, useEffect, useState} from "react";
+import {Image, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {DrawerContentScrollView} from "@react-navigation/drawer";
+import {Ionicons} from "@expo/vector-icons";
+import {mockUser} from '../../data/mockData';
+import {useTranslation} from "react-i18next";
+import {loadUser, User} from "../../utils/user";
 
 const LOGO_IMAGE = require('../../../assets/fuji-logo-kanji.jpeg');
 
 export const iconMap: Record<string, string> = {
   Dashboard: "home-outline",
   Practice: "pencil-sharp",
+    Radicals: "grid-outline",
   Kanji: "language-outline",
   Vocabulary: "book-outline",
   Chat: "chatbubble-ellipses-outline",
