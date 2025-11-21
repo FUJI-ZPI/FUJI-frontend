@@ -1,16 +1,16 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useTranslation } from 'react-i18next';
-import { FujiIllustration } from '../components/dashboard/FujiIllustration';
-import { themeStyles, colors } from '../theme/styles';
-import { mockUser, mockKanji, totalKanjiCount } from '../data/mockData';
-import { FlyingClouds } from '../components/dashboard/FlyingClouds';
-import { Feather } from '@expo/vector-icons';
-import { CloudStatCard } from '../components/dashboard/CloudStatCard';
-import { loadUser } from '../utils/user';
-import { User } from '../utils/user';
+import React, {useEffect, useMemo, useState} from 'react';
+import {Dimensions, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {LinearGradient} from 'expo-linear-gradient';
+import {useTranslation} from 'react-i18next';
+import {FujiIllustration} from '../components/dashboard/FujiIllustration';
+import {colors, themeStyles} from '../theme/styles';
+import {mockKanji, mockUser, totalKanjiCount} from '../data/mockData';
+import {FlyingClouds} from '../components/dashboard/FlyingClouds';
+import {Feather} from '@expo/vector-icons';
+import {CloudStatCard} from '../components/dashboard/CloudStatCard';
+import {loadUser, User} from '../utils/user';
+import {usePushNotifications} from '../hooks/usePushNotifications';
 
 interface ScreenProps {
   navigation: any;
@@ -26,6 +26,9 @@ const FUJI_HEIGHT = screenWidth * ASPECT_RATIO;
 export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
   const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
+
+    // Inicjalizacja powiadomień Push
+    usePushNotifications();
 
   useEffect(() => {
     async function init() {

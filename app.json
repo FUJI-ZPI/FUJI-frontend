@@ -23,11 +23,16 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.tommil.test"
+      "package": "com.tommil.test",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/fuji-logo-kanji.jpeg"
     },
+    "plugins": [
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging"
+    ],
     "extra": {
       "eas": {
         "projectId": "ba3ad6a0-fa27-4c73-b9bc-2bef71ec0891"
