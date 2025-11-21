@@ -27,6 +27,10 @@ import RadicalDetailScreen from "./src/screens/RadicalDetailScreen";
 import RecognizerScreen from "./src/screens/RecognizerScreen";
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {MenuProvider} from 'react-native-popup-menu';
+import PracticeScreen from "./src/screens/LearningSessionScreen";
+import PracticeSessionScreen from "./src/screens/LearningSessionScreen";
+import LearningSessionScreen from "./src/screens/LearningSessionScreen";
+import ReviewSessionScreen from "./src/screens/ReviewSessionScreen";
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -78,7 +82,7 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
   const navItems: NavItem[] = [
     { id: "Dashboard", label: t("nav.dashboard"), icon: "home-outline", component: DashboardScreen as ScreenComponentType },
     { id: "Practice", label: t("nav.practice"), icon: "pencil-sharp", component: RecognizerScreen as ScreenComponentType },
-      {id: "Radicals", label: t("Radicals"), icon: "grid-outline", component: RadicalFlow as ScreenComponentType},
+    { id: "Radicals", label: t("Radicals"), icon: "grid-outline", component: RadicalFlow as ScreenComponentType},
     { id: "Kanji", label: t("Kanji"), icon: "language-outline", component: KanjiFlow as ScreenComponentType },
     { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: VocabularyFlow as ScreenComponentType },
     { id: "Chat", label: t("nav.chat"), icon: "chatbubble-ellipses-outline", component: ChatbotScreen as ScreenComponentType },
@@ -105,6 +109,22 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
           component={item.component}
         />
       ))}
+
+      <Drawer.Screen 
+        name="LearningSession" 
+        component={LearningSessionScreen} 
+        options={{ 
+          drawerItemStyle: { display: "none" },
+        }}
+      />
+
+      <Drawer.Screen 
+        name="ReviewSession" 
+        component={ReviewSessionScreen} 
+        options={{ 
+          drawerItemStyle: { display: "none" },
+        }}
+      />
 
       <Drawer.Screen name="Profile">
         {(props) => <ProfileScreen {...props} onLogout={onLogout} />}
