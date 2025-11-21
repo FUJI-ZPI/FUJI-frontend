@@ -15,7 +15,6 @@ import {useToast} from '../hooks/use-toast';
 import * as SecureStore from 'expo-secure-store';
 import {useFocusEffect} from '@react-navigation/native';
 
-// ... (interfejsy bez zmian: Meaning, Reading, WanikaniData, WanikaniKanjiJsonDto, KanjiDetailDto, CardDto)
 interface Meaning {
   meaning: string;
   primary: boolean;
@@ -131,45 +130,12 @@ export default function ReviewSessionScreen({navigation}: any) {
     }
   };
 
-  const increaseFamiliarity = async (cardUuid: string) => {
-    try {
-      const token = await SecureStore.getItemAsync('accessToken');
-      if (!token) throw new Error('Authorization token not found.');
-      const url = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/srs/increase-familiarity?uuid=${cardUuid}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {Authorization: `Bearer ${token}`},
-      });
-      if (!response.ok) throw new Error(`Server error: ${response.status}`);
-      console.log(`Familiarity increased for ${cardUuid}`);
-    } catch (e: any) {
-      console.error('Failed to increase familiarity:', e);
-      toast({title: 'Sync Error', description: e.message});
-    }
-  };
-
-  const decreaseFamiliarity = async (cardUuid: string) => {
-    try {
-      const token = await SecureStore.getItemAsync('accessToken');
-      if (!token) throw new Error('Authorization token not found.');
-      const url = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/srs/decrease-familiarity?uuid=${cardUuid}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {Authorization: `Bearer ${token}`},
-      });
-      if (!response.ok) throw new Error(`Server error: ${response.status}`);
-      console.log(`Familiarity decreased for ${cardUuid}`);
-    } catch (e: any) {
-      console.error('Failed to decrease familiarity:', e);
-      toast({title: 'Sync Error', description: e.message});
-    }
-  };
+  // --- USUNIĘTO funkcje increaseFamiliarity / decreaseFamiliarity (backend robi to teraz) ---
 
   const currentCard = practiceKanjiList[currentKanjiIndex];
   const currentKanji = currentCard?.kanji; 
   const totalKanji = practiceKanjiList.length;
 
-  // --- TU JEST ZMIANA ---
   const handleKanjiComplete = async (accuracy: number) => {
     if (!currentCard || !currentKanji) return;
 
@@ -177,30 +143,21 @@ export default function ReviewSessionScreen({navigation}: any) {
     setSessionScore(prev => prev + accuracy);
     setCompletedKanji(prev => prev + 1);
     
-    // 1. WŁĄCZAMY HINT (Pokaż wzorzec pod spodem, żeby user widział co źle zrobił)
     setShowCharacterHint(true);
 
-    if (accuracy >= 90) {
+    // Tylko wyświetlanie Toasta - logika SRS wykonana już przez Canvas/Backend
+    if (accuracy >= 70) {
       toast({
-        title: 'Excellent! 🎉',
-        description: `Perfect drawing! ${accuracy}% accuracy`,
-        variant: 'success',
-      });
-        await increaseFamiliarity(currentCard.uuid);
-    } else if (accuracy >= 70) {
-      toast({
-        title: 'Good job! 👍',
+        title: accuracy >= 90 ? 'Excellent! 🎉' : 'Good job! 👍',
         description: `Nice work! ${accuracy}% accuracy`,
         variant: 'success',
       });
-        await increaseFamiliarity(currentCard.uuid);
     } else {
       toast({
         title: 'Incorrect. 😢',
         description: `Review the strokes. Moving next...`, 
         variant: 'error',
       });
-      await decreaseFamiliarity(currentCard.uuid);
     }
 
     // Automatyczne przejście po 2.5s
@@ -213,7 +170,6 @@ export default function ReviewSessionScreen({navigation}: any) {
     setShowResult(false); 
     if (currentKanjiIndex < practiceKanjiList.length - 1) {
       setCurrentKanjiIndex(prev => prev + 1);
-      // 2. WYŁĄCZAMY HINT DLA NOWEGO ZNAKU (Tu już jest OK)
       setShowCharacterHint(false); 
     } else {
       const averageScore =
@@ -335,6 +291,10 @@ export default function ReviewSessionScreen({navigation}: any) {
         </Card>
       ) : (
         <KanjiCanvas
+          // --- ZMIANA: Przekazujemy ID i flagę sesji ---
+          kanjiUuid={currentKanji.uuid}
+          isLearningSession={false}
+          
           targetKanji={currentKanji.character}
           referenceStrokes={currentKanji.referenceStrokes}
           onComplete={handleKanjiComplete}

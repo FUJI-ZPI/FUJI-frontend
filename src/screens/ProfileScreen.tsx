@@ -1,60 +1,82 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, LayoutAnimation, Modal, Pressable } from 'react-native';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, LayoutAnimation, Modal, Pressable, ActivityIndicator } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Path, G } from "react-native-svg";
+import * as SecureStore from 'expo-secure-store';
+import { useFocusEffect } from '@react-navigation/native';
 
-// Components (Mock imports assumed based on context, adjusted for single-file portability if needed)
-// In a real app, ensure these paths are correct or replace with inline components
 import { ProfileHeader } from '../components/profile/ProfileHeader';
 import { ContributionGraph } from '../components/profile/ContributionGraph';
 import { Card } from '../components/ui/Card'; 
+import { useToast } from '../hooks/use-toast';
 
 import { themeStyles, colors, spacing } from '../theme/styles';
 import { User, loadUser } from '../utils/user';
 
-// --- HELPER FUNCTIONS ---
 
-const pointsToPath = (points: {x: number; y: number}[]) => {
-  if (points.length === 0) return "";
-  return points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ");
+interface DailyActivityStat {
+  date: string;
+  count: number;
+}
+
+interface DailyActivityDetail {
+  activityUuid: string;
+  timestamp: string;
+  kanjiCharacter: string;
+  kanjiMeaning: string;
+  type: 'LESSON' | 'REVIEW';
+  accuracy: number;
+}
+
+interface ActivityPlaybackDetails {
+  character: string;
+  userStrokes: number[][][];
+  referenceStrokes: number[][][];
+  overallAccuracy: number;
+  strokesAccuracy: number[];
+}
+
+const pointsArrayToPath = (points: number[][]) => {
+  if (!points || points.length === 0) return "";
+  return points.map((p, i) => (i === 0 ? `M ${p[0]} ${p[1]}` : `L ${p[0]} ${p[1]}`)).join(" ");
 };
 
-// Mock Data
-const MOCK_USER_STROKES = [
-    { points: [{x: 140, y: 40}, {x: 140, y: 100}] }, 
-    { points: [{x: 60, y: 140}, {x: 220, y: 140}] }, 
-    { points: [{x: 140, y: 140}, {x: 100, y: 240}] }, 
-    { points: [{x: 140, y: 140}, {x: 180, y: 240}] }, 
-];
+// Helper do formatowania godziny (np. 14:30)
+const formatTime = (isoString: string) => {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+};
 
-const MOCK_REF_STROKES = [
-    { points: [{x: 140, y: 35}, {x: 140, y: 105}] }, 
-    { points: [{x: 55, y: 140}, {x: 225, y: 140}] }, 
-    { points: [{x: 140, y: 140}, {x: 95, y: 245}] }, 
-    { points: [{x: 140, y: 140}, {x: 185, y: 245}] }, 
-];
+// --- KOMPONENT VIEWERA ---
+interface KanjiCanvasViewerProps {
+  size?: number;
+  userStrokes?: number[][][];
+  referenceStrokes?: number[][][];
+  strokesAccuracy?: number[];
+}
 
-// --- COMPONENT: KANJI VIEWER ---
-// Stylized exactly like the requested 'KanjiCanvas'
-const KanjiCanvasViewer = ({ size = 280, userStrokes = [], refStrokes = [] }: { size?: number, userStrokes?: any[], refStrokes?: any[] }) => {
+const KanjiCanvasViewer = ({ 
+  size = 280, 
+  userStrokes = [], 
+  referenceStrokes = [], 
+  strokesAccuracy = [] 
+}: KanjiCanvasViewerProps) => {
     return (
         <View style={[styles.canvasContainer, { width: size, height: size }]}>
-            <Svg width="100%" height="100%" style={styles.canvas}>
-                {/* Grid Lines */}
+            <Svg width="100%" height="100%" style={styles.canvas} viewBox={`0 0 256 256`}>
                 <Path
-                    d={`M ${size / 2} 0 L ${size / 2} ${size} M 0 ${size / 2} L ${size} ${size / 2}`}
+                    d={`M 128 0 L 128 256 M 0 128 L 256 128`}
                     stroke="#F3F4F6"
                     strokeWidth={1}
                 />
-                
-                {/* 1. Placeholder (Reference) */}
                 <G>
-                    {refStrokes.map((stroke, i) => (
+                    {referenceStrokes.map((stroke, i) => (
                         <Path
                             key={`ref-${i}`}
-                            d={pointsToPath(stroke.points)}
-                            stroke="#E5E7EB" 
+                            d={pointsArrayToPath(stroke)}
+                            stroke="#E5E7EB"
                             strokeWidth={4}
                             fill="none"
                             strokeLinecap="round"
@@ -62,56 +84,30 @@ const KanjiCanvasViewer = ({ size = 280, userStrokes = [], refStrokes = [] }: { 
                         />
                     ))}
                 </G>
-
-                {/* 2. User Strokes */}
                 <G>
-                    {userStrokes.map((stroke, i) => (
-                        <Path
-                            key={`user-${i}`}
-                            d={pointsToPath(stroke.points)}
-                            stroke="#1F2937"
-                            strokeWidth={4}
-                            fill="none"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        />
-                    ))}
+                    {userStrokes.map((stroke, i) => {
+                        const rawAccuracy = strokesAccuracy[i] || 0;
+                        const accuracyPercent = rawAccuracy <= 1 ? rawAccuracy * 100 : rawAccuracy;
+                        const strokeColor = accuracyPercent >= 70 ? '#22C55E' : '#EF4444';
+
+                        return (
+                            <Path
+                                key={`user-${i}`}
+                                d={pointsArrayToPath(stroke)}
+                                stroke={strokeColor}
+                                strokeWidth={4}
+                                fill="none"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                        );
+                    })}
                 </G>
             </Svg>
         </View>
     );
 };
 
-// --- DATA GENERATORS ---
-
-const generateMockActivity = () => {
-    const data: { [date: string]: number } = {};
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    data[todayStr] = 8; 
-
-    for (let i = 1; i < 110; i++) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
-        const rand = Math.random();
-        if (rand > 0.7) data[d.toISOString().split('T')[0]] = Math.floor(Math.random() * 12) + 1;
-    }
-    return data;
-};
-
-const getMockDetailsForDate = (count: number) => {
-    if (count === 0) return [];
-    const kanjiPool = ["木", "火", "土", "金", "水"];
-    return Array.from({ length: Math.min(count, 12) }).map((_, i) => ({
-        id: i,
-        char: kanjiPool[i % kanjiPool.length],
-        meaning: ["Tree", "Fire", "Earth", "Gold", "Water"][i % 5],
-        type: i % 3 === 0 ? "New" : "Review",
-        status: i % 4 === 0 ? "miss" : "ok"
-    }));
-};
-
-// --- MAIN SCREEN ---
 
 interface ScreenProps {
     navigation: any;
@@ -119,35 +115,107 @@ interface ScreenProps {
     onLogout: () => void;
 }
 
+// Stałe do paginacji
+const INITIAL_VISIBLE_ITEMS = 8;
+const ITEMS_PER_PAGE = 4;
+
 const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   
-  // State
+  const [activityMap, setActivityMap] = useState<{ [date: string]: number }>({});
+  const [dailyHistory, setDailyHistory] = useState<DailyActivityDetail[]>([]);
+  
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedCount, setSelectedCount] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<'lessons' | 'reviews'>('reviews');
+  const [activeTab, setActiveTab] = useState<'LESSON' | 'REVIEW'>('REVIEW');
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  // Modal State
+  const [visibleItemsCount, setVisibleItemsCount] = useState(INITIAL_VISIBLE_ITEMS);
+
   const [kanjiModalVisible, setKanjiModalVisible] = useState(false);
-  const [selectedKanji, setSelectedKanji] = useState<any>(null);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [playbackDetails, setPlaybackDetails] = useState<ActivityPlaybackDetails | null>(null);
 
-  const activityData = useMemo(() => generateMockActivity(), []);
-  const dailyDetails = useMemo(() => getMockDetailsForDate(selectedCount), [selectedCount, selectedDate]);
+  const fetchWithAuth = async (endpoint: string) => {
+    const token = await SecureStore.getItemAsync('accessToken');
+    if (!token) throw new Error('No token');
+    
+    const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}${endpoint}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+    return response.json();
+  };
 
-  const filteredItems = useMemo(() => {
-      if (activeTab === 'lessons') return dailyDetails.filter(i => i.type === 'New');
-      return dailyDetails.filter(i => i.type === 'Review');
-  }, [dailyDetails, activeTab]);
+  const fetchStats = async () => {
+    try {
+        const data: DailyActivityStat[] = await fetchWithAuth('/api/v1/activity/stats');
+        
+        const map: { [key: string]: number } = {};
+        data.forEach(item => {
+            map[item.date] = item.count;
+        });
+        setActivityMap(map);
+        return map; 
+    } catch (e) {
+        console.error("Failed to fetch stats", e);
+        return {};
+    }
+  };
+
+  const fetchDailyHistory = async (dateStr: string) => {
+      setIsLoadingHistory(true);
+      try {
+          const data: DailyActivityDetail[] = await fetchWithAuth(`/api/v1/activity/history/${dateStr}`);
+          setDailyHistory(data);
+      } catch (e) {
+          console.error("Failed to fetch history", e);
+          setDailyHistory([]);
+      } finally {
+          setIsLoadingHistory(false);
+      }
+  };
+
+  const fetchActivityDetails = async (uuid: string) => {
+      setModalLoading(true);
+      setPlaybackDetails(null);
+      try {
+          const data: ActivityPlaybackDetails = await fetchWithAuth(`/api/v1/activity/${uuid}`);
+          setPlaybackDetails(data);
+      } catch (e) {
+          toast({ title: "Error", description: "Could not load drawing data." });
+          setKanjiModalVisible(false);
+      } finally {
+          setModalLoading(false);
+      }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+        const initData = async () => {
+            await loadUser().then(u => u && setUser(u));
+            const map = await fetchStats();
+            const todayStr = new Date().toISOString().split('T')[0];
+            const targetDate = selectedDate || todayStr;
+
+            if (!selectedDate) {
+                setSelectedDate(targetDate);
+            }
+            
+            setSelectedCount(map[targetDate] || 0);
+            await fetchDailyHistory(targetDate);
+        };
+
+        initData();
+    }, [selectedDate]) 
+  );
 
   useEffect(() => {
-    loadUser().then(u => u && setUser(u));
-    
-    const todayStr = new Date().toISOString().split('T')[0];
-    setSelectedDate(todayStr);
-    setSelectedCount(activityData[todayStr] || 0);
-    setActiveTab('reviews');
-  }, [activityData]);
+    setVisibleItemsCount(INITIAL_VISIBLE_ITEMS);
+  }, [selectedDate, activeTab]);
 
   const handleLogoutPress = async () => {
     setUser(null);
@@ -158,18 +226,35 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSelectedDate(date);
     setSelectedCount(count);
-    setActiveTab('reviews');
+    setActiveTab('REVIEW');
   };
 
-  const handleKanjiPress = (item: any) => {
-      setSelectedKanji(item);
+  const handleKanjiPress = (item: DailyActivityDetail) => {
       setKanjiModalVisible(true);
+      fetchActivityDetails(item.activityUuid);
+  };
+
+  const handleShowMore = () => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setVisibleItemsCount(prev => prev + ITEMS_PER_PAGE);
   };
 
   const formatDatePretty = (dateStr: string) => {
       const date = new Date(dateStr);
       return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'long' });
   };
+
+  const filteredItems = useMemo(() => {
+      const items = dailyHistory.filter(i => i.type === activeTab);
+      // Sortowanie od najnowszych (wg timestampu)
+      return items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [dailyHistory, activeTab]);
+
+  const displayedItems = useMemo(() => {
+      return filteredItems.slice(0, visibleItemsCount);
+  }, [filteredItems, visibleItemsCount]);
+
+  const hasMoreItems = filteredItems.length > visibleItemsCount;
 
   return (
       <ScrollView style={themeStyles.flex1} contentContainerStyle={styles.scrollContent}>
@@ -178,7 +263,7 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
           <ProfileHeader user={user} />
 
           <ContributionGraph 
-            values={activityData} 
+            values={activityMap} 
             selectedDate={selectedDate}
             onDayPress={handleDayPress} 
           />
@@ -199,44 +284,67 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
                   {selectedCount > 0 && (
                     <View style={styles.tabsRow}>
                         <TouchableOpacity 
-                            style={[styles.tabButton, activeTab === 'reviews' && styles.activeTabButton]}
-                            onPress={() => setActiveTab('reviews')}
+                            style={[styles.tabButton, activeTab === 'REVIEW' && styles.activeTabButton]}
+                            onPress={() => setActiveTab('REVIEW')}
                         >
-                            <Text style={[styles.tabText, activeTab === 'reviews' && styles.activeTabText]}>
-                                Reviews ({dailyDetails.filter(i => i.type === 'Review').length})
+                            <Text style={[styles.tabText, activeTab === 'REVIEW' && styles.activeTabText]}>
+                                Reviews ({dailyHistory.filter(i => i.type === 'REVIEW').length})
                             </Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity 
-                            style={[styles.tabButton, activeTab === 'lessons' && styles.activeTabButton]}
-                            onPress={() => setActiveTab('lessons')}
+                            style={[styles.tabButton, activeTab === 'LESSON' && styles.activeTabButton]}
+                            onPress={() => setActiveTab('LESSON')}
                         >
-                            <Text style={[styles.tabText, activeTab === 'lessons' && styles.activeTabText]}>
-                                Lessons ({dailyDetails.filter(i => i.type === 'New').length})
+                            <Text style={[styles.tabText, activeTab === 'LESSON' && styles.activeTabText]}>
+                                Lessons ({dailyHistory.filter(i => i.type === 'LESSON').length})
                             </Text>
                         </TouchableOpacity>
                     </View>
                   )}
 
-                  {selectedCount > 0 ? (
-                      <View style={styles.chipsGrid}>
-                          {filteredItems.length > 0 ? (
-                              filteredItems.map((item, idx) => (
-                                  <TouchableOpacity 
-                                    key={idx} 
-                                    style={[styles.chip, item.status === 'miss' ? styles.chipMiss : styles.chipOk]}
-                                    activeOpacity={0.7}
-                                    onPress={() => handleKanjiPress(item)}
-                                  >
-                                      <View style={styles.chipTop}>
-                                          <Text style={styles.chipChar}>{item.char}</Text>
-                                          {item.type === 'New' && <View style={styles.newDot} />}
-                                      </View>
-                                      <Text style={styles.chipMeaning} numberOfLines={1}>{item.meaning}</Text>
-                                  </TouchableOpacity>
-                              ))
-                          ) : (
-                              <Text style={styles.emptyTabParams}>No {activeTab} this day.</Text>
+                  {isLoadingHistory ? (
+                      <ActivityIndicator size="small" color={colors.primary} style={{ margin: 20 }} />
+                  ) : selectedCount > 0 ? (
+                      <View>
+                          <View style={styles.chipsGrid}>
+                              {displayedItems.length > 0 ? (
+                                  displayedItems.map((item) => (
+                                      <TouchableOpacity 
+                                        key={item.activityUuid} 
+                                        style={[
+                                            styles.chip, 
+                                            Math.round(item.accuracy * 100) >= 70 ? styles.chipOk : styles.chipMiss
+                                        ]}
+                                        activeOpacity={0.7}
+                                        onPress={() => handleKanjiPress(item)}
+                                      >
+                                          <View style={styles.chipHeader}>
+                                              <Text style={styles.chipTime}>
+                                                  {formatTime(item.timestamp)}
+                                              </Text>
+                                          </View>
+
+                                          <View style={styles.chipContent}>
+                                              <Text style={styles.chipChar}>{item.kanjiCharacter}</Text>
+                                              <Text style={styles.chipMeaning} numberOfLines={1}>{item.kanjiMeaning}</Text>
+                                          </View>
+                                      </TouchableOpacity>
+                                  ))
+                              ) : (
+                                  <Text style={styles.emptyTabParams}>No {activeTab.toLowerCase()}s this day.</Text>
+                              )}
+                          </View>
+
+                          {hasMoreItems && (
+                              <TouchableOpacity 
+                                  style={styles.showMoreButton} 
+                                  onPress={handleShowMore}
+                                  activeOpacity={0.6}
+                              >
+                                  <Text style={styles.showMoreText}>Show More</Text>
+                                  <Ionicons name="chevron-down" size={16} color={colors.textMuted} />
+                              </TouchableOpacity>
                           )}
                       </View>
                   ) : (
@@ -262,7 +370,6 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
 
         </View>
 
-        {/* --- MODAL --- */}
         <Modal
             animationType="fade"
             transparent={true}
@@ -272,28 +379,37 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
             <Pressable style={styles.modalOverlay} onPress={() => setKanjiModalVisible(false)}>
                 <Pressable style={styles.modalContent} onPress={() => {}}>
                     
-                    {/* Header Modal */}
-                    <View style={styles.modalHeader}>
-                         <View>
-                            <Text style={styles.modalTitle}>{selectedKanji?.char}</Text>
-                            <Text style={styles.modalSubtitle}>{selectedKanji?.meaning}</Text>
-                         </View>
-                         <TouchableOpacity onPress={() => setKanjiModalVisible(false)}>
-                            <Ionicons name="close-circle" size={30} color={colors.textMuted} />
-                         </TouchableOpacity>
-                    </View>
+                    {modalLoading ? (
+                        <ActivityIndicator size="large" color={colors.primary} />
+                    ) : playbackDetails ? (
+                        <>
+                            <View style={styles.modalHeader}>
+                                <View>
+                                    <Text style={styles.modalTitle}>{playbackDetails.character}</Text>
+                                    <Text style={styles.modalSubtitle}>
+                                        Accuracy: {Math.round(playbackDetails.overallAccuracy * (playbackDetails.overallAccuracy <= 1 ? 100 : 1))}%
+                                    </Text>
+                                </View>
+                                <TouchableOpacity onPress={() => setKanjiModalVisible(false)}>
+                                    <Ionicons name="close-circle" size={30} color={colors.textMuted} />
+                                </TouchableOpacity>
+                            </View>
 
-                    {/* KANJI VIEWER - UPDATED STYLING */}
-                    <View style={styles.viewerContainer}>
-                         <KanjiCanvasViewer 
-                            size={256} 
-                            userStrokes={MOCK_USER_STROKES} 
-                            refStrokes={MOCK_REF_STROKES}
-                         />
-                         <Text style={styles.instructionText}>
-                            Your stroke vs Reference
-                         </Text>
-                    </View>
+                            <View style={styles.viewerContainer}>
+                                <KanjiCanvasViewer 
+                                    size={256} 
+                                    userStrokes={playbackDetails.userStrokes} 
+                                    referenceStrokes={playbackDetails.referenceStrokes}
+                                    strokesAccuracy={playbackDetails.strokesAccuracy}
+                                />
+                                <Text style={styles.instructionText}>
+                                    Your drawing
+                                </Text>
+                            </View>
+                        </>
+                    ) : (
+                        <Text>No data available</Text>
+                    )}
 
                 </Pressable>
             </Pressable>
@@ -306,8 +422,6 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
 const styles = StyleSheet.create({
   scrollContent: { backgroundColor: colors.background, paddingBottom: 40 },
   
-  // --- UPDATED KANJI CANVAS STYLES ---
-  // This matches the structure provided in the prompt (no shadows, specific border)
   canvasContainer: {
     borderWidth: 2,
     borderColor: '#E5E7EB',
@@ -316,7 +430,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: '#fff',
     alignSelf: 'center',
-    // Width and Height are handled dynamically via props
   },
   canvas: {
     backgroundColor: '#fff',
@@ -328,10 +441,9 @@ const styles = StyleSheet.create({
   instructionText: {
       fontSize: 14, 
       color: '#666', 
-      marginTop: -8 // Adjusted since canvasContainer has marginBottom
+      marginTop: -8
   },
 
-  // Details Section
   detailsContainer: {
     backgroundColor: '#fff', 
     borderRadius: 16,
@@ -343,7 +455,6 @@ const styles = StyleSheet.create({
   detailsDate: { fontSize: 18, fontWeight: '700', color: colors.text },
   detailsSubtitle: { fontSize: 14, color: colors.textMuted, marginTop: 2 },
   
-  // Tabs
   tabsRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#f0f0f0', marginBottom: 12 },
   tabButton: { paddingVertical: 8, paddingHorizontal: 12, marginRight: 8, borderBottomWidth: 2, borderBottomColor: 'transparent' },
   activeTabButton: { borderBottomColor: colors.primary || '#3498db' },
@@ -351,15 +462,64 @@ const styles = StyleSheet.create({
   activeTabText: { color: colors.primary || '#3498db', fontWeight: '700' },
   emptyTabParams: { color: colors.textMuted, fontStyle: 'italic', padding: 8 },
 
-  // Chips
   chipsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { width: '22%', aspectRatio: 1, backgroundColor: '#f8f9fa', borderRadius: 10, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#eee' },
+  
+  chip: { 
+      width: '22%', 
+      aspectRatio: 1, // Kwadratowy kształt
+      backgroundColor: '#f8f9fa', 
+      borderRadius: 10, 
+      // justifyContent: 'space-between', // Rozkład góra-dół
+      padding: 4,
+      borderWidth: 1, 
+      borderColor: '#eee' 
+  },
   chipOk: { backgroundColor: '#f0fdf4', borderColor: '#dcfce7' }, 
   chipMiss: { backgroundColor: '#fef2f2', borderColor: '#fee2e2' }, 
-  chipTop: { flexDirection: 'row', alignItems: 'flex-start' },
+  
+  chipHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+      height: 14, // Stała wysokość nagłówka
+  },
+  newDot: { 
+      width: 6, 
+      height: 6, 
+      borderRadius: 3, 
+      backgroundColor: '#3498db' 
+  },
+  chipTime: {
+      fontSize: 9,
+      color: '#9ca3af',
+      fontWeight: '600'
+  },
+
+  chipContent: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: -4 // Lekka korekta optyczna
+  },
   chipChar: { fontSize: 20, fontWeight: '700', color: '#333', marginBottom: 2 },
-  newDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#3498db', position: 'absolute', right: -8, top: 0 },
-  chipMeaning: { fontSize: 10, color: '#666' },
+  chipMeaning: { fontSize: 9, color: '#666', textAlign: 'center' }, // Mniejszy font dla znaczenia
+
+  showMoreButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 12,
+      marginTop: 8,
+      gap: 4,
+      borderTopWidth: 1,
+      borderTopColor: '#F3F4F6'
+  },
+  showMoreText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.textMuted
+  },
 
   emptyState: { padding: 10, alignItems: 'center' },
   emptyText: { color: colors.textMuted, fontStyle: 'italic' },
@@ -368,7 +528,6 @@ const styles = StyleSheet.create({
   logoutContent: { ...themeStyles.flexRow, ...themeStyles.gap8, alignItems: 'center', justifyContent: 'center' },
   logoutText: { color: '#c0392b', fontSize: 16, fontWeight: '500' },
 
-  // --- MODAL STYLES ---
   modalOverlay: {
       flex: 1,
       backgroundColor: 'rgba(0,0,0,0.6)',
@@ -387,7 +546,9 @@ const styles = StyleSheet.create({
       shadowOffset: { width: 0, height: 10 },
       shadowOpacity: 0.25,
       shadowRadius: 10,
-      elevation: 10
+      elevation: 10,
+      minHeight: 200,
+      justifyContent: 'center'
   },
   modalHeader: {
       width: '100%',
@@ -397,7 +558,7 @@ const styles = StyleSheet.create({
       marginBottom: 10
   },
   modalTitle: { fontSize: 32, fontWeight: 'bold', color: colors.text },
-  modalSubtitle: { fontSize: 18, color: colors.textMuted, marginTop: -4 },
+  modalSubtitle: { fontSize: 16, color: colors.textMuted, marginTop: -4 },
 });
 
 export default ProfileScreen;

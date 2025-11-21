@@ -19,78 +19,48 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as SecureStore from 'expo-secure-store';
 
-// --- 1. ZMODYFIKOWANA funkcja: Obliczanie ŚRODKA kreski ---
 const getArrowConfig = (path: string) => {
-  // Wyciągamy wszystkie liczby ze ścieżki
   const numbers = path.match(/[-+]?[0-9]*\.?[0-9]+/g)?.map(Number);
 
   if (!numbers || numbers.length < 4) return null;
 
-  // Punkt Startowy (Pierwsza para)
   const startX = numbers[0];
   const startY = numbers[1];
-
-  // Punkt Końcowy (Ostatnia para w tablicy)
-  // Dzięki temu uwzględniamy całą długość kreski
   const endX = numbers[numbers.length - 2];
   const endY = numbers[numbers.length - 1];
 
-  // Obliczamy ŚRODEK (Midpoint)
   const midX = (startX + endX) / 2;
   const midY = (startY + endY) / 2;
 
-  // Obliczamy kąt ogólnego kierunku kreski (od startu do końca)
   const angle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI);
 
   return {x: midX, y: midY, rotation: angle};
 };
 
-// --- 2. Komponent Strzałki (Bez zmian wizualnych, tylko pozycja się zmieniła dzięki funkcji wyżej) ---
 const StrokeDirectionArrow: React.FC<{d: string; color?: string}> = ({d, color = "#EF4444"}) => {
   const config = useMemo(() => getArrowConfig(d), [d]);
 
   if (!config) return null;
 
-  const arrowLength = 40; // Dłuższa strzałka
-  const offset = 16;      // Większy odstęp od kreski, żeby było czytelnie
+  const arrowLength = 40;
+  const offset = 16;
 
   return (
-    <G
-      x={config.x}
-      y={config.y}
-      rotation={config.rotation}
-      origin="0, 0"
-    >
-      {/* Przesuwamy w dół (offset) i cofamy o połowę długości (-arrowLength/2), 
-          żeby środek strzałki był dokładnie na środku kreski */}
+    <G x={config.x} y={config.y} rotation={config.rotation} origin="0, 0">
       <G y={offset} x={-arrowLength / 2}>
-        
-        {/* Oś strzałki */}
         <Line 
-          x1={0} 
-          y1={0} 
-          x2={arrowLength} 
-          y2={0} 
-          stroke={color} 
-          strokeWidth={2} 
-          opacity={0.8}
+          x1={0} y1={0} x2={arrowLength} y2={0} 
+          stroke={color} strokeWidth={2} opacity={0.8}
         />
-
-        {/* Grot strzałki */}
         <Polygon
           points={`${arrowLength},0 ${arrowLength - 6},-4 ${arrowLength - 6},4`}
-          fill={color}
-          opacity={0.8}
+          fill={color} opacity={0.8}
         />
-
-        {/* Kropka początkowa strzałki (opcjonalnie) */}
         <Circle cx={0} cy={0} r={2} fill={color} opacity={0.6} />
       </G>
     </G>
   );
 };
-
-// --- Reszta pliku bez zmian (Komponenty animacji, Canvas itp.) ---
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -144,6 +114,7 @@ interface AnimatedKanjiProps {
   isActive: boolean;
   paths: string[];
   viewBox?: string;
+  style?: any;
 }
 
 const pointsToPath = (points: Point[]): string => {
@@ -155,19 +126,20 @@ const pointsToPath = (points: Point[]): string => {
   return path;
 };
 
-const AnimatedKanji: React.FC<AnimatedKanjiProps> = ({
+export const AnimatedKanji: React.FC<AnimatedKanjiProps> = ({
   size,
   color,
   isActive,
   paths,
   viewBox = '0 0 256 256',
+  style,
 }) => {
   return (
     <Svg
       width={size}
       height={size}
       viewBox={viewBox}
-      style={styles.canvasAnimation}>
+      style={[styles.canvasAnimation, style]}>
       
       {paths.map((d, index) => (
         <AnimatedStroke
@@ -179,7 +151,6 @@ const AnimatedKanji: React.FC<AnimatedKanjiProps> = ({
         />
       ))}
 
-      {/* Renderujemy strzałki w trybie Guided (animacja) */}
       {isActive && paths.map((d, index) => (
          <StrokeDirectionArrow key={`arrow-${index}`} d={d} />
       ))}
@@ -190,6 +161,8 @@ const AnimatedKanji: React.FC<AnimatedKanjiProps> = ({
 type Point = {x: number; y: number};
 
 interface KanjiCanvasProps {
+  kanjiUuid: string;
+  isLearningSession: boolean;
   targetKanji: string;
   referenceStrokes: number[][][];
   onComplete: (accuracy: number) => void;
@@ -212,6 +185,8 @@ const getStrokeColor = (accuracyPercent: number): string => {
 };
 
 const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
+  kanjiUuid,
+  isLearningSession,
   targetKanji,
   referenceStrokes,
   onComplete,
@@ -242,8 +217,7 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
   const [currentPath, setCurrentPath] = useState<Point[]>([]);
 
   const [isReviewing, setIsReviewing] = useState(false);
-  const [accuracyResult, setAccuracyResult] =
-    useState<KanjiAccuracyResult | null>(null);
+  const [accuracyResult, setAccuracyResult] = useState<KanjiAccuracyResult | null>(null);
 
   useEffect(() => {
     resetCanvas(true);
@@ -259,7 +233,7 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
         throw new Error('Authorization token not found.');
       }
 
-      const url = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/accuracy/${endpoint}`;
+      const url = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/checker/${endpoint}`;
 
       const response = await fetch(url, {
         method: 'POST',
@@ -275,12 +249,11 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
         throw new Error(`API Error (${response.status}): ${errorText}`);
       }
 
-      const result: KanjiAccuracyResult = await response.json();
-      return result;
+      return await response.json();
     } catch (e: any) {
-      console.error(`Failed to check ${endpoint} accuracy:`, e);
+      console.error(`Checker API error (${endpoint}):`, e);
       toast({
-        title: 'Accuracy Check Failed',
+        title: 'Check Failed',
         description: e.message,
       });
       return null;
@@ -383,7 +356,7 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
     if (paths.length !== referencePaths.length) {
       toast({
         title: 'Incorrect Stroke Count',
-        description: `Expected ${referencePaths.length} strokes, but you drew ${paths.length}.`,
+        description: `Expected ${referencePaths.length}, got ${paths.length}.`,
         variant: 'error',
       });
       return;
@@ -394,9 +367,12 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
     });
 
     const payload = {
+      kaniUuid: kanjiUuid,
       userStrokes: formattedPaths,
       referenceStrokes: referenceStrokes,
+      isLearningSession: isLearningSession
     };
+    
     const result = await checkAccuracyAPI('kanji', payload);
 
     if (!result) return;
@@ -404,16 +380,12 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
     setAccuracyResult(result);
     setIsReviewing(true);
 
-    const allStrokesGood = result.strokeAccuracies.every(
-      acc => Math.round(acc * 100) >= ACCURACY_THRESHOLD,
-    );
-
-    if (allStrokesGood) {
+    if (Math.round(result.overallAccuracy * 100) > ACCURACY_THRESHOLD) {
       onComplete(Math.round(result.overallAccuracy * 100));
     } else {
       toast({
-        title: 'Some strokes are incorrect',
-        description: 'Review the colored strokes and press Reset to try again.',
+        title: 'Not quite right',
+        description: 'Accuracy too low. Try again to pass!',
         variant: 'error',
       });
     }
@@ -431,8 +403,7 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
 
   const isUndoDisabled = paths.length === 0;
   const isCheckDisabled = paths.length === 0 || isReviewing;
-  const isResetEnabled =
-    currentPath.length > 0 || paths.length > 0 || guidedPaths.length > 0;
+  const isResetEnabled = currentPath.length > 0 || paths.length > 0 || guidedPaths.length > 0;
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
@@ -440,9 +411,7 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
         <View style={styles.header}>
           <Text style={styles.instructionText}>
             {practiceMode === 'guided'
-              ? `Draw stroke ${currentStrokeIndex + 1} / ${
-                  referencePaths.length
-                }`
+              ? `Draw stroke ${currentStrokeIndex + 1} / ${referencePaths.length}`
               : 'Draw the full kanji'}
           </Text>
         </View>
@@ -457,22 +426,11 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
               height={CANVAS_SIZE}
               style={styles.canvas}>
               <G stroke="#F3F4F6" strokeWidth="1">
-                <Line
-                  x1={CANVAS_SIZE / 2}
-                  y1="0"
-                  x2={CANVAS_SIZE / 2}
-                  y2={CANVAS_SIZE}
-                />
-                <Line
-                  x1="0"
-                  y1={CANVAS_SIZE / 2}
-                  x2={CANVAS_SIZE}
-                  y2={CANVAS_SIZE / 2}
-                />
+                <Line x1={CANVAS_SIZE / 2} y1="0" x2={CANVAS_SIZE / 2} y2={CANVAS_SIZE} />
+                <Line x1="0" y1={CANVAS_SIZE / 2} x2={CANVAS_SIZE} y2={CANVAS_SIZE / 2} />
               </G>
 
               {practiceMode === 'guided' ? (
-                // --- TRYB GUIDED ---
                 <AnimatedKanji
                   key={animationKey}
                   size={CANVAS_SIZE}
@@ -482,11 +440,9 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
                   viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_SIZE}`}
                 />
               ) : (
-                // --- TRYB FREE ---
                 <G opacity={0.3}>
                   {referencePaths.map((strokePath, index) => (
                     <React.Fragment key={`ref-group-${index}`}>
-                      {/* Placeholder */}
                       <Path
                         d={strokePath}
                         stroke="#9CA3AF"
@@ -495,14 +451,12 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
                         strokeLinejoin="round"
                         fill="none"
                       />
-                      {/* Strzałka Kierunkowa (Wyśrodkowana) */}
                       <StrokeDirectionArrow d={strokePath} color="#EF4444" />
                     </React.Fragment>
                   ))}
                 </G>
               )}
 
-              {/* Reszta ścieżek (guidedPaths, paths, currentPath) bez zmian */}
               {guidedPaths.map((path, index) => (
                 <Path
                   key={`guided-path-${index}`}
@@ -522,11 +476,7 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
                     d={pointsToPath(path)}
                     stroke={
                       isReviewing && accuracyResult
-                        ? getStrokeColor(
-                            Math.round(
-                              accuracyResult.strokeAccuracies[index] * 100,
-                            ),
-                          )
+                        ? getStrokeColor(Math.round(accuracyResult.strokeAccuracies[index] * 100))
                         : '#1E293B'
                     }
                     strokeWidth="4"
@@ -558,16 +508,8 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
                 onPress={() => resetCanvas(false)}
                 disabled={!isResetEnabled}>
                 <View style={styles.buttonContent}>
-                  <Ionicons
-                    name="reload"
-                    size={16}
-                    color={!isResetEnabled ? '#AAA' : '#666'}
-                  />
-                  <Text
-                    style={[
-                      styles.buttonText,
-                      !isResetEnabled && styles.buttonTextDisabled,
-                    ]}>
+                  <Ionicons name="reload" size={16} color={!isResetEnabled ? '#AAA' : '#666'} />
+                  <Text style={[styles.buttonText, !isResetEnabled && styles.buttonTextDisabled]}>
                     Reset
                   </Text>
                 </View>
@@ -579,16 +521,8 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
                 disabled={isUndoDisabled}
               >
                 <View style={styles.buttonContent}>
-                  <Ionicons
-                    name="arrow-undo-outline"
-                    size={16}
-                    color={isUndoDisabled ? '#AAA' : '#666'}
-                  />
-                  <Text
-                    style={[
-                      styles.buttonText,
-                      isUndoDisabled && styles.buttonTextDisabled,
-                    ]}>
+                  <Ionicons name="arrow-undo-outline" size={16} color={isUndoDisabled ? '#AAA' : '#666'} />
+                  <Text style={[styles.buttonText, isUndoDisabled && styles.buttonTextDisabled]}>
                     Undo
                   </Text>
                 </View>
@@ -599,16 +533,8 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
                 disabled={isCheckDisabled}
               >
                 <View style={styles.buttonContent}>
-                  <Ionicons
-                    name="checkmark"
-                    size={16}
-                    color={isCheckDisabled ? '#AAA' : '#fff'}
-                  />
-                  <Text
-                    style={[
-                      styles.buttonText,
-                      {color: isCheckDisabled ? '#AAA' : '#fff'},
-                    ]}>
+                  <Ionicons name="checkmark" size={16} color={isCheckDisabled ? '#AAA' : '#fff'} />
+                  <Text style={[styles.buttonText, {color: isCheckDisabled ? '#AAA' : '#fff'}]}>
                     Check
                   </Text>
                 </View>

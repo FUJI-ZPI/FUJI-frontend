@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-// WAŻNE: Ten import jest kluczowy, aby reset działał przy powrocie na ekran
 import { useFocusEffect } from '@react-navigation/native'; 
 
 export interface ContributionGraphProps {
@@ -10,6 +9,14 @@ export interface ContributionGraphProps {
   onDayPress: (date: string, count: number) => void;
   daysBack?: number; 
 }
+
+// Helper do formatowania daty lokalnej YYYY-MM-DD (zamiast toISOString)
+const getLocalDateString = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 export const ContributionGraph: React.FC<ContributionGraphProps> = ({
   values,
@@ -20,7 +27,6 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
   
   const [currentEndDate, setCurrentEndDate] = useState(new Date());
 
-  // --- LOGIKA RESETOWANIA PRZY WEJŚCIU NA EKRAN ---
   useFocusEffect(
     useCallback(() => {
       setCurrentEndDate(new Date());
@@ -38,7 +44,10 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
     for (let i = daysBack; i >= 0; i--) {
       const d = new Date(anchorDate);
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      
+      // POPRAWKA 1: Używamy lokalnej daty zamiast ISO (które przesuwa strefę czasową)
+      const dateStr = getLocalDateString(d);
+      
       const count = values[dateStr] || 0;
       
       let level = 0;
@@ -78,8 +87,9 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
     const newDate = new Date(currentEndDate);
     newDate.setDate(newDate.getDate() + daysBack);
     
-    const today = new Date();
-    today.setHours(0,0,0,0);
+    // POPRAWKA 2: Nie zerujemy godzin (setHours(0,0,0,0)), 
+    // bo to powodowało cofnięcie daty przy konwersji.
+    const today = new Date(); 
 
     if (newDate > today) {
         setCurrentEndDate(today);
@@ -90,11 +100,14 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
 
   const isLatest = useMemo(() => {
       const today = new Date();
+      // Tutaj zerowanie jest OK, bo służy tylko do porównania logicznego, a nie generowania daty
       today.setHours(0,0,0,0);
-      return currentEndDate.getTime() >= today.getTime();
+      const checkDate = new Date(currentEndDate);
+      checkDate.setHours(0,0,0,0);
+      
+      return checkDate.getTime() >= today.getTime();
   }, [currentEndDate]);
 
-  // Pobieramy rok z aktualnie wyświetlanej daty końcowej
   const currentYear = currentEndDate.getFullYear();
 
   return (
@@ -108,7 +121,6 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
              
              <View style={styles.titleTextContainer}>
                 <Text style={styles.title}>Activity Log</Text>
-                {/* ROK - dodany tutaj */}
                 <Text style={styles.yearText}>{currentYear}</Text>
              </View>
              
@@ -142,7 +154,6 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
         contentContainerStyle={styles.scrollContent} 
       >
         <View>
-            {/* Warstwa Miesięcy */}
             <View style={styles.monthsRow}>
             {months.map((m, i) => (
                 <Text key={i} style={[styles.monthLabel, { left: m.index * 18 }]}>
@@ -151,7 +162,6 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
             ))}
             </View>
 
-            {/* Grid Dni */}
             <View style={styles.grid}>
             {weeks.map((week, wIndex) => (
                 <View key={wIndex} style={styles.column}>
@@ -210,7 +220,7 @@ const styles = StyleSheet.create({
   },
   titleTextContainer: {
       flexDirection: 'row',
-      alignItems: 'baseline', // Wyrównanie do linii bazowej tekstu
+      alignItems: 'baseline', 
       gap: 6
   },
   title: { 
@@ -221,7 +231,7 @@ const styles = StyleSheet.create({
   yearText: {
       fontSize: 12,
       fontWeight: '600',
-      color: '#94a3b8' // Szary kolor dla roku
+      color: '#94a3b8' 
   },
   arrowBtn: {
       padding: 2,

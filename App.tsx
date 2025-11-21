@@ -3,10 +3,8 @@ import {NavigationContainer} from "@react-navigation/native";
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {createDrawerNavigator} from "@react-navigation/drawer";
 import {StyleSheet} from "react-native";
-//import { ZenDots_400Regular, useFonts } from '@expo-google-fonts/zen-dots';
 import {DrawerContent, NavItem, ScreenComponentType} from "./src/components/navigation/DrawerContent";
 import {DashboardScreen} from "./src/screens/DashboardScreen";
-import {PlaceholderScreen} from "./src/screens/PlaceholderScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 import LoginScreen from "./src/screens/LoginScreen";
 import ToastProvider from "./src/providers/ToastProvider";
@@ -27,8 +25,6 @@ import RadicalDetailScreen from "./src/screens/RadicalDetailScreen";
 import RecognizerScreen from "./src/screens/RecognizerScreen";
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {MenuProvider} from 'react-native-popup-menu';
-import PracticeScreen from "./src/screens/LearningSessionScreen";
-import PracticeSessionScreen from "./src/screens/LearningSessionScreen";
 import LearningSessionScreen from "./src/screens/LearningSessionScreen";
 import ReviewSessionScreen from "./src/screens/ReviewSessionScreen";
 
@@ -86,7 +82,6 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
     { id: "Kanji", label: t("Kanji"), icon: "language-outline", component: KanjiFlow as ScreenComponentType },
     { id: "Vocabulary", label: t("nav.vocabulary"), icon: "book-outline", component: VocabularyFlow as ScreenComponentType },
     { id: "Chat", label: t("nav.chat"), icon: "chatbubble-ellipses-outline", component: ChatbotScreen as ScreenComponentType },
-    { id: "Leaderboard", label: t("nav.leaderboard"), icon: "trophy-outline", component: PlaceholderScreen as ScreenComponentType },
     { id: "Profile", label: t("nav.profile"), icon: "person-outline", component: ProfileScreen as ScreenComponentType },
   ];
 

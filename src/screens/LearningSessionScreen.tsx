@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
-  // Dodane importy
   StyleProp,
   ViewStyle,
 } from 'react-native';
@@ -18,7 +17,6 @@ import {useToast} from '../hooks/use-toast';
 import * as SecureStore from 'expo-secure-store';
 import {useFocusEffect} from '@react-navigation/native';
 
-// --- Importy do Animacji SVG ---
 import Svg, {Path} from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -28,7 +26,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-// --- Komponenty do Animacji SVG (zgodne z poprzednimi plikami) ---
+// --- Komponenty do Animacji SVG ---
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const AnimatedStroke: React.FC<{
@@ -37,7 +35,6 @@ const AnimatedStroke: React.FC<{
   isActive: boolean;
   color: string;
 }> = ({d, index, isActive, color}) => {
-  // Używamy animacji rysowania
   const STROKE_LENGTH = 1000;
   const strokeDashoffset = useSharedValue(STROKE_LENGTH);
 
@@ -82,7 +79,7 @@ interface AnimatedKanjiProps {
   isActive: boolean;
   paths: string[];
   viewBox?: string;
-  style?: StyleProp<ViewStyle>; // Zezwól na przekazywanie stylu
+  style?: StyleProp<ViewStyle>;
 }
 
 const AnimatedKanji: React.FC<AnimatedKanjiProps> = ({
@@ -112,7 +109,7 @@ const AnimatedKanji: React.FC<AnimatedKanjiProps> = ({
   );
 };
 
-// --- Interfejsy (ZMIANA TUTAJ) ---
+// --- Interfejsy ---
 interface Meaning {
   meaning: string;
   primary: boolean;
@@ -160,17 +157,13 @@ interface KanjiDetailDto {
   componentRadicals: any[];
   relatedVocabulary: any[];
   visuallySimilarKanji: any[];
-  // --- DODANE POLE ---
-  referenceStrokes: number[][][]; // List<List<List<Double>>>
+  referenceStrokes: number[][][];
 }
-// --- Koniec interfejsów ---
 
 export default function LearningSessionScreen({navigation}: any) {
   const {toast} = useToast();
 
-  const [practiceKanjiList, setPracticeKanjiList] = useState<KanjiDetailDto[]>(
-    [],
-  );
+  const [practiceKanjiList, setPracticeKanjiList] = useState<KanjiDetailDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -222,43 +215,13 @@ export default function LearningSessionScreen({navigation}: any) {
       toast({
         title: 'Error',
         description: e.message || 'Failed to fetch lessons.',
-        // variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const addCardToSrs = async (kanjiUuid: string) => {
-    try {
-      const token = await SecureStore.getItemAsync('accessToken');
-      if (!token) {
-        throw new Error('Authorization token not found.');
-      }
-
-      const url = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/srs/add-card?kanjiUuid=${kanjiUuid}`;
-
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Server error while adding card: ${response.status}`);
-      }
-
-      console.log(`Card ${kanjiUuid} added to SRS.`);
-    } catch (e: any) {
-      console.error('Failed to synchronize card with SRS:', e);
-      toast({
-        title: 'Sync Error',
-        description: e.message,
-        // variant: 'destructive',
-      });
-    }
-  };
+  // --- LOGIKA: Usunięto funkcję addCardToSrs (Backend robi to automatycznie) ---
 
   const currentKanji = practiceKanjiList[currentKanjiIndex];
   const totalKanji = practiceKanjiList.length;
@@ -291,7 +254,7 @@ export default function LearningSessionScreen({navigation}: any) {
       });
     }
 
-    await addCardToSrs(currentKanji.uuid);
+    // --- LOGIKA: Nie wywołujemy SRS tutaj. Backend zapisał wynik po otrzymaniu rysunku. ---
 
     setTimeout(() => {
       nextKanji();
@@ -363,8 +326,6 @@ export default function LearningSessionScreen({navigation}: any) {
   const primaryMeaning =
     currentKanji.details.data.meanings.find(m => m.primary)?.meaning ||
     'No meaning';
-  
-  // Usunięto onyomiReadings i kunyomiReadings
 
   return (
     <ScrollView
@@ -398,21 +359,17 @@ export default function LearningSessionScreen({navigation}: any) {
 
         <View style={styles.kanjiDisplay}>
           <View style={styles.kanjiCharacterContainer}>
-            {/* Animacja rysowania z SVG */}
             <AnimatedKanji
               key={animationKey}
               size={120}
               color="#10B981"
-              paths={currentKanji.svgPath} // Użyj svgPath do animacji
+              paths={currentKanji.svgPath}
               isActive={true}
               style={styles.kanjiAnimationOverlay}
             />
           </View>
           <Text style={styles.kanjiMeaning}>{primaryMeaning}</Text>
         </View>
-
-        {/* --- USUNIĘTA SEKCJA CZYTAŃ --- */}
-        
       </Card>
 
       {showResult ? (
@@ -435,6 +392,10 @@ export default function LearningSessionScreen({navigation}: any) {
         </Card>
       ) : (
         <KanjiCanvas
+          // --- LOGIKA: Przekazujemy ID i flagę lekcji ---
+          kanjiUuid={currentKanji.uuid}
+          isLearningSession={true}
+          
           targetKanji={currentKanji.character}
           referenceStrokes={currentKanji.referenceStrokes}
           onComplete={handleKanjiComplete}
@@ -498,8 +459,6 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   kanjiMeaning: {fontSize: 18, fontWeight: '500', color: '#333'},
-  // --- USUNIĘTE STYLE CZYTAŃ ---
-  // readingsContainer, readingItem, readingLabel, readingValue
   resultCard: {padding: 24, alignItems: 'center', marginBottom: 16},
   resultEmoji: {fontSize: 64, marginBottom: 16},
   resultTitle: {

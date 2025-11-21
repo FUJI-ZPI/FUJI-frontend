@@ -15,6 +15,8 @@ import * as SecureStore from 'expo-secure-store';
 type Point = {x: number; y: number};
 
 interface KanjiCanvasProps {
+  kanjiUuid: string;          // <--- NOWE
+  isLearningSession: boolean; // <--- NOWE
   targetKanji: string;
   referenceStrokes: number[][][];
   onComplete: (accuracy: number) => void;
@@ -32,7 +34,6 @@ const clamp = (value: number, min: number, max: number) => {
   return Math.max(min, Math.min(value, max));
 };
 
-// Kolorowanie: Czerwony dla błędu, Zielony dla sukcesu
 const getStrokeColor = (accuracyPercent: number): string => {
   return accuracyPercent >= ACCURACY_THRESHOLD ? '#22C55E' : '#EF4444';
 };
@@ -47,6 +48,8 @@ const pointsToPath = (points: Point[]): string => {
 };
 
 const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
+  kanjiUuid,          // <--- props
+  isLearningSession,  // <--- props
   targetKanji,
   referenceStrokes,
   onComplete,
@@ -79,6 +82,7 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
     resetCanvas();
   }, [targetKanji]);
 
+  // --- ZMIANA: Nowy endpoint ---
   const checkKanjiAccuracyAPI = async (
     payload: any,
   ): Promise<KanjiAccuracyResult | null> => {
@@ -87,7 +91,8 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
       if (!token) {
         throw new Error('Authorization token not found.');
       }
-      const url = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/accuracy/kanji`;
+      // Zmiana na endpoint checker
+      const url = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/checker/kanji`;
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -105,7 +110,7 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
     } catch (e: any) {
       console.error(`Failed to check kanji accuracy:`, e);
       toast({
-        title: 'Accuracy Check Failed',
+        title: 'Check Failed',
         description: e.message,
       });
       return null;
@@ -157,9 +162,7 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
     }
   };
 
-  // --- KLUCZOWA ZMIANA ---
   const handleFinalCheck = async () => {
-    // 1. Sprawdzenie liczby kresek
     if (paths.length !== referencePaths.length) {
       toast({
         title: 'Wrong Stroke Count',
@@ -167,14 +170,12 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
         variant: 'error',
       });
 
-      // Ustawiamy "sztuczny" wynik 0%, żeby pokolorować wszystko na czerwono
       setAccuracyResult({
         overallAccuracy: 0,
-        strokeAccuracies: new Array(paths.length).fill(0), // Wszystkie kreski 0% -> czerwone
+        strokeAccuracies: new Array(paths.length).fill(0),
       });
       setIsReviewing(true);
 
-      // OD RAZU wywołujemy onComplete(0), żeby parent przeszedł dalej
       onComplete(0);
       return;
     }
@@ -183,21 +184,23 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
       return stroke.map(point => [point.x, point.y]);
     });
 
+    // --- ZMIANA: Payload z danymi do checkera ---
     const payload = {
+      kaniUuid: kanjiUuid,
       userStrokes: formattedPaths,
       referenceStrokes: referenceStrokes,
+      isLearningSession: isLearningSession
     };
 
     const result = await checkKanjiAccuracyAPI(payload);
     if (!result) {
-        onComplete(0); // Fallback w razie błędu API
+        onComplete(0); 
         return;
     }
 
     setAccuracyResult(result);
     setIsReviewing(true); 
 
-    // Przekazujemy faktyczny wynik.
     onComplete(Math.round(result.overallAccuracy * 100));
   };
 
