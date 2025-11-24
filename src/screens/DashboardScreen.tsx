@@ -43,8 +43,8 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
     return { learnedKanji, totalKanji };
   }, []);
 
-  const handleStartPractice = () => navigation.navigate('Practice');
-  const handleNavigateToVocabulary = () => navigation.navigate('Vocabulary');
+  const handleReviewSession = () => navigation.navigate('ReviewSession');
+  const handleLearningSession = () => navigation.navigate('LearningSession');
 
   return (
     <View style={{ flex: 1 }}>
@@ -107,20 +107,14 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
 
           <View style={styles.grassSection}>
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={[styles.buttonBase, styles.buttonSecondary]} onPress={handleNavigateToVocabulary}>
+              <TouchableOpacity style={[styles.buttonBase, styles.buttonSecondary]} onPress={handleLearningSession}>
                 <View style={styles.buttonContentWrapper}>
-                  <Text style={styles.buttonTextSecondary}>Learn Kanji</Text>
-                  <View style={[styles.iconCircle, styles.iconCircleSecondary]}>
-                    <Text style={styles.kanjiIconText}>勉</Text>
-                  </View>
+                  <Text style={styles.buttonTextSecondary}>Learning Session</Text>
                 </View>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.buttonBase, styles.buttonPrimary]} onPress={handleStartPractice}>
+              <TouchableOpacity style={[styles.buttonBase, styles.buttonPrimary]} onPress={handleReviewSession}>
                 <View style={styles.buttonContentWrapper}>
-                  <Text style={styles.buttonTextPrimary}>Start Practice</Text>
-                  <View style={[styles.iconCircle, styles.iconCirclePrimary]}>
-                    <Feather name="arrow-right" size={22} color='#ffffff' />
-                  </View>
+                  <Text style={styles.buttonTextPrimary}>Review Session</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -230,13 +224,17 @@ const styles = StyleSheet.create({
   },
   buttonTextPrimary: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 18,
+    flex: 1,
+    textAlign: 'center',
   },
   buttonTextSecondary: {
     color: 'black',
     fontWeight: '800',
     fontSize: 18,
+    flex: 1,
+    textAlign: 'center',
   },
   kanjiIconText: {
     color: 'black',

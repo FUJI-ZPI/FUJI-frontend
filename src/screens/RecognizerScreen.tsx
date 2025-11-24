@@ -5,6 +5,7 @@ import Svg, { Path } from "react-native-svg";
 import * as SecureStore from 'expo-secure-store';
 import { Card } from '../components/ui/Card';
 import { colors } from '../theme/styles';
+import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 
 const { width } = Dimensions.get("window");
 const CANVAS_SIZE = width - 40;
@@ -21,12 +22,18 @@ type RecognizedKanjiDto = {
 };
 
 type Stroke = {
-  points: number[][];
+  points: Point[];
 };
+
+type Point = {x: number; y: number};
 
 type KanjiCandidatesGridProps = {
     kanjiList: RecognizedKanjiDto[];
     onSelectKanji: (item: RecognizedKanjiDto) => void;
+};
+
+const clamp = (value: number, min: number, max: number) => {
+  return Math.max(min, Math.min(value, max));
 };
 
 const KanjiCandidatesGrid = ({ kanjiList, onSelectKanji }: KanjiCandidatesGridProps) => {
@@ -65,21 +72,14 @@ const KanjiCandidatesGrid = ({ kanjiList, onSelectKanji }: KanjiCandidatesGridPr
 
 export default function RecognizerScreen({ navigation }: { navigation: any }) {
   const [strokes, setStrokes] = useState<Stroke[]>([]);
-  const [currentStroke, setCurrentStroke] = useState<number[][]>([]);
+  const [currentStroke, setCurrentStroke] = useState<Point[]>([]);
   const [recognizedKanjis, setRecognizedKanjis] = useState<RecognizedKanjiDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const pointsToPath = useCallback((points: number[][]) => {
+  const pointsToPath = useCallback((points: Point[]) => {
     if (points.length === 0) return "";
-    return points.map((p, i) => (i === 0 ? `M ${p[0]} ${p[1]}` : `L ${p[0]} ${p[1]}`)).join(" ");
+    return points.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ");
   }, []);
-
-  const handleGesture = (event: any) => {
-    const { x, y } = event.nativeEvent;
-    const clampedY = Math.max(0, y);
-    const clampedX = Math.max(0, x);
-    setCurrentStroke((prev) => [...prev, [clampedX, clampedY]]);
-  };
 
   const onSelectKanji = (item: RecognizedKanjiDto) => {
     navigation.navigate('Kanji', {
@@ -107,7 +107,9 @@ export default function RecognizerScreen({ navigation }: { navigation: any }) {
         return;
       }
 
-      const userStrokesData = currentStrokes.map(stroke => stroke.points);
+      const userStrokesData = currentStrokes.map(stroke => 
+        stroke.points.map(p => [p.x, p.y])
+      );
 
       const payload = {
           userStrokes: userStrokesData
@@ -141,17 +143,34 @@ export default function RecognizerScreen({ navigation }: { navigation: any }) {
     }
   };
 
-  const handleEnd = () => {
-    if (currentStroke.length > 0) {
-      const newStroke: Stroke = { points: currentStroke };
-      const newStrokesList = [...strokes, newStroke];
+  const onGestureEvent = useCallback((event: any) => {
+    const { x, y } = event.nativeEvent;
+    const clampedX = clamp(x, 0, CANVAS_SIZE);
+    const clampedY = clamp(y, 0, CANVAS_SIZE);
+    setCurrentStroke((prev) => [...prev, {x: clampedX, y: clampedY}]);
+  }, []);
 
-      setStrokes(newStrokesList);
-      setCurrentStroke([]);
+  const onHandlerStateChange = useCallback(
+    (event: any) => {
+      if (event.nativeEvent.state === State.BEGAN) {
+        const { x, y } = event.nativeEvent;
+        const clampedX = clamp(x, 0, CANVAS_SIZE);
+        const clampedY = clamp(y, 0, CANVAS_SIZE);
+        setCurrentStroke([{x: clampedX, y: clampedY}]);
+      } else if (event.nativeEvent.state === State.END) {
+        if (currentStroke.length > 0) {
+          const newStroke: Stroke = { points: currentStroke };
+          const newStrokesList = [...strokes, newStroke];
 
-      recognize(newStrokesList);
-    }
-  };
+          setStrokes(newStrokesList);
+          setCurrentStroke([]);
+
+          recognize(newStrokesList);
+        }
+      }
+    },
+    [currentStroke, strokes],
+  );
 
   const handleClear = () => {
     setStrokes([]);
@@ -172,7 +191,7 @@ export default function RecognizerScreen({ navigation }: { navigation: any }) {
 
       return newStrokes.map(stroke => ({ points: stroke.points }));
     });
-  }, []);
+  }, []); 
 
   const renderResults = () => {
     if (isLoading) {
@@ -195,14 +214,16 @@ export default function RecognizerScreen({ navigation }: { navigation: any }) {
     );
   };
 
+  const isResetDisabled = isLoading || (strokes.length === 0 && currentStroke.length === 0);
+  const isUndoDisabled = isLoading || strokes.length === 0;
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <View style={styles.canvasWrapper}>
         <PanGestureHandler
-          onGestureEvent={handleGesture}
-          onHandlerStateChange={(event) => {
-            if (event.nativeEvent.state === State.END) handleEnd();
-          }}
+          onGestureEvent={onGestureEvent} 
+          onHandlerStateChange={onHandlerStateChange} 
+          minDist={1} 
         >
           <View style={styles.canvasContainer}>
             <Svg width="100%" height="100%">
@@ -247,12 +268,48 @@ export default function RecognizerScreen({ navigation }: { navigation: any }) {
       </View>
 
       <View style={styles.buttonsContainer}>
-        <TouchableOpacity style={[styles.buttonBase, styles.buttonOutline]} onPress={handleClear} disabled={isLoading}>
-          <Text style={styles.buttonOutlineText}>Reset</Text>
+        <TouchableOpacity 
+          style={[styles.buttonBase, styles.buttonOutline]} 
+          onPress={handleClear} 
+          disabled={isResetDisabled}
+        >
+          <View style={styles.buttonContent}>
+            <Ionicons 
+              name="reload" 
+              size={16} 
+              color={isResetDisabled ? '#AAA' : '#666'} 
+            />
+            <Text 
+              style={[
+                styles.buttonOutlineText, 
+                isResetDisabled && styles.buttonTextDisabled
+              ]}
+            >
+              Reset
+            </Text>
+          </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.buttonBase, styles.buttonOutline]} onPress={handleUndo} disabled={isLoading}>
-          <Text style={styles.buttonOutlineText}>Undo</Text>
+        <TouchableOpacity 
+          style={[styles.buttonBase, styles.buttonOutline]} 
+          onPress={handleUndo} 
+          disabled={isUndoDisabled}
+        >
+          <View style={styles.buttonContent}>
+            <Ionicons 
+              name="arrow-undo-outline" 
+              size={16} 
+              color={isUndoDisabled ? '#AAA' : '#666'} 
+            />
+            <Text 
+              style={[
+                styles.buttonOutlineText, 
+                isUndoDisabled && styles.buttonTextDisabled
+              ]}
+            >
+              Undo
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
     </GestureHandlerRootView>
@@ -265,7 +322,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     padding: 20,
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
   },
   canvasWrapper: {
     width: CANVAS_SIZE,
@@ -294,6 +351,7 @@ const styles = StyleSheet.create({
   activityIndicator: {
     transform: [{ translateY: 20 }], 
   },
+  // --- ZAKTUALIZOWANE STYLES: buttonsContainer, buttonBase, buttonOutline, buttonOutlineText, buttonContent, buttonTextDisabled ---
   buttonsContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -305,14 +363,14 @@ const styles = StyleSheet.create({
   },
   buttonBase: {
     flex: 1,
-    flexDirection: "row",
+    flexDirection: "row", // Upewnij się, że tekst i ikona są w rzędzie
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderRadius: 8,
     height: 50,
-    gap: 6,
+    // Gap dla odstępu między ikoną a tekstem (nie dla elementów flex)
   },
   buttonOutline: {
     backgroundColor: "#fff",
@@ -323,6 +381,14 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     fontSize: 14,
     fontWeight: "600",
+  },
+  buttonContent: { // Nowy styl do grupowania ikony i tekstu w TouchableOpacity
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6, // Odstęp między ikoną a tekstem
+  },
+  buttonTextDisabled: {
+    color: '#AAA',
   },
 });
 
