@@ -10,7 +10,6 @@ import {FlyingClouds} from '../components/dashboard/FlyingClouds';
 import {Feather} from '@expo/vector-icons';
 import {CloudStatCard} from '../components/dashboard/CloudStatCard';
 import {loadUser, User} from '../utils/user';
-import {usePushNotifications} from '../hooks/usePushNotifications';
 
 interface ScreenProps {
   navigation: any;
@@ -27,8 +26,6 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
   const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
 
-    // Inicjalizacja powiadomień Push
-    usePushNotifications();
 
   useEffect(() => {
     async function init() {

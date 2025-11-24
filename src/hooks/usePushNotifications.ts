@@ -1,5 +1,4 @@
 import {useEffect, useState} from 'react';
-import messaging from '@react-native-firebase/messaging';
 import * as SecureStore from 'expo-secure-store';
 import {Alert} from 'react-native';
 import {Toast} from 'toastify-react-native';
@@ -9,12 +8,25 @@ const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 export const usePushNotifications = () => {
     const [fcmToken, setFcmToken] = useState<string | null>(null);
     const [permissionStatus, setPermissionStatus] = useState<string>('not_determined');
+    const [isFirebaseAvailable, setIsFirebaseAvailable] = useState(false);
 
     useEffect(() => {
+        // Sprawdź czy Firebase jest dostępny
+        let messaging: any;
+        try {
+            messaging = require('@react-native-firebase/messaging').default;
+            setIsFirebaseAvailable(true);
+        } catch (error) {
+            console.log('Firebase messaging not available - skipping push notifications setup');
+            setIsFirebaseAvailable(false);
+            return; // Wyjdź z hooka jeśli Firebase nie jest dostępny
+        }
+
         // Funkcja do wysyłania tokena na backend
         const sendTokenToBackend = async (token: string) => {
             try {
                 const accessToken = await SecureStore.getItemAsync('accessToken');
+                console.log("access token", accessToken);
 
                 if (!accessToken) {
                     console.log('No access token found, skipping FCM token registration');
@@ -27,8 +39,9 @@ export const usePushNotifications = () => {
                         'Authorization': `Bearer ${accessToken}`,
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({token}),
+                    body: JSON.stringify({fcmToken: token}),
                 });
+                console.log("FCm payload", JSON.stringify({fcmToken: token}),)
 
                 if (response.ok) {
                     console.log('FCM token successfully sent to backend');
@@ -41,10 +54,20 @@ export const usePushNotifications = () => {
             }
         };
 
-        // Funkcja do żądania uprawnień
+        // Funkcja do żądania uprawnień z timeoutem
         const requestUserPermission = async () => {
             try {
-                const authStatus = await messaging().requestPermission();
+                // Timeout aby nie blokować UI
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Firebase initialization timeout')), 10000)
+                );
+
+                const permissionPromise = messaging().requestPermission();
+                console.log("permission permission", permissionPromise);
+
+                const authStatus = await Promise.race([permissionPromise, timeoutPromise]) as number;
+                console.log("auth status", authStatus);
+
                 const enabled =
                     authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
                     authStatus === messaging.AuthorizationStatus.PROVISIONAL;
@@ -53,8 +76,13 @@ export const usePushNotifications = () => {
                     console.log('Authorization status:', authStatus);
                     setPermissionStatus('granted');
 
-                    // Pobierz token FCM
-                    const token = await messaging().getToken();
+                    // Pobierz token FCM z timeoutem
+                    const tokenPromise = messaging().getToken();
+                    const tokenTimeout = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Token fetch timeout')), 10000)
+                    );
+
+                    const token = await Promise.race([tokenPromise, tokenTimeout]) as string;
                     console.log('FCM Token:', token);
                     setFcmToken(token);
 
@@ -67,65 +95,87 @@ export const usePushNotifications = () => {
             } catch (error) {
                 console.error('Error requesting push notification permission:', error);
                 setPermissionStatus('error');
+                // Nie blokuj aplikacji - po prostu loguj błąd
             }
         };
 
-        // Funkcja do obsługi powiadomień na pierwszym planie (foreground)
-        const unsubscribeForeground = messaging().onMessage(async (remoteMessage) => {
-            console.log('Foreground notification received:', remoteMessage);
+        let unsubscribeForeground: (() => void) | undefined;
+        let unsubscribeBackground: (() => void) | undefined;
+        let unsubscribeTokenRefresh: (() => void) | undefined;
 
-            // Wyświetl powiadomienie jako Toast
-            if (remoteMessage.notification) {
-                Alert.alert(
-                    remoteMessage.notification.title || 'Notification',
-                    remoteMessage.notification.body || ''
-                );
-            }
-        });
+        // Uruchom asynchronicznie aby nie blokować renderowania
+        const initializeFirebase = async () => {
+            try {
+                // Funkcja do obsługi powiadomień na pierwszym planie (foreground)
+                unsubscribeForeground = messaging().onMessage(async (remoteMessage: any) => {
+                    console.log('Foreground notification received:', remoteMessage);
 
-        // Obsługa kliknięcia w powiadomienie gdy app był w tle (background)
-        const unsubscribeBackground = messaging().onNotificationOpenedApp((remoteMessage) => {
-            console.log(
-                'Notification caused app to open from background state:',
-                remoteMessage
-            );
-            // Tutaj możesz dodać nawigację do odpowiedniego ekranu
-        });
+                    // Wyświetl powiadomienie jako Alert
+                    if (remoteMessage.notification) {
+                        Alert.alert(
+                            remoteMessage.notification.title || 'Notification',
+                            remoteMessage.notification.body || ''
+                        );
+                    }
+                });
 
-        // Sprawdź czy aplikacja została otwarta z powiadomienia (killed state)
-        messaging()
-            .getInitialNotification()
-            .then((remoteMessage) => {
-                if (remoteMessage) {
+                // Obsługa kliknięcia w powiadomienie gdy app był w tle (background)
+                unsubscribeBackground = messaging().onNotificationOpenedApp((remoteMessage: any) => {
                     console.log(
-                        'Notification caused app to open from quit state:',
+                        'Notification caused app to open from background state:',
                         remoteMessage
                     );
                     // Tutaj możesz dodać nawigację do odpowiedniego ekranu
-                }
-            });
+                });
 
-        // Żądaj uprawnień
-        requestUserPermission();
+                // Sprawdź czy aplikacja została otwarta z powiadomienia (killed state)
+                messaging()
+                    .getInitialNotification()
+                    .then((remoteMessage: any) => {
+                        if (remoteMessage) {
+                            console.log(
+                                'Notification caused app to open from quit state:',
+                                remoteMessage
+                            );
+                            // Tutaj możesz dodać nawigację do odpowiedniego ekranu
+                        }
+                    })
+                    .catch((error: any) => {
+                        console.log('Error getting initial notification:', error);
+                    });
 
-        // Obsługa odświeżania tokena
-        const unsubscribeTokenRefresh = messaging().onTokenRefresh(async (token) => {
-            console.log('FCM Token refreshed:', token);
-            setFcmToken(token);
-            await sendTokenToBackend(token);
-        });
+                // Żądaj uprawnień
+                await requestUserPermission();
+
+                // Obsługa odświeżania tokena
+                unsubscribeTokenRefresh = messaging().onTokenRefresh(async (token: string) => {
+                    console.log('FCM Token refreshed:', token);
+                    setFcmToken(token);
+                    await sendTokenToBackend(token);
+                });
+            } catch (error) {
+                console.error('Error initializing Firebase messaging:', error);
+            }
+        };
+
+        // Uruchom po 1 sekundzie aby nie blokować initial render
+        const timer = setTimeout(() => {
+            initializeFirebase();
+        }, 1000);
 
         // Cleanup
         return () => {
-            unsubscribeForeground();
-            unsubscribeBackground();
-            unsubscribeTokenRefresh();
+            clearTimeout(timer);
+            if (unsubscribeForeground) unsubscribeForeground();
+            if (unsubscribeBackground) unsubscribeBackground();
+            if (unsubscribeTokenRefresh) unsubscribeTokenRefresh();
         };
     }, []);
 
     return {
         fcmToken,
         permissionStatus,
+        isFirebaseAvailable,
     };
 };
 

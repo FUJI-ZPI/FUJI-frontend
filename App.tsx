@@ -27,6 +27,7 @@ import RadicalDetailScreen from "./src/screens/RadicalDetailScreen";
 import RecognizerScreen from "./src/screens/RecognizerScreen";
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {MenuProvider} from 'react-native-popup-menu';
+import {usePushNotifications} from './src/hooks/usePushNotifications';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -122,6 +123,9 @@ export default function AppNavigator() {
     await SecureStore.deleteItemAsync('user');
     setIsAuthenticated(false);
   };
+
+    // Inicjalizacja powiadomień push gdy użytkownik jest zalogowany
+    usePushNotifications();
 
 useEffect(() => {
   const checkAuth = async () => {
