@@ -31,7 +31,15 @@
     },
     "plugins": [
       "@react-native-firebase/app",
-      "@react-native-firebase/messaging"
+      "@react-native-firebase/messaging",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon-no-background.png",
+          "color": "#ffffff",
+          "sounds": []
+        }
+      ]
     ],
     "extra": {
       "eas": {

@@ -1,7 +1,8 @@
 import {useEffect, useState} from 'react';
 import * as SecureStore from 'expo-secure-store';
-import {Alert} from 'react-native';
+import {Alert, PermissionsAndroid, Platform} from 'react-native';
 import {Toast} from 'toastify-react-native';
+import * as Notifications from 'expo-notifications';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
@@ -66,41 +67,61 @@ export const usePushNotifications = () => {
         // Funkcja do żądania uprawnień z timeoutem
         const requestUserPermission = async () => {
             try {
+                // Na Androidzie 13+ (API 33+) musimy najpierw poprosić o POST_NOTIFICATIONS permission
+                if (Platform.OS === 'android' && Platform.Version >= 33) {
+                    try {
+                        const granted = await PermissionsAndroid.request(
+                            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+                        );
+
+                        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+                            console.log('POST_NOTIFICATIONS permission denied');
+                            setPermissionStatus('denied');
+                            return;
+                        }
+                        console.log('POST_NOTIFICATIONS permission granted');
+                    } catch (err) {
+                        console.error('Error requesting POST_NOTIFICATIONS permission:', err);
+                        setPermissionStatus('error');
+                        return;
+                    }
+                }
+
+                // Dodatkowo użyj expo-notifications do uproszczenia obsługi
+                const {status: existingStatus} = await Notifications.getPermissionsAsync();
+                let finalStatus = existingStatus;
+
+                if (existingStatus !== 'granted') {
+                    const {status} = await Notifications.requestPermissionsAsync();
+                    finalStatus = status;
+                }
+
+                if (finalStatus !== 'granted') {
+                    console.log('Notification permission denied');
+                    setPermissionStatus('denied');
+                    return;
+                }
+
+                console.log('Notification permission granted');
+                setPermissionStatus('granted');
+
                 // Timeout aby nie blokować UI
                 const timeoutPromise = new Promise((_, reject) =>
                     setTimeout(() => reject(new Error('Firebase initialization timeout')), 10000)
                 );
 
-                const permissionPromise = messagingInstance.requestPermission();
-                console.log("permission permission", permissionPromise);
+                // Pobierz token FCM z timeoutem
+                const tokenPromise = messagingInstance.getToken();
+                const tokenTimeout = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Token fetch timeout')), 10000)
+                );
 
-                const authStatus = await Promise.race([permissionPromise, timeoutPromise]) as number;
-                console.log("auth status", authStatus);
+                const token = await Promise.race([tokenPromise, tokenTimeout]) as string;
+                console.log('FCM Token:', token);
+                setFcmToken(token);
 
-                const enabled =
-                    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-                    authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-                if (enabled) {
-                    console.log('Authorization status:', authStatus);
-                    setPermissionStatus('granted');
-
-                    // Pobierz token FCM z timeoutem
-                    const tokenPromise = messagingInstance.getToken();
-                    const tokenTimeout = new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error('Token fetch timeout')), 10000)
-                    );
-
-                    const token = await Promise.race([tokenPromise, tokenTimeout]) as string;
-                    console.log('FCM Token:', token);
-                    setFcmToken(token);
-
-                    // Wyślij token na backend
-                    await sendTokenToBackend(token);
-                } else {
-                    setPermissionStatus('denied');
-                    console.log('Push notification permission denied');
-                }
+                // Wyślij token na backend
+                await sendTokenToBackend(token);
             } catch (error) {
                 console.error('Error requesting push notification permission:', error);
                 setPermissionStatus('error');

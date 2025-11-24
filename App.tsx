@@ -28,6 +28,18 @@ import RecognizerScreen from "./src/screens/RecognizerScreen";
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {MenuProvider} from 'react-native-popup-menu';
 import {usePushNotifications} from './src/hooks/usePushNotifications';
+import * as Notifications from 'expo-notifications';
+
+// Konfiguracja expo-notifications - jak mają być wyświetlane powiadomienia na pierwszym planie
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+    }),
+});
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
