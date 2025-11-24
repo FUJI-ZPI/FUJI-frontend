@@ -13,14 +13,23 @@ export const usePushNotifications = () => {
     useEffect(() => {
         // Sprawdź czy Firebase jest dostępny
         let messaging: any;
+        let getMessaging: any;
+        let getApp: any;
         try {
-            messaging = require('@react-native-firebase/messaging').default;
+            const firebaseMessaging = require('@react-native-firebase/messaging');
+            messaging = firebaseMessaging.default;
+            getMessaging = firebaseMessaging.getMessaging;
+            const firebaseApp = require('@react-native-firebase/app');
+            getApp = firebaseApp.getApp;
             setIsFirebaseAvailable(true);
         } catch (error) {
             console.log('Firebase messaging not available - skipping push notifications setup');
             setIsFirebaseAvailable(false);
             return; // Wyjdź z hooka jeśli Firebase nie jest dostępny
         }
+
+        // Inicjalizuj messaging z nowym API
+        const messagingInstance = getMessaging ? getMessaging(getApp()) : messaging();
 
         // Funkcja do wysyłania tokena na backend
         const sendTokenToBackend = async (token: string) => {
@@ -62,7 +71,7 @@ export const usePushNotifications = () => {
                     setTimeout(() => reject(new Error('Firebase initialization timeout')), 10000)
                 );
 
-                const permissionPromise = messaging().requestPermission();
+                const permissionPromise = messagingInstance.requestPermission();
                 console.log("permission permission", permissionPromise);
 
                 const authStatus = await Promise.race([permissionPromise, timeoutPromise]) as number;
@@ -77,7 +86,7 @@ export const usePushNotifications = () => {
                     setPermissionStatus('granted');
 
                     // Pobierz token FCM z timeoutem
-                    const tokenPromise = messaging().getToken();
+                    const tokenPromise = messagingInstance.getToken();
                     const tokenTimeout = new Promise((_, reject) =>
                         setTimeout(() => reject(new Error('Token fetch timeout')), 10000)
                     );
@@ -107,7 +116,7 @@ export const usePushNotifications = () => {
         const initializeFirebase = async () => {
             try {
                 // Funkcja do obsługi powiadomień na pierwszym planie (foreground)
-                unsubscribeForeground = messaging().onMessage(async (remoteMessage: any) => {
+                unsubscribeForeground = messagingInstance.onMessage(async (remoteMessage: any) => {
                     console.log('Foreground notification received:', remoteMessage);
 
                     // Wyświetl powiadomienie jako Alert
@@ -120,7 +129,7 @@ export const usePushNotifications = () => {
                 });
 
                 // Obsługa kliknięcia w powiadomienie gdy app był w tle (background)
-                unsubscribeBackground = messaging().onNotificationOpenedApp((remoteMessage: any) => {
+                unsubscribeBackground = messagingInstance.onNotificationOpenedApp((remoteMessage: any) => {
                     console.log(
                         'Notification caused app to open from background state:',
                         remoteMessage
@@ -129,7 +138,7 @@ export const usePushNotifications = () => {
                 });
 
                 // Sprawdź czy aplikacja została otwarta z powiadomienia (killed state)
-                messaging()
+                messagingInstance
                     .getInitialNotification()
                     .then((remoteMessage: any) => {
                         if (remoteMessage) {
@@ -148,7 +157,7 @@ export const usePushNotifications = () => {
                 await requestUserPermission();
 
                 // Obsługa odświeżania tokena
-                unsubscribeTokenRefresh = messaging().onTokenRefresh(async (token: string) => {
+                unsubscribeTokenRefresh = messagingInstance.onTokenRefresh(async (token: string) => {
                     console.log('FCM Token refreshed:', token);
                     setFcmToken(token);
                     await sendTokenToBackend(token);
