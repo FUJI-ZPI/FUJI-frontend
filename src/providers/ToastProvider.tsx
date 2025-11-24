@@ -35,7 +35,7 @@ const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
       {children}
       <ToastManager
           position='top'
-          duration={2000}
+          duration={1000}
         theme='light'
       />
       </ToastContext.Provider>

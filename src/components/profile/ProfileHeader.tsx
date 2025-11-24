@@ -1,10 +1,7 @@
-
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import { Badge } from '../ui/Badge';
 import { themeStyles, colors, spacing } from '../../theme/styles';
-import { User } from '../../context/UserContex';
-
+import { User } from '../../utils/user';
 
 interface ProfileHeaderProps {
   user: User | null;
@@ -12,18 +9,28 @@ interface ProfileHeaderProps {
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user }) => {  
   return (
-    <View style={[themeStyles.cardBase, styles.profileHeaderCard]}>
-      <View style={styles.profileHeaderContent}>
-        <View>
-          <Image source={{ uri: user?.photo }} style={styles.avatar}/>
+    <View style={styles.container}>
+      <View style={styles.contentRow}>
+        <View style={styles.avatarContainer}>
+           {user?.photo ? (
+              <Image source={{ uri: user?.photo }} style={styles.avatar}/>
+           ) : (
+              <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                  <Text style={styles.avatarFallbackText}>
+                    {user?.name?.charAt(0).toUpperCase() || '?'}
+                  </Text>
+              </View>
+           )}
         </View>
-        <View style={themeStyles.flex1}>
-          <Text style={styles.userName}>{user?.name}</Text>
-          <Text style={styles.userEmail}>{user?.email}</Text>
-          <View style={styles.badgesRow}>
-            <Badge variant="secondary">Level {5}</Badge>
-            <Badge variant="secondary">Rank #{2}</Badge>
-          </View>
+        
+        <View style={styles.infoContainer}>
+          <Text style={styles.userName} numberOfLines={1}>
+            {user?.name || "Guest User"}
+          </Text>
+          <Text style={styles.userEmail} numberOfLines={1}>
+            {user?.email || "Sign in to sync progress"}
+          </Text>
+          {/* Opcjonalnie: Tutaj można dodać mały badge np. "Pro Member" */}
         </View>
       </View>
     </View>
@@ -31,66 +38,65 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user }) => {
 };
 
 const styles = StyleSheet.create({
-  profileHeaderCard: {
-    backgroundColor: colors.primary, 
-    borderColor: colors.primary,
-    shadowColor: colors.primary,
-    color: '#fff',
-    marginBottom: spacing.base,
+  container: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    // Spójny cień z resztą aplikacji (ContributionGraph)
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    // Opcjonalnie: delikatna ramka jak w activity
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
-  profileHeaderContent: {
-    ...themeStyles.flexRow,
-    gap: spacing.base,
-    marginBottom: spacing.base,
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  avatarContainer: {
+    // Cień pod samym awatarem dla efektu głębi
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#fff',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  avatarPlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.primary || '#3498db',
   },
-  avatarFallback: {
-    fontSize: 32,
-    color: colors.primary,
+  avatarFallbackText: {
+    fontSize: 28,
+    color: '#fff',
     fontWeight: '700',
+  },
+  infoContainer: {
+    flex: 1,
+    justifyContent: 'center',
   },
   userName: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.text || '#1F2937',
+    marginBottom: 4,
   },
   userEmail: {
-    opacity: 0.9,
-    color: '#fff',
     fontSize: 14,
-  },
-  badgesRow: {
-    ...themeStyles.flexRow,
-    gap: 8,
-    marginTop: 8,
-  },
-  xpSection: {
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#ffffff20',
-    gap: 8,
-  },
-  xpRow: {
-    ...themeStyles.flexRow,
-    ...themeStyles.justifyBetween,
-    fontSize: 14,
-  },
-  xpText: {
-    fontSize: 14,
-    color: '#fff',
-    opacity: 0.9,
-  },
-  xpHint: {
-    fontSize: 12,
-    opacity: 0.75,
-    textAlign: 'center',
-    color: '#fff',
+    color: colors.textMuted || '#6B7280',
+    fontWeight: '500',
   },
 });
