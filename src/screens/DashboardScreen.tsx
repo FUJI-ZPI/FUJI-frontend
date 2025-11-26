@@ -10,6 +10,8 @@ import {FlyingClouds} from '../components/dashboard/FlyingClouds';
 import {Feather} from '@expo/vector-icons';
 import {CloudStatCard} from '../components/dashboard/CloudStatCard';
 import {loadUser, User} from '../utils/user';
+import * as SecureStore from 'expo-secure-store';
+import { useToast } from '../hooks/use-toast';
 
 interface ScreenProps {
   navigation: any;
@@ -25,6 +27,9 @@ const FUJI_HEIGHT = screenWidth * ASPECT_RATIO;
 export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
   const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
+  const [dailyStreak, setDailyStreak] = useState<number>(mockUser.streak);
+  const [kanjiLearned, setKanjiLearned] = useState<number>(-1);
+  const { toast } = useToast();
 
 
   useEffect(() => {
@@ -33,15 +38,82 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
       if (u) {
         setUser(u);
       }
+      const fetchWithAuth = async (endpoint: string): Promise<any> => {
+        const token = await SecureStore.getItemAsync('accessToken');
+        if (!token) throw new Error('No token');
+
+        const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}${endpoint}`, {
+          headers: { Authorization: `Bearer ${token}`, Accept: 'application/json,text/*' },
+        });
+
+        if (!response.ok) {
+          const body = await response.text().catch(() => '');
+          throw new Error(`API Error: ${response.status} ${body}`);
+        }
+
+        const contentType = (response.headers.get('content-type') || '').toLowerCase();
+        if (contentType.includes('application/json')) {
+          return response.json();
+        }
+
+        const text = await response.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          return text;
+        }
+      };
+
+      try {
+        const data = await fetchWithAuth('/api/v1/progress/daily-streak');
+        let streak = Number.NaN;
+        if (typeof data === 'number') {
+          streak = data as number;
+        } else if (typeof data === 'string') {
+          streak = Number(data);
+        } else if (data && typeof data === 'object') {
+          streak = Number(data.streak ?? data.value ?? data.count ?? data.dailyStreak ?? NaN);
+        }
+
+        if (!Number.isNaN(streak)) {
+          setDailyStreak(streak);
+        } else {
+          console.warn('Invalid daily streak value:', data);
+        }
+      } catch (err) {
+        console.warn('Error fetching daily streak:', err);
+      }
+
+      try {
+        const data = await fetchWithAuth('/api/v1/progress/kanji-learned');
+        let kanjiNum = Number.NaN;
+        if (typeof data === 'number') {
+          kanjiNum = data as number;
+        } else if (typeof data === 'string') {
+          kanjiNum = Number(data);
+        } else if (data && typeof data === 'object') {
+          kanjiNum = Number(
+            data.kanjiLearned ?? data.kanji_learned ?? data.count ?? data.value ?? data.learned ?? NaN,
+          );
+        }
+
+        if (!Number.isNaN(kanjiNum)) {
+          setKanjiLearned(kanjiNum);
+        } else {
+          console.warn('Invalid kanji learned value:', data);
+        }
+      } catch (err) {
+        console.warn('Error fetching kanji learned:', err);
+      }
     }
     init();
   }, []);
 
-  const { learnedKanji, totalKanji } = useMemo(() => {
-    const learnedKanji = mockKanji.filter(k => k.learned).length;
-    const totalKanji = totalKanjiCount;
-    return { learnedKanji, totalKanji };
-  }, []);
+  // const { learnedKanji, totalKanji } = useMemo(() => {
+  //   const learnedKanji = mockKanji.filter(k => k.learned).length;
+  //   const totalKanji = totalKanjiCount;
+  //   return { learnedKanji, totalKanji };
+  // }, []);
 
   const handleReviewSession = () => navigation.navigate('ReviewSession');
   const handleLearningSession = () => navigation.navigate('LearningSession');
@@ -64,7 +136,7 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
               iconName="flame"
               iconSet="Ionicons"
               iconColor={colors.warning}
-              value={mockUser.streak}
+              value={dailyStreak}
               label={t('common.streak_label')}
 
               contentStyle={{ paddingRight: 72, paddingTop: 5 }}
@@ -76,7 +148,7 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
               iconName="book-open"
               iconSet="Feather"
               iconColor={colors.secondary}
-              value={learnedKanji}
+              value={kanjiLearned}
               label={t('common.kanji_learned_label')}
 
               contentStyle={{ paddingRight: 72, paddingTop: 20 }}
