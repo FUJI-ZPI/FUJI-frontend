@@ -11,6 +11,8 @@
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.6",
     "@lottiefiles/dotlottie-react": "^0.13.5",
+    "@react-native-firebase/app": "^21.8.1",
+    "@react-native-firebase/messaging": "^21.8.1",
     "@react-native-google-signin/google-signin": "^16.0.0",
     "@react-native-masked-view/masked-view": "^0.3.2",
     "@react-native-picker/picker": "^2.11.4",
@@ -21,6 +23,7 @@
     "expo": "~54.0.12",
     "expo-av": "~16.0.7",
     "expo-linear-gradient": "~15.0.7",
+    "expo-notifications": "~0.32.13",
     "expo-secure-store": "^15.0.7",
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",

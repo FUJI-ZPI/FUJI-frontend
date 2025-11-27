@@ -25,8 +25,21 @@ import RadicalDetailScreen from "./src/screens/RadicalDetailScreen";
 import RecognizerScreen from "./src/screens/RecognizerScreen";
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {MenuProvider} from 'react-native-popup-menu';
+import {usePushNotifications} from './src/hooks/usePushNotifications';
+import * as Notifications from 'expo-notifications';
 import LearningSessionScreen from "./src/screens/LearningSessionScreen";
 import ReviewSessionScreen from "./src/screens/ReviewSessionScreen";
+
+// Konfiguracja expo-notifications - jak mają być wyświetlane powiadomienia na pierwszym planie
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+    }),
+});
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -105,18 +118,18 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
         />
       ))}
 
-      <Drawer.Screen 
-        name="LearningSession" 
-        component={LearningSessionScreen} 
-        options={{ 
+      <Drawer.Screen
+        name="LearningSession"
+        component={LearningSessionScreen}
+        options={{
           drawerItemStyle: { display: "none" },
         }}
       />
 
-      <Drawer.Screen 
-        name="ReviewSession" 
-        component={ReviewSessionScreen} 
-        options={{ 
+      <Drawer.Screen
+        name="ReviewSession"
+        component={ReviewSessionScreen}
+        options={{
           drawerItemStyle: { display: "none" },
         }}
       />
@@ -137,6 +150,9 @@ export default function AppNavigator() {
     await SecureStore.deleteItemAsync('user');
     setIsAuthenticated(false);
   };
+
+    // Inicjalizacja powiadomień push gdy użytkownik jest zalogowany
+    usePushNotifications();
 
 useEffect(() => {
   const checkAuth = async () => {
