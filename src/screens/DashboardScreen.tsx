@@ -1,21 +1,32 @@
-import React, {useEffect, useMemo, useState} from 'react';
-import {Dimensions, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {LinearGradient} from 'expo-linear-gradient';
-import {useTranslation} from 'react-i18next';
-import {FujiIllustration} from '../components/dashboard/FujiIllustration';
-import {colors, themeStyles} from '../theme/styles';
-import {mockKanji, mockUser, totalKanjiCount} from '../data/mockData';
-import {FlyingClouds} from '../components/dashboard/FlyingClouds';
-import {Feather} from '@expo/vector-icons';
-import {CloudStatCard} from '../components/dashboard/CloudStatCard';
-import {loadUser, User} from '../utils/user';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
+import { FujiIllustration } from '../components/dashboard/FujiIllustration';
+import { themeStyles, colors } from '../theme/styles';
+import { FlyingClouds } from '../components/dashboard/FlyingClouds';
+import { CloudStatCard } from '../components/dashboard/CloudStatCard';
+import { loadUser, User } from '../utils/user';
 import * as SecureStore from 'expo-secure-store';
 import { useToast } from '../hooks/use-toast';
 
 interface ScreenProps {
   navigation: any;
   route: any;
+}
+
+interface DailyStreakDto {
+  streak: number;
+}
+
+interface KanjiLearnedDto {
+  amount: number;
+}
+
+interface UserLevelDto {
+  level: number;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -27,93 +38,79 @@ const FUJI_HEIGHT = screenWidth * ASPECT_RATIO;
 export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
   const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
-  const [dailyStreak, setDailyStreak] = useState<number>(mockUser.streak);
-  const [kanjiLearned, setKanjiLearned] = useState<number>(-1);
+  
+  const [dailyStreak, setDailyStreak] = useState<number>(0);
+  const [kanjiLearned, setKanjiLearned] = useState<number>(0);
+  const [userLevel, setUserLevel] = useState<number>(1);
+  
   const { toast } = useToast();
 
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true; 
 
-  useEffect(() => {
-    async function init() {
-      const u = await loadUser();
-      if (u) {
-        setUser(u);
-      }
-      const fetchWithAuth = async (endpoint: string): Promise<any> => {
-        const token = await SecureStore.getItemAsync('accessToken');
-        if (!token) throw new Error('No token');
-
-        const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}${endpoint}`, {
-          headers: { Authorization: `Bearer ${token}`, Accept: 'application/json,text/*' },
-        });
-
-        if (!response.ok) {
-          const body = await response.text().catch(() => '');
-          throw new Error(`API Error: ${response.status} ${body}`);
+      async function init() {
+        const u = await loadUser();
+        if (isActive && u) {
+          setUser(u);
+          if (u.level) setUserLevel(u.level);
         }
 
-        const contentType = (response.headers.get('content-type') || '').toLowerCase();
-        if (contentType.includes('application/json')) {
+        const fetchWithAuth = async <T,>(endpoint: string): Promise<T> => {
+          const token = await SecureStore.getItemAsync('accessToken');
+          console.log(token)
+          if (!token) throw new Error('No token');
+
+          const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}${endpoint}`, {
+            headers: { 
+              Authorization: `Bearer ${token}`, 
+              Accept: 'application/json' 
+            },
+          });
+
+          if (!response.ok) {
+            const body = await response.text().catch(() => '');
+            throw new Error(`API Error: ${response.status} ${body}`);
+          }
+
           return response.json();
-        }
+        };
 
-        const text = await response.text();
         try {
-          return JSON.parse(text);
-        } catch {
-          return text;
+          const data = await fetchWithAuth<DailyStreakDto>('/api/v1/progress/daily-streak');
+          if (isActive && data && typeof data.streak === 'number') {
+            setDailyStreak(data.streak);
+          }
+        } catch (err) {
+          console.warn('Error fetching daily streak:', err);
         }
+
+        try {
+          const data = await fetchWithAuth<KanjiLearnedDto>('/api/v1/progress/kanji-learned');
+          if (isActive && data && typeof data.amount === 'number') {
+            setKanjiLearned(data.amount);
+          }
+        } catch (err) {
+          console.warn('Error fetching kanji learned:', err);
+        }
+
+        try {
+          const data = await fetchWithAuth<UserLevelDto>('/api/v1/progress/level');
+          if (isActive && data && typeof data.level === 'number') {
+            setUserLevel(data.level);
+          }
+        } catch (err) {
+          console.warn('Error fetching user level:', err);
+        }
+      }
+
+      init();
+
+      return () => {
+        isActive = false; 
       };
-
-      try {
-        const data = await fetchWithAuth('/api/v1/progress/daily-streak');
-        let streak = Number.NaN;
-        if (typeof data === 'number') {
-          streak = data as number;
-        } else if (typeof data === 'string') {
-          streak = Number(data);
-        } else if (data && typeof data === 'object') {
-          streak = Number(data.streak ?? data.value ?? data.count ?? data.dailyStreak ?? NaN);
-        }
-
-        if (!Number.isNaN(streak)) {
-          setDailyStreak(streak);
-        } else {
-          console.warn('Invalid daily streak value:', data);
-        }
-      } catch (err) {
-        console.warn('Error fetching daily streak:', err);
-      }
-
-      try {
-        const data = await fetchWithAuth('/api/v1/progress/kanji-learned');
-        let kanjiNum = Number.NaN;
-        if (typeof data === 'number') {
-          kanjiNum = data as number;
-        } else if (typeof data === 'string') {
-          kanjiNum = Number(data);
-        } else if (data && typeof data === 'object') {
-          kanjiNum = Number(
-            data.kanjiLearned ?? data.kanji_learned ?? data.count ?? data.value ?? data.learned ?? NaN,
-          );
-        }
-
-        if (!Number.isNaN(kanjiNum)) {
-          setKanjiLearned(kanjiNum);
-        } else {
-          console.warn('Invalid kanji learned value:', data);
-        }
-      } catch (err) {
-        console.warn('Error fetching kanji learned:', err);
-      }
-    }
-    init();
-  }, []);
-
-  // const { learnedKanji, totalKanji } = useMemo(() => {
-  //   const learnedKanji = mockKanji.filter(k => k.learned).length;
-  //   const totalKanji = totalKanjiCount;
-  //   return { learnedKanji, totalKanji };
-  // }, []);
+    }, [])
+  );
 
   const handleReviewSession = () => navigation.navigate('ReviewSession');
   const handleLearningSession = () => navigation.navigate('LearningSession');
@@ -138,7 +135,6 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
               iconColor={colors.warning}
               value={dailyStreak}
               label={t('common.streak_label')}
-
               contentStyle={{ paddingRight: 72, paddingTop: 5 }}
             />
           </View>
@@ -150,7 +146,6 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
               iconColor={colors.secondary}
               value={kanjiLearned}
               label={t('common.kanji_learned_label')}
-
               contentStyle={{ paddingRight: 72, paddingTop: 20 }}
             />
           </View>
@@ -159,7 +154,7 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
         <View>
           <View style={[styles.header, themeStyles.paddingContainer]}>
             <Text style={styles.headerTitle}>
-              {t('dashboard.greeting', { userName: user?.name?.split(' ')[0]})}
+              {t('dashboard.greeting', { userName: user?.name?.split(' ')[0] })}
             </Text>
             <Text style={themeStyles.textSubtitle}>{t('dashboard.subtitle')}</Text>
           </View>
@@ -171,7 +166,7 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
           <View style={styles.mountainContainer}>
             <View style={{ width: '100%', height: FUJI_HEIGHT }} pointerEvents='auto'>
               <FujiIllustration
-                currentLevel={mockUser.level}
+                currentLevel={userLevel}
                 maxLevel={60}
               />
             </View>
@@ -289,7 +284,6 @@ const styles = StyleSheet.create({
   },
   buttonPrimary: {
     backgroundColor: '#4673aa',
-
   },
   buttonSecondary: {
     backgroundColor: '#ffffff',
