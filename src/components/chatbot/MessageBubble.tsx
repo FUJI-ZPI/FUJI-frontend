@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { chatbotColors } from '../../theme/styles';
+import React, {useEffect, useRef, useState} from 'react';
+import {Animated, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {chatbotColors} from '../../theme/styles';
 
 interface Message {
   id: string;
@@ -40,8 +40,41 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   ];
   
   const isTranslationActive = showTranslation?.messageId === message.id;
-  
-  const isAI = !isUser; 
+    const isAI = !isUser;
+
+    const [isTranslationRendered, setIsTranslationRendered] = useState(false);
+    const anim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (isTranslationActive) {
+            setIsTranslationRendered(true);
+            Animated.timing(anim, {
+                toValue: 1,
+                duration: 400,
+                useNativeDriver: true,
+            }).start();
+        } else {
+            Animated.timing(anim, {
+                toValue: 0,
+                duration: 400,
+                useNativeDriver: true,
+            }).start(() => {
+                setIsTranslationRendered(false);
+            });
+        }
+    }, [isTranslationActive, anim]);
+
+    const animatedStyle = {
+        opacity: anim,
+        transform: [
+            {
+                translateY: anim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-10, 0],
+                }),
+            },
+        ],
+    };
 
   return (
     <View style={styles.messageGroupContainer}>
@@ -87,17 +120,17 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             )}
         </View>
 
-        {isTranslationActive && (
-            <View style={[styles.translationRow, isUser ? styles.userRow : styles.aiRow]}>
+        {isTranslationRendered && (
+            <Animated.View style={[styles.translationRow, isUser ? styles.userRow : styles.aiRow, animatedStyle]}>
                 {isAI && <View style={styles.avatarSpacer} />}
 
                 <View style={[styles.translationBubble, isUser ? styles.userTranslation : styles.aiTranslationContent]}>
                     <View style={styles.translationIconContainer}>
                         <Text style={styles.translationIconText}>文A</Text> 
                     </View>
-                    <Text style={styles.translationText}>{showTranslation.translation}</Text>
+                    <Text style={styles.translationText}>{showTranslation?.translation}</Text>
                 </View>
-            </View>
+            </Animated.View>
         )}
     </View>
   );
@@ -267,3 +300,4 @@ const styles = StyleSheet.create({
 });
 
 export default MessageBubble;
+
