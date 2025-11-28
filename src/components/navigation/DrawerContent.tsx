@@ -2,7 +2,6 @@ import React, {ComponentType, useEffect, useState} from "react";
 import {Image, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {DrawerContentScrollView} from "@react-navigation/drawer";
 import {Ionicons} from "@expo/vector-icons";
-import {mockUser} from '../../data/mockData';
 import {useTranslation} from "react-i18next";
 import {loadUser, User} from "../../utils/user";
 
@@ -74,7 +73,6 @@ export const DrawerContent = ({ navigation, state, navItems}: DrawerContentProps
           <Image source={{ uri: user?.photo }} style={styles.avatar} />
           <View>
             <Text style={styles.username}>{user?.name}</Text>
-            <Text style={styles.userLevel}>{mockUser.level_name}</Text>
           </View>
         </TouchableOpacity>
 
@@ -135,7 +133,6 @@ const styles = StyleSheet.create({
       padding: 24,
       borderBottomWidth: 1,
       borderColor: "rgb(198, 211, 199)",
-      // backgroundColor: "#ebf4f0",
     },
     avatar: {
       fontSize: 32,
