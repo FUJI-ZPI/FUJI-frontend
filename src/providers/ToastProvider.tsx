@@ -57,7 +57,7 @@ const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
             text1: options.title,
             text2: options.description,
             position: 'top',
-            visibilityTime: 3000,
+            visibilityTime: 1500,
             autoHide: true,
             topOffset: 60,
         });
