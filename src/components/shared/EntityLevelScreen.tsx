@@ -7,8 +7,8 @@ import {EntityType, LevelStyleConfig, useEntityLevels} from '../../hooks/useEnti
 
 const {width} = Dimensions.get('window');
 const GRID_PADDING = spacing.base * 2;
-const ITEM_MARGIN = spacing.base;
-const ITEMS_PER_ROW = 3;
+const ITEM_MARGIN = spacing.small;
+const ITEMS_PER_ROW = 4;
 const ITEM_WIDTH = (width - GRID_PADDING - (ITEM_MARGIN * (ITEMS_PER_ROW - 1))) / ITEMS_PER_ROW;
 
 interface EntityLevelScreenConfig {
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     },
     levelsRow: {
         justifyContent: 'space-between',
-        marginBottom: spacing.base,
+        marginBottom: spacing.small,
     },
     levelCard: {
         borderRadius: 12,
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     levelNumber: {
-        fontSize: 40,
+        fontSize: 30,
         fontWeight: '700',
     },
     footerLoader: {
