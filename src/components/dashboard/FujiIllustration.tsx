@@ -1,6 +1,7 @@
-import React, { useRef, useState, useLayoutEffect } from 'react';
-import { Alert } from 'react-native';
-import Svg, { Defs, Path, Circle, Rect, G, Text as TextSvg, TSpan } from 'react-native-svg';
+import React, {useLayoutEffect, useRef, useState} from 'react';
+import {Text, TouchableOpacity, View} from 'react-native';
+import Svg, {Circle, Defs, G, Path, Rect, Text as TextSvg, TSpan} from 'react-native-svg';
+import Tooltip from 'react-native-walkthrough-tooltip';
 
 interface FujiIllustrationProps {
     style?: any;
@@ -27,6 +28,7 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
     const [pathLength, setPathLength] = useState<number | null>(null);
     const [playerPos, setPlayerPos] = useState({ x: 0, y: 0 });
     const [milestonePositions, setMilestonePositions] = useState<{ level: number; x: number; y: number; label: string; icon: string; }[]>([]);
+    const [visibleTooltip, setVisibleTooltip] = useState<number | 'player' | null>(null);
 
     useLayoutEffect(() => {
         if (pathRef.current) {
@@ -34,10 +36,7 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
             if (typeof length === 'number') {
                 setPathLength(length);
 
-                const progress = Math.max(0, Math.min(1, (currentLevel - 1) / (maxLevel - 1 || 1)));
-                const playerDistance = length * progress;
-                const pointPlayer = pathRef.current?.getPointAtLength(playerDistance);
-                if (typeof length === 'number' && length > 0) {
+                if (length > 0) {
                     const progress = Math.max(0, Math.min(1, (currentLevel - 1) / (maxLevel - 1 || 1)));
                     const playerDistance = length * progress;
                     const pointPlayer = pathRef.current?.getPointAtLength(playerDistance);
@@ -49,7 +48,7 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                 }
 
                 const positions = milestones.map(m => {
-                    if (typeof length !== 'number' || length <= 0) {
+                    if (length <= 0) {
                         return { ...m, x: 0, y: 0 };
                     }
                     const milestoneProgress = Math.max(0, Math.min(1, (m.level - 1) / (maxLevel - 1 || 1)));
@@ -62,23 +61,6 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
         }
     }, [currentLevel, maxLevel, pathLength]);
 
-    const handleMilestonePress = (milestone: typeof milestonePositions[0]) => {
-        Alert.alert(
-            `${milestone.icon} ${milestone.label}`,
-            `Achieve level ${milestone.level}!`,
-            [ { text: 'OK' } ],
-            { cancelable: true }
-        );
-    };
-
-    const handlePlayerPress = () => {
-        Alert.alert(
-            "🔴 This is you!",
-            `Current level: 🏆 ${currentLevel}\n\nKeep climbing!`,
-            [ { text: 'Got it!' } ],
-            { cancelable: true }
-        );
-    };
 
     // Dynamiczne obliczanie szerokości dymka
     const isTwoDigit = currentLevel >= 10;
@@ -89,15 +71,19 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
 
     const progressPathData = "m 185.27017,265.48059 c -3.12395,-2.34886 1.0356,4.47982 -7.23951,0.22382 -12.79186,-6.57902 -37.2043,-11.98595 -65.1511,-16.56827 C 74.127125,242.78206 33.68335,232.29688 35.7,209.525 c 2.205921,-24.90911 36.761208,-17.63618 88.87899,-21.95085 39.02464,-3.23073 71.86616,-7.57352 69.64601,-24.79915 -1.46986,-11.40428 -27.79822,-18.26915 -51.82224,-26.43172 -18.6678,-6.3427 -35.94423,-13.46896 -39.08496,-24.11747 -5.426065,-18.39685 49.91716,-34.187855 49.91716,-34.187855"
 
+    // Obliczenia dla ViewBox SVG
+    const SVG_VIEWBOX_WIDTH = 320.0216;
+    const SVG_VIEWBOX_HEIGHT = 346.01524;
+
     return (
-        <Svg
-            width="100%"
-            height="100%"
-            viewBox="0 0 320.0216 346.01524"
-            preserveAspectRatio="xMidYMid meet"
-            style={style}
-            pointerEvents='box-none'
-        >
+        <View style={[{width: '100%', height: '100%', position: 'relative'}, style]}>
+            <Svg
+                width="100%"
+                height="100%"
+                viewBox="0 0 320.0216 346.01524"
+                preserveAspectRatio="xMidYMid meet"
+                pointerEvents='box-none'
+            >
             <Defs />
             <Circle cx="216.31267" cy="83.369278" r="83.369278" fill="#f74f73" strokeWidth="1.22255" id="circle1" />
             <Path d="m 60.314751,149.75592 22.180736,-21.25626 123.315613,24.43721 14.28162,13.65227 c 0,0 38.42676,42.79654 66.17911,59.72333 v 45.36876 L 0,271.76673 0.1991997,215.98846 c 0,0 37.3773303,-32.76909 60.1155513,-66.23256 z" fill="#4673aa" strokeWidth="1.28366" id="path1" />
@@ -161,45 +147,29 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                     {milestonePositions.map((m) => {
                         const isPassed = currentLevel >= m.level;
                         return (
-                            <G key={m.level} onPressIn={() => handleMilestonePress(m)}>
-                                <G x={m.x} y={m.y}>
-                                    {/* Większy promień żeby łatwiej w to kliknąć */}
-                                    <Circle 
-                                        cx="0" 
-                                        cy="0" 
-                                        r="13" 
-                                        fill="transparent"
-                                    />
-                                    <Circle
-                                        cx="0"
-                                        cy="0"
-                                        r="9"
-                                        fill={isPassed ? "#FFFF00" : "#ffffffb6"}
-                                    />
-                                    <TextSvg
-                                        x="0"
-                                        y="4"
-                                        fontSize="11"
-                                        fill={isPassed ? "white" : "black"}
-                                        fontWeight="bold"
-                                        textAnchor="middle"
-                                    >
-                                        {m.icon || m.level}
-                                    </TextSvg>
-                                </G>
+                            <G key={m.level} transform={`translate(${m.x}, ${m.y})`}>
+                                <Circle
+                                    cx="0"
+                                    cy="0"
+                                    r="9"
+                                    fill={isPassed ? "#FFFF00" : "#ffffffb6"}
+                                />
+                                <TextSvg
+                                    x="0"
+                                    y="4"
+                                    fontSize="11"
+                                    fill={isPassed ? "white" : "black"}
+                                    fontWeight="bold"
+                                    textAnchor="middle"
+                                >
+                                    {m.icon || m.level}
+                                </TextSvg>
                             </G>
                         );
                     })}
 
                     {/* Awatar gracza */}
-                    <G onPressIn={handlePlayerPress}>
-                        {/* Większy promień żeby łatwiej w to kliknąć */}
-                        <Circle 
-                            cx={playerPos.x} 
-                            cy={playerPos.y} 
-                            r="13" 
-                            fill="transparent"
-                        />
+                    <G>
                         <Circle
                             cx={playerPos.x}
                             cy={playerPos.y}
@@ -212,9 +182,7 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
 
                     {/* Dymek nad graczem */}
                     <G
-                        x={playerPos.x} // Pozycja X (środek)
-                        y={playerPos.y - 37} // Pozycja Y (nad kropką)
-                        transform={`translate(-${bubbleWidth / 2}, 0)`} // Centrowanie dymka nad kropką
+                        transform={`translate(${playerPos.x - bubbleWidth / 2}, ${playerPos.y - 37})`}
                     >
                         {/* Tło dymka */}
                         <Rect
@@ -251,5 +219,156 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                 </>
             )}
         </Svg>
+
+            {/* Tooltips jako nakładki absolutne */}
+            {pathLength !== null && pathLength > 0 && (
+                <View style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0}} pointerEvents="box-none">
+                    {/* Tooltips dla kamieni milowych */}
+                    {milestonePositions.map((m) => {
+                        // Konwersja współrzędnych SVG na procenty
+                        const leftPercent = (m.x / SVG_VIEWBOX_WIDTH) * 100;
+                        const topPercent = (m.y / SVG_VIEWBOX_HEIGHT) * 100;
+
+                        return (
+                            <View
+                                key={`tooltip-${m.level}`}
+                                style={{
+                                    position: 'absolute',
+                                    left: `${leftPercent}%`,
+                                    top: `${topPercent}%`,
+                                    width: 26,
+                                    height: 26,
+                                    marginLeft: -13,
+                                    marginTop: -13,
+                                }}
+                                pointerEvents="box-none"
+                            >
+                                <Tooltip
+                                    isVisible={visibleTooltip === m.level}
+                                    content={
+                                        <View style={{minWidth: 120, maxWidth: 200}}>
+                                            <Text style={{
+                                                fontSize: 16,
+                                                color: '#000',
+                                                fontWeight: 'bold',
+                                                textAlign: 'center'
+                                            }}>
+                                                {m.icon} {m.label}
+                                            </Text>
+                                            <Text style={{
+                                                fontSize: 13,
+                                                color: '#333',
+                                                marginTop: 6,
+                                                textAlign: 'center'
+                                            }}>
+                                                Level {m.level}
+                                            </Text>
+                                        </View>
+                                    }
+                                    placement="top"
+                                    onClose={() => setVisibleTooltip(null)}
+                                    useInteractionManager={true}
+                                    contentStyle={{
+                                        backgroundColor: '#FFFFFF',
+                                        padding: 14,
+                                        borderRadius: 8,
+                                        minWidth: 120,
+                                        shadowColor: '#000',
+                                        shadowOffset: {width: 0, height: 2},
+                                        shadowOpacity: 0.25,
+                                        shadowRadius: 3.84,
+                                        elevation: 5,
+                                    }}
+                                    arrowStyle={{borderTopColor: '#FFFFFF'}}
+                                    disableShadow={false}
+                                    backgroundColor="transparent"
+                                    closeOnChildInteraction={false}
+                                    closeOnContentInteraction={false}
+                                    showChildInTooltip={false}
+                                >
+                                    <TouchableOpacity
+                                        onPress={() => setVisibleTooltip(visibleTooltip === m.level ? null : m.level)}
+                                        style={{
+                                            width: 26,
+                                            height: 26,
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        {/* Transparent hitbox */}
+                                        <View style={{width: 26, height: 26}}/>
+                                    </TouchableOpacity>
+                                </Tooltip>
+                            </View>
+                        );
+                    })}
+
+                    {/* Tooltip dla gracza */}
+                    <View
+                        style={{
+                            position: 'absolute',
+                            left: `${(playerPos.x / SVG_VIEWBOX_WIDTH) * 100}%`,
+                            top: `${(playerPos.y / SVG_VIEWBOX_HEIGHT) * 100}%`,
+                            width: 26,
+                            height: 26,
+                            marginLeft: -13,
+                            marginTop: -13,
+                        }}
+                        pointerEvents="box-none"
+                    >
+                        <Tooltip
+                            isVisible={visibleTooltip === 'player'}
+                            content={
+                                <View style={{minWidth: 150, maxWidth: 220}}>
+                                    <Text
+                                        style={{fontSize: 16, color: '#000', fontWeight: 'bold', textAlign: 'center'}}>
+                                        🔴 This is you!
+                                    </Text>
+                                    <Text style={{fontSize: 13, color: '#333', marginTop: 6, textAlign: 'center'}}>
+                                        Current level: 🏆 {currentLevel}
+                                    </Text>
+                                    <Text style={{fontSize: 13, color: '#333', marginTop: 4, textAlign: 'center'}}>
+                                        Keep climbing!
+                                    </Text>
+                                </View>
+                            }
+                            placement="top"
+                            onClose={() => setVisibleTooltip(null)}
+                            useInteractionManager={true}
+                            contentStyle={{
+                                backgroundColor: '#FFFFFF',
+                                padding: 14,
+                                borderRadius: 8,
+                                minWidth: 150,
+                                shadowColor: '#000',
+                                shadowOffset: {width: 0, height: 2},
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+                                elevation: 5,
+                            }}
+                            arrowStyle={{borderTopColor: '#FFFFFF'}}
+                            disableShadow={false}
+                            backgroundColor="transparent"
+                            closeOnChildInteraction={false}
+                            closeOnContentInteraction={false}
+                            showChildInTooltip={false}
+                        >
+                            <TouchableOpacity
+                                onPress={() => setVisibleTooltip(visibleTooltip === 'player' ? null : 'player')}
+                                style={{
+                                    width: 26,
+                                    height: 26,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                }}
+                            >
+                                {/* Transparent hitbox */}
+                                <View style={{width: 26, height: 26}}/>
+                            </TouchableOpacity>
+                        </Tooltip>
+                    </View>
+                </View>
+            )}
+        </View>
     );
 };
