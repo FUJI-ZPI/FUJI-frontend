@@ -7,7 +7,6 @@ import {FujiIllustration} from '../components/dashboard/FujiIllustration';
 import {colors, themeStyles} from '../theme/styles';
 import {mockKanji, mockUser, totalKanjiCount} from '../data/mockData';
 import {FlyingClouds} from '../components/dashboard/FlyingClouds';
-import {Feather} from '@expo/vector-icons';
 import {CloudStatCard} from '../components/dashboard/CloudStatCard';
 import {loadUser, User} from '../utils/user';
 
@@ -109,12 +108,18 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
             <View style={styles.buttonRow}>
               <TouchableOpacity style={[styles.buttonBase, styles.buttonSecondary]} onPress={handleLearningSession}>
                 <View style={styles.buttonContentWrapper}>
-                  <Text style={styles.buttonTextSecondary}>Learning Session</Text>
+                    <View style={styles.buttonTextContainer}>
+                        <Text style={styles.buttonTextSecondary}>Learning</Text>
+                        <Text style={styles.buttonTextSecondary}>Session</Text>
+                    </View>
                 </View>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.buttonBase, styles.buttonPrimary]} onPress={handleReviewSession}>
                 <View style={styles.buttonContentWrapper}>
-                  <Text style={styles.buttonTextPrimary}>Review Session</Text>
+                    <View style={styles.buttonTextContainer}>
+                        <Text style={styles.buttonTextPrimary}>Review</Text>
+                        <Text style={styles.buttonTextPrimary}>Session</Text>
+                    </View>
                 </View>
               </TouchableOpacity>
             </View>
@@ -215,6 +220,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+    buttonTextContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+  },
   buttonPrimary: {
     backgroundColor: '#4673aa',
 
@@ -226,15 +236,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 18,
-    flex: 1,
     textAlign: 'center',
+      lineHeight: 22,
   },
   buttonTextSecondary: {
     color: 'black',
     fontWeight: '800',
     fontSize: 18,
-    flex: 1,
     textAlign: 'center',
+      lineHeight: 22,
   },
   kanjiIconText: {
     color: 'black',
