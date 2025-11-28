@@ -106,6 +106,9 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
       screenOptions={{
         headerTitleAlign: 'center',
         headerTitle: () => <CustomHeaderTitle />,
+          headerStyle: {
+              height: 80,
+          },
       }}
     >
       {navItems
