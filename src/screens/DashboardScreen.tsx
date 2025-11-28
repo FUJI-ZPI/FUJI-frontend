@@ -9,10 +9,35 @@ import {mockKanji, mockUser, totalKanjiCount} from '../data/mockData';
 import {FlyingClouds} from '../components/dashboard/FlyingClouds';
 import {CloudStatCard} from '../components/dashboard/CloudStatCard';
 import {loadUser, User} from '../utils/user';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
+import { FujiIllustration } from '../components/dashboard/FujiIllustration';
+import { themeStyles, colors } from '../theme/styles';
+import { FlyingClouds } from '../components/dashboard/FlyingClouds';
+import { CloudStatCard } from '../components/dashboard/CloudStatCard';
+import { loadUser, User } from '../utils/user';
+import * as SecureStore from 'expo-secure-store';
+import { useToast } from '../hooks/use-toast';
 
 interface ScreenProps {
   navigation: any;
   route: any;
+}
+
+interface DailyStreakDto {
+  streak: number;
+}
+
+interface KanjiLearnedDto {
+  amount: number;
+}
+
+interface UserLevelDto {
+  level: number;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -25,22 +50,78 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
   const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
 
+  const [dailyStreak, setDailyStreak] = useState<number>(0);
+  const [kanjiLearned, setKanjiLearned] = useState<number>(0);
+  const [userLevel, setUserLevel] = useState<number>(1);
 
-  useEffect(() => {
-    async function init() {
-      const u = await loadUser();
-      if (u) {
-        setUser(u);
+  const { toast } = useToast();
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      async function init() {
+        const u = await loadUser();
+        if (isActive && u) {
+          setUser(u);
+          if (u.level) setUserLevel(u.level);
+        }
+
+        const fetchWithAuth = async <T,>(endpoint: string): Promise<T> => {
+          const token = await SecureStore.getItemAsync('accessToken');
+          console.log(token)
+          if (!token) throw new Error('No token');
+
+          const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}${endpoint}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: 'application/json'
+            },
+          });
+
+          if (!response.ok) {
+            const body = await response.text().catch(() => '');
+            throw new Error(`API Error: ${response.status} ${body}`);
+          }
+
+          return response.json();
+        };
+
+        try {
+          const data = await fetchWithAuth<DailyStreakDto>('/api/v1/progress/daily-streak');
+          if (isActive && data && typeof data.streak === 'number') {
+            setDailyStreak(data.streak);
+          }
+        } catch (err) {
+          console.warn('Error fetching daily streak:', err);
+        }
+
+        try {
+          const data = await fetchWithAuth<KanjiLearnedDto>('/api/v1/progress/kanji-learned');
+          if (isActive && data && typeof data.amount === 'number') {
+            setKanjiLearned(data.amount);
+          }
+        } catch (err) {
+          console.warn('Error fetching kanji learned:', err);
+        }
+
+        try {
+          const data = await fetchWithAuth<UserLevelDto>('/api/v1/progress/level');
+          if (isActive && data && typeof data.level === 'number') {
+            setUserLevel(data.level);
+          }
+        } catch (err) {
+          console.warn('Error fetching user level:', err);
+        }
       }
-    }
-    init();
-  }, []);
 
-  const { learnedKanji, totalKanji } = useMemo(() => {
-    const learnedKanji = mockKanji.filter(k => k.learned).length;
-    const totalKanji = totalKanjiCount;
-    return { learnedKanji, totalKanji };
-  }, []);
+      init();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   const handleReviewSession = () => navigation.navigate('ReviewSession');
   const handleLearningSession = () => navigation.navigate('LearningSession');
@@ -63,9 +144,8 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
               iconName="flame"
               iconSet="Ionicons"
               iconColor={colors.warning}
-              value={mockUser.streak}
+              value={dailyStreak}
               label={t('common.streak_label')}
-
               contentStyle={{ paddingRight: 72, paddingTop: 5 }}
             />
           </View>
@@ -75,9 +155,8 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
               iconName="book-open"
               iconSet="Feather"
               iconColor={colors.secondary}
-              value={learnedKanji}
+              value={kanjiLearned}
               label={t('common.kanji_learned_label')}
-
               contentStyle={{ paddingRight: 72, paddingTop: 20 }}
             />
           </View>
@@ -86,7 +165,7 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
         <View>
           <View style={[styles.header, themeStyles.paddingContainer]}>
             <Text style={styles.headerTitle}>
-              {t('dashboard.greeting', { userName: user?.name?.split(' ')[0]})}
+              {t('dashboard.greeting', { userName: user?.name?.split(' ')[0] })}
             </Text>
             <Text style={themeStyles.textSubtitle}>{t('dashboard.subtitle')}</Text>
           </View>
@@ -98,7 +177,7 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
           <View style={styles.mountainContainer}>
             <View style={{ width: '100%', height: FUJI_HEIGHT }} pointerEvents='auto'>
               <FujiIllustration
-                currentLevel={mockUser.level}
+                currentLevel={userLevel}
                 maxLevel={60}
               />
             </View>
@@ -108,18 +187,12 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
             <View style={styles.buttonRow}>
               <TouchableOpacity style={[styles.buttonBase, styles.buttonSecondary]} onPress={handleLearningSession}>
                 <View style={styles.buttonContentWrapper}>
-                    <View style={styles.buttonTextContainer}>
-                        <Text style={styles.buttonTextSecondary}>Learning</Text>
-                        <Text style={styles.buttonTextSecondary}>Session</Text>
-                    </View>
+                  <Text style={styles.buttonTextSecondary}>Learning Session</Text>
                 </View>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.buttonBase, styles.buttonPrimary]} onPress={handleReviewSession}>
                 <View style={styles.buttonContentWrapper}>
-                    <View style={styles.buttonTextContainer}>
-                        <Text style={styles.buttonTextPrimary}>Review</Text>
-                        <Text style={styles.buttonTextPrimary}>Session</Text>
-                    </View>
+                  <Text style={styles.buttonTextPrimary}>Review Session</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -220,14 +293,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-    buttonTextContainer: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-  },
   buttonPrimary: {
     backgroundColor: '#4673aa',
-
   },
   buttonSecondary: {
     backgroundColor: '#ffffff',
@@ -236,15 +303,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 18,
+    flex: 1,
     textAlign: 'center',
-      lineHeight: 22,
   },
   buttonTextSecondary: {
     color: 'black',
     fontWeight: '800',
     fontSize: 18,
+    flex: 1,
     textAlign: 'center',
-      lineHeight: 22,
   },
   kanjiIconText: {
     color: 'black',
