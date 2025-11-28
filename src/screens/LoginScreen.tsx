@@ -1,13 +1,10 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { 
-  View, Text, Image, TouchableOpacity, 
-  StyleSheet, ActivityIndicator, Alert 
-} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { Toast } from 'toastify-react-native';
-import { useTranslation } from 'react-i18next';
-import { User } from '../utils/user';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {useToast} from '../hooks/use-toast';
+import {useTranslation} from 'react-i18next';
+import {User} from '../utils/user';
 
 const FUJI_LOGO = require('../../assets/fuji-logo-kanji.jpeg');
 const GOOGLE_LOGO = require('../../assets/google-icon.png')
@@ -15,6 +12,7 @@ const GOOGLE_LOGO = require('../../assets/google-icon.png')
 const LoginScreen = ({ navigation, onLogin }: any) => {
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
+    const {toast} = useToast();
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -54,7 +52,7 @@ const LoginScreen = ({ navigation, onLogin }: any) => {
 
       await SecureStore.setItemAsync('user', JSON.stringify(user));
 
-      Toast.success('You have successfully logged in via Google.');
+        toast({title: 'You have successfully logged in via Google.', variant: 'success'});
       onLogin();
     } catch (error) {
       console.error('Error logging in to the backend:', error);
@@ -100,8 +98,8 @@ const LoginScreen = ({ navigation, onLogin }: any) => {
 
             await SecureStore.setItemAsync('accessToken', data.access);
             await SecureStore.setItemAsync('refreshToken', data.refresh);
-          
-            Toast.success('Test logged in without Google! (mock)');
+
+              toast({title: 'Test logged in without Google! (mock)', variant: 'success'});
             onLogin();
           } catch (e) {
             console.error('Error logging in with mock:', e);
