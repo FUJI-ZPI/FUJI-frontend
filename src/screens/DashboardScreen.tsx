@@ -176,17 +176,13 @@ export const DashboardScreen: React.FC<ScreenProps> = ({navigation}: any) => {
                         <View style={styles.buttonRow}>
                             <TouchableOpacity style={[styles.buttonBase, styles.buttonSecondary]}
                                               onPress={handleLearningSession}>
-                                <View style={styles.buttonTextContainer}>
-                                    <Text style={styles.buttonTextSecondary}>Learning</Text>
-                                    <Text style={styles.buttonTextSecondary}>Session</Text>
-                                </View>
+                                <Text style={styles.buttonTextSecondary}>Learning</Text>
+                                <Text style={styles.buttonTextSecondary}>Session</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.buttonBase, styles.buttonPrimary]}
                                               onPress={handleReviewSession}>
-                                <View style={styles.buttonTextContainer}>
-                                    <Text style={styles.buttonTextPrimary}>Review</Text>
-                                    <Text style={styles.buttonTextPrimary}>Session</Text>
-                                </View>
+                                <Text style={styles.buttonTextPrimary}>Review</Text>
+                                <Text style={styles.buttonTextPrimary}>Session</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -280,14 +276,6 @@ const styles = StyleSheet.create({
         paddingRight: themeStyles.paddingContainer.padding - 5,
         borderRadius: 26,
         elevation: 6,
-    },
-    buttonContentWrapper: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    buttonTextContainer: {
-        flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
     },
