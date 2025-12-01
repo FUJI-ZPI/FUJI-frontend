@@ -79,39 +79,6 @@ const LoginScreen = ({ navigation, onLogin }: any) => {
         </TouchableOpacity>
     
         {loading && <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />}
-        
-        <Text style={styles.note}>DO TESTÓW</Text>
-
-        <TouchableOpacity
-        disabled={loading}
-        onPress={async () => {
-          setLoading(true);
-          try {
-            const res = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/auth/login-mock`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-            });
-
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-            const data = await res.json();
-
-            await SecureStore.setItemAsync('accessToken', data.access);
-            await SecureStore.setItemAsync('refreshToken', data.refresh);
-
-              toast({title: 'Test logged in without Google! (mock)', variant: 'success'});
-            onLogin();
-          } catch (e) {
-            console.error('Error logging in with mock:', e);
-            Alert.alert('Mock login error', String(e));
-          } finally {
-            setLoading(false);
-          }
-        }}
-        style={styles.googleButton}
-      >
-        <Text style={styles.googleText}>🔧 Mock Login</Text>
-      </TouchableOpacity>
       </View>
     </View>
   );
@@ -131,7 +98,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     width: '90%',
     borderRadius: 16,
-    padding: 24,
+      padding: 30,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOpacity: 0.1,
@@ -176,11 +143,5 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontWeight: '500',
     fontSize: 16,
-  },
-  note: {
-    fontSize: 12,
-    color: '#94a3b8',
-    textAlign: 'center',
-    marginTop: 24,
   },
 });
