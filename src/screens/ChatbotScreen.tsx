@@ -332,16 +332,12 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
     minWidth: 70, 
     backgroundColor: chatbotColors.card,
-    borderWidth: 1,
-    borderColor: `${chatbotColors.primary}10`,
   },
   rotatingSquare: {
     width: 12,
     height: 12,
-    borderWidth: 2,
-    borderColor: chatbotColors.primary,
-    borderTopColor: 'transparent',
-    borderRadius: 6,
+      backgroundColor: chatbotColors.primary,
+      borderRadius: 2,
   },
   loadingBubbleContent: {
       flexDirection: 'row',

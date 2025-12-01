@@ -30,7 +30,6 @@ import * as Notifications from 'expo-notifications';
 import LearningSessionScreen from "./src/screens/LearningSessionScreen";
 import ReviewSessionScreen from "./src/screens/ReviewSessionScreen";
 
-// Konfiguracja expo-notifications - jak mają być wyświetlane powiadomienia na pierwszym planie
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
         shouldShowAlert: true,

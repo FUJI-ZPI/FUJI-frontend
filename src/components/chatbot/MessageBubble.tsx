@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Animated, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Animated, Image, Pressable, StyleSheet, Text, View} from 'react-native';
 import {chatbotColors} from '../../theme/styles';
 
 interface Message {
@@ -50,13 +50,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             setIsTranslationRendered(true);
             Animated.timing(anim, {
                 toValue: 1,
-                duration: 400,
+                duration: 150,
                 useNativeDriver: true,
             }).start();
         } else {
             Animated.timing(anim, {
                 toValue: 0,
-                duration: 400,
+                duration: 150,
                 useNativeDriver: true,
             }).start(() => {
                 setIsTranslationRendered(false);
@@ -68,9 +68,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         opacity: anim,
         transform: [
             {
-                translateY: anim.interpolate({
+                scale: anim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [-10, 0],
+                    outputRange: [0.96, 1],
                 }),
             },
         ],
@@ -92,24 +92,24 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             )}
 
             <View style={[styles.messageContent, isUser && styles.userMessageContent]}>
-                <TouchableOpacity
+                <Pressable
                     onLongPress={() => isTranslatable && handleLongPress(message.id, message.text)}
                     onPress={() => isTranslatable && handleLongPress(message.id, message.text)}
-                    activeOpacity={0.8}
-                    style={bubbleStyles}
                 >
-                    <View style={styles.innerBubbleContent}>
-                        <Text style={textStyles}>
-                        {message.text}
-                        </Text>
-                        
-                        <View style={[styles.metadataRow, isUser && styles.userMetadataWidthFix]}>
-                        <Text style={isUser ? styles.userTimestamp : styles.aiTimestamp}>
-                            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </Text>
+                    <View style={bubbleStyles}>
+                        <View style={styles.innerBubbleContent}>
+                            <Text style={textStyles}>
+                                {message.text}
+                            </Text>
+
+                            <View style={[styles.metadataRow, isUser && styles.userMetadataWidthFix]}>
+                                <Text style={isUser ? styles.userTimestamp : styles.aiTimestamp}>
+                                    {message.timestamp.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
+                                </Text>
+                            </View>
                         </View>
                     </View>
-                </TouchableOpacity>
+                </Pressable>
             </View>
 
             {isUser && (
@@ -221,8 +221,6 @@ const styles = StyleSheet.create({
   },
   aiBubble: {
     backgroundColor: chatbotColors.card,
-    borderWidth: 1,
-    borderColor: `${chatbotColors.primary}10`,
   },
   userBubble: {
     backgroundColor: chatbotColors.primary,
@@ -300,4 +298,3 @@ const styles = StyleSheet.create({
 });
 
 export default MessageBubble;
-
