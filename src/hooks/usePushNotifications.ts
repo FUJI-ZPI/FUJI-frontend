@@ -1,7 +1,6 @@
 import {useEffect, useState} from 'react';
 import * as SecureStore from 'expo-secure-store';
 import {Alert, PermissionsAndroid, Platform} from 'react-native';
-import {Toast} from 'toastify-react-native';
 import * as Notifications from 'expo-notifications';
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
@@ -55,7 +54,7 @@ export const usePushNotifications = () => {
 
                 if (response.ok) {
                     console.log('FCM token successfully sent to backend');
-                    Toast.success('Push notifications enabled!');
+                    console.log('Push notifications enabled!');
                 } else {
                     console.error('Failed to send FCM token to backend:', response.status);
                 }

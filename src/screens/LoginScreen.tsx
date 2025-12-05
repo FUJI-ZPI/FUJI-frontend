@@ -1,13 +1,10 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { 
-  View, Text, Image, TouchableOpacity, 
-  StyleSheet, ActivityIndicator, Alert 
-} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { Toast } from 'toastify-react-native';
-import { useTranslation } from 'react-i18next';
-import { User } from '../utils/user';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {useToast} from '../hooks/use-toast';
+import {useTranslation} from 'react-i18next';
+import {User} from '../utils/user';
 
 const FUJI_LOGO = require('../../assets/fuji-logo-kanji.jpeg');
 const GOOGLE_LOGO = require('../../assets/google-icon.png')
@@ -15,6 +12,7 @@ const GOOGLE_LOGO = require('../../assets/google-icon.png')
 const LoginScreen = ({ navigation, onLogin }: any) => {
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
+    const {toast} = useToast();
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -54,7 +52,7 @@ const LoginScreen = ({ navigation, onLogin }: any) => {
 
       await SecureStore.setItemAsync('user', JSON.stringify(user));
 
-      Toast.success('You have successfully logged in via Google.');
+        toast({title: 'You have successfully logged in via Google.', variant: 'success'});
       onLogin();
     } catch (error) {
       console.error('Error logging in to the backend:', error);
@@ -81,39 +79,6 @@ const LoginScreen = ({ navigation, onLogin }: any) => {
         </TouchableOpacity>
     
         {loading && <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />}
-        
-        <Text style={styles.note}>DO TESTÓW</Text>
-
-        <TouchableOpacity
-        disabled={loading}
-        onPress={async () => {
-          setLoading(true);
-          try {
-            const res = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/auth/login-mock`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-            });
-
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-            const data = await res.json();
-
-            await SecureStore.setItemAsync('accessToken', data.access);
-            await SecureStore.setItemAsync('refreshToken', data.refresh);
-          
-            Toast.success('Test logged in without Google! (mock)');
-            onLogin();
-          } catch (e) {
-            console.error('Error logging in with mock:', e);
-            Alert.alert('Mock login error', String(e));
-          } finally {
-            setLoading(false);
-          }
-        }}
-        style={styles.googleButton}
-      >
-        <Text style={styles.googleText}>🔧 Mock Login</Text>
-      </TouchableOpacity>
       </View>
     </View>
   );
@@ -133,7 +98,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     width: '90%',
     borderRadius: 16,
-    padding: 24,
+      padding: 30,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOpacity: 0.1,
@@ -178,11 +143,5 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontWeight: '500',
     fontSize: 16,
-  },
-  note: {
-    fontSize: 12,
-    color: '#94a3b8',
-    textAlign: 'center',
-    marginTop: 24,
   },
 });

@@ -1,13 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import {ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import {colors, spacing, themeStyles} from '../theme/styles';
@@ -483,7 +475,7 @@ const localStyles = StyleSheet.create({
     marginTop: spacing.base,
   },
   kanjiTile: {
-    width: 100,
+      width: '31.5%',
     height: 100,
     backgroundColor: colors.background,
     borderRadius: 8,

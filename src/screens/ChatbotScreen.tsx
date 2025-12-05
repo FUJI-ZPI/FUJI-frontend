@@ -1,28 +1,25 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  View, 
-  ScrollView, 
-  Platform,
-  KeyboardAvoidingView,
-  StyleSheet,
-  Text,
-  Image,
-  Animated,
+import React, {useEffect, useRef, useState} from 'react';
+import {
+    Animated,
+    Image,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableWithoutFeedback,
+    View,
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import MessageBubble, { MessageBubbleProps } from '../components/chatbot/MessageBubble'
+import MessageBubble, {MessageBubbleProps} from '../components/chatbot/MessageBubble'
 import ChatInput from '../components/chatbot/ChatInput';
-import { chatbotColors } from '../theme/styles';
-import { useTranslation } from 'react-i18next';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, loadUser } from '../utils/user';
-import { 
-  Menu, 
-  MenuOptions, 
-  MenuOption, 
-  MenuTrigger 
-} from 'react-native-popup-menu';
-import { Feather } from '@expo/vector-icons'; 
+import {chatbotColors} from '../theme/styles';
+import {useTranslation} from 'react-i18next';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {loadUser, User} from '../utils/user';
+import {Menu, MenuOption, MenuOptions, MenuTrigger} from 'react-native-popup-menu';
+import {Feather} from '@expo/vector-icons';
 
 
 const AI_SENSEI_AVATAR = require('../../assets/ai-sensei-avatar.jpeg');
@@ -188,13 +185,16 @@ const ChatbotScreen: React.FC<any> = () => {
       setShowTranslation({ messageId, translation: t('chat.translation_not_available') });
     }
   };
+    ;
+
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.fullScreen}
-    >
-      <SafeAreaView style={styles.fullScreen} edges={['top', 'left', 'right', 'bottom']}>
+      <SafeAreaView style={styles.fullScreen} edges={['top', 'left', 'right']}>
+          <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              style={styles.fullScreen}
+              keyboardVerticalOffset={90}
+          >
         <Menu style={styles.infoMenu}>
           <MenuTrigger>
             <Feather name="info" size={22} color={chatbotColors.mutedForeground} />
@@ -207,37 +207,40 @@ const ChatbotScreen: React.FC<any> = () => {
             </MenuOption>
           </MenuOptions>
         </Menu>
-        
-        <ScrollView 
-          ref={scrollViewRef} 
-          style={styles.scrollView} 
-          contentContainerStyle={styles.scrollContentContainer}
-        >
-          {messages.map((message) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              handleLongPress={handleLongPress}
-              showTranslation={showTranslation}
-              userAvatar={user?.photo}
-            />
-          ))}
-          {loading && (
-            <View style={[styles.messageRow, styles.aiRow, styles.loadingRow]}>
-                <View style={styles.avatarContainer}>
-                    <Image 
-                        source={AI_SENSEI_AVATAR}
-                        style={styles.aiAvatarImage}
-                        accessibilityLabel="AI Sensei Avatar"
-                    />
-                    <Text style={styles.aiAvatarLabel}>AI先生</Text>
-                </View>
-                <View style={styles.aiBubbleBase}>
-                    <ChatbotLoadingIndicator text={t('chat.thinking')} />
-                </View>
-            </View>
-          )}
-        </ScrollView>
+
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                  <ScrollView
+                      ref={scrollViewRef}
+                      style={styles.scrollView}
+                      contentContainerStyle={styles.scrollContentContainer}
+                      keyboardShouldPersistTaps="handled"
+                  >
+                      {messages.map((message) => (
+                          <MessageBubble
+                              key={message.id}
+                              message={message}
+                              handleLongPress={handleLongPress}
+                              showTranslation={showTranslation}
+                              userAvatar={user?.photo}
+                          />
+                      ))}
+                      {loading && (
+                          <View style={[styles.messageRow, styles.aiRow, styles.loadingRow]}>
+                              <View style={styles.avatarContainer}>
+                                  <Image
+                                      source={AI_SENSEI_AVATAR}
+                                      style={styles.aiAvatarImage}
+                                      accessibilityLabel="AI Sensei Avatar"
+                                  />
+                                  <Text style={styles.aiAvatarLabel}>AI先生</Text>
+                              </View>
+                              <View style={styles.aiBubbleBase}>
+                                  <ChatbotLoadingIndicator text={t('chat.thinking')}/>
+                              </View>
+                          </View>
+                      )}
+                  </ScrollView>
+              </TouchableWithoutFeedback>
 
         <ChatInput 
           inputText={inputText}
@@ -246,8 +249,8 @@ const ChatbotScreen: React.FC<any> = () => {
           placeholder={t('chat.placeholder')}
           disabled={loading} 
         />
+          </KeyboardAvoidingView>
       </SafeAreaView>
-    </KeyboardAvoidingView>
   );
 };
 
@@ -287,7 +290,7 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     padding: 5,
     paddingTop: 0,
-    paddingBottom: 20, 
+      paddingBottom: 10,
   },
   loadingRow: {
     marginBottom: 16,
@@ -329,16 +332,12 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
     minWidth: 70, 
     backgroundColor: chatbotColors.card,
-    borderWidth: 1,
-    borderColor: `${chatbotColors.primary}10`,
   },
   rotatingSquare: {
     width: 12,
     height: 12,
-    borderWidth: 2,
-    borderColor: chatbotColors.primary,
-    borderTopColor: 'transparent',
-    borderRadius: 6,
+      backgroundColor: chatbotColors.primary,
+      borderRadius: 2,
   },
   loadingBubbleContent: {
       flexDirection: 'row',
