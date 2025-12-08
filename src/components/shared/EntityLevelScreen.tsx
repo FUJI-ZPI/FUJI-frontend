@@ -1,15 +1,59 @@
-import React from 'react';
-import {ActivityIndicator, Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
-import {colors, spacing, themeStyles} from '../../theme/styles';
-import {EntityType, LevelStyleConfig, useEntityLevels} from '../../hooks/useEntityLevels';
+import React, { useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+// 1. ZMIANA IMPORTU: Usunięto SafeAreaView, dodano hook
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
+import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from "react-native-svg";
 
-const {width} = Dimensions.get('window');
-const GRID_PADDING = spacing.base * 2;
-const ITEM_MARGIN = spacing.small;
+// Importy z Twojego projektu
+import { colors } from '../../theme/styles';
+import { EntityType, LevelStyleConfig, useEntityLevels } from '../../hooks/useEntityLevels';
+
+// --- THEME CONSTANTS ---
+const JP_THEME = {
+  ink: '#1F2937',        // Sumi Ink
+  primary: '#4673aa',    // Fuji Blue
+  accent: '#f74f73',     // Sun Red
+  paperWhite: '#FFFFFF',
+  sand: '#E5E0D6',
+  textMuted: '#64748b',
+};
+
+const { width } = Dimensions.get('window');
+
+// Konfiguracja Gridu
+const GRID_PADDING = 24;
+const ITEM_MARGIN = 10;
 const ITEMS_PER_ROW = 4;
-const ITEM_WIDTH = (width - GRID_PADDING - (ITEM_MARGIN * (ITEMS_PER_ROW - 1))) / ITEMS_PER_ROW;
+const ITEM_WIDTH = (width - (GRID_PADDING * 2) - (ITEM_MARGIN * (ITEMS_PER_ROW - 1))) / ITEMS_PER_ROW;
+
+// --- HEADER ILLUSTRATION (TORII) ---
+const HeaderTorii = () => (
+  <View style={styles.toriiContainer} pointerEvents="none">
+    <Svg width="120" height="60" viewBox="0 0 120 60" style={{ opacity: 0.6 }}>
+       <Defs>
+          <SvgLinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={JP_THEME.accent} stopOpacity="1" />
+            <Stop offset="1" stopColor="#c23b22" stopOpacity="1" />
+          </SvgLinearGradient>
+       </Defs>
+       {/* Daszek */}
+       <Path d="M 10 20 Q 60 10 110 20 L 112 28 Q 60 18 8 28 Z" fill="url(#grad)" />
+       {/* Filary */}
+       <Rect x="25" y="28" width="6" height="30" rx="1" fill="#c0392b" />
+       <Rect x="89" y="28" width="6" height="30" rx="1" fill="#c0392b" />
+    </Svg>
+  </View>
+);
 
 interface EntityLevelScreenConfig {
     entityType: EntityType;
@@ -26,18 +70,21 @@ interface EntityLevelScreenProps {
 }
 
 export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
-                                                                        navigation,
-                                                                        config,
-                                                                    }) => {
-    const {t} = useTranslation();
-    const {entityName, totalLevels, levelsPerLoad, getLevelStyle, onSelectLevel} = config;
+    navigation,
+    config,
+}) => {
+    const { t } = useTranslation();
+    // 2. INICJALIZACJA HOOKA
+    const insets = useSafeAreaInsets();
+    
+    const { entityName, totalLevels, levelsPerLoad, getLevelStyle, onSelectLevel } = config;
 
-    const [visibleRange, setVisibleRange] = React.useState<{ min: number; max: number }>({
+    const [visibleRange, setVisibleRange] = useState<{ min: number; max: number }>({
         min: 1,
         max: levelsPerLoad,
     });
 
-    const {displayedLevels, hasMore, loadingMore, loadMore} = useEntityLevels({
+    const { displayedLevels, hasMore, loadingMore, loadMore } = useEntityLevels({
         totalLevels,
         levelsPerLoad,
         getLevelStyle,
@@ -51,16 +98,16 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
 
     const currentGroupStyle = getLevelStyle(getMidpointLevel());
 
-    const handleViewableItemsChanged = React.useRef(({viewableItems}: any) => {
+    const handleViewableItemsChanged = useRef(({ viewableItems }: any) => {
         if (viewableItems.length > 0) {
             const visibleLevels = viewableItems.map((item: any) => item.item);
             const min = Math.min(...visibleLevels);
             const max = Math.max(...visibleLevels);
-            setVisibleRange({min, max});
+            setVisibleRange({ min, max });
         }
     }).current;
 
-    const viewabilityConfig = React.useRef({
+    const viewabilityConfig = useRef({
         itemVisiblePercentThreshold: 50,
     }).current;
 
@@ -71,123 +118,205 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
     };
 
     const renderFooter = () => {
-        if (!loadingMore) return null;
+        if (!loadingMore) return <View style={{ height: 40 }} />;
         return (
             <View style={styles.footerLoader}>
-                <ActivityIndicator size="small" color={colors.primary}/>
+                <ActivityIndicator size="small" color="#10B981" />
                 <Text style={styles.loadingMoreText}>Loading more...</Text>
             </View>
         );
     };
 
     return (
-        <SafeAreaView style={themeStyles.flex1} edges={['bottom', 'left', 'right']}>
-            <View style={[themeStyles.paddingContainer, themeStyles.flex1]}>
-                {/* Sticky Header - zawsze widoczny */}
-                <View style={styles.header}>
-                    <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
-                        {t(entityName) || entityName}{' '}
-                        <Text style={{color: currentGroupStyle.color}}>
-                            {currentGroupStyle.text}
-                        </Text>
+        // 3. ZMIANA GLÓWNEGO KONTENERA NA VIEW + PADDINGI
+        <View 
+            style={[
+                styles.container, 
+                { 
+                    paddingTop: insets.top,
+                    paddingLeft: insets.left,
+                    paddingRight: insets.right
+                    // Bottom nie dodajemy tutaj, bo chcemy żeby lista wchodziła pod spód,
+                    // obsłużymy to w contentContainerStyle listy.
+                }
+            ]}
+        >
+            
+            {/* Header */}
+            <View style={styles.header}>
+                <TouchableOpacity 
+                    onPress={() => navigation.goBack()} 
+                    style={styles.backButton}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons name="arrow-back" size={20} color={JP_THEME.ink} />
+                </TouchableOpacity>
+                
+                <View style={styles.headerTitleContainer}>
+                    <HeaderTorii />
+                    <Text style={styles.headerTitle}>{t(entityName) || entityName}</Text>
+                    <Text style={[styles.headerSubtitle, { color: currentGroupStyle.color }]}>
+                        {currentGroupStyle.text}
                     </Text>
                 </View>
 
-                {/* Scrollable Content */}
-                <FlatList
-                    key={ITEMS_PER_ROW.toString()}
-                    data={displayedLevels}
-                    keyExtractor={item => item.toString()}
-                    numColumns={ITEMS_PER_ROW}
-                    contentContainerStyle={styles.scrollContent}
-                    columnWrapperStyle={styles.levelsRow}
-                    onEndReached={handleLoadMore}
-                    onEndReachedThreshold={0.5}
-                    onViewableItemsChanged={handleViewableItemsChanged}
-                    viewabilityConfig={viewabilityConfig}
-                    ListFooterComponent={renderFooter}
-                    renderItem={({item: level}) => {
-                        const style = getLevelStyle(level);
-                        return (
-                            <TouchableOpacity
-                                key={level}
-                                onPress={() => onSelectLevel(level)}
-                                style={{width: ITEM_WIDTH}}>
-                                <View
-                                    style={[
-                                        styles.levelCard,
-                                        {
-                                            backgroundColor: style.background,
-                                            borderColor: style.borderColor,
-                                        },
-                                    ]}>
-                                    <Text style={[styles.levelNumber, {color: style.color}]}>
-                                        {level}
-                                    </Text>
-                                </View>
-                            </TouchableOpacity>
-                        );
-                    }}
-                />
+                {/* Pusty widok dla balansu flex */}
+                <View style={{ width: 40 }} /> 
             </View>
-        </SafeAreaView>
+
+            {/* Grid */}
+            <FlatList
+                key={ITEMS_PER_ROW.toString()}
+                data={displayedLevels}
+                keyExtractor={item => item.toString()}
+                numColumns={ITEMS_PER_ROW}
+                // 4. DODANIE INSETS.BOTTOM DO LISTY
+                contentContainerStyle={[
+                    styles.scrollContent,
+                    { paddingBottom: insets.bottom + 20 }
+                ]}
+                columnWrapperStyle={styles.levelsRow}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                onViewableItemsChanged={handleViewableItemsChanged}
+                viewabilityConfig={viewabilityConfig}
+                ListFooterComponent={renderFooter}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item: level }) => {
+                    const style = getLevelStyle(level);
+                    return (
+                        <TouchableOpacity
+                            key={level}
+                            onPress={() => onSelectLevel(level)}
+                            activeOpacity={0.7}
+                            style={{ width: ITEM_WIDTH }}
+                        >
+                            <View
+                                style={[
+                                    styles.levelCard,
+                                    {
+                                        borderColor: style.borderColor || style.color,
+                                    },
+                                ]}>
+                                
+                                {/* Kolorowy pasek na górze karty */}
+                                <View style={[styles.colorStrip, { backgroundColor: style.color }]} />
+                                
+                                <Text style={styles.levelNumber}>
+                                    {level}
+                                </Text>
+                            </View>
+                        </TouchableOpacity>
+                    );
+                }}
+            />
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    scrollContent: {
-        backgroundColor: colors.background,
-        paddingBottom: spacing.base * 4,
+    container: { 
+        flex: 1,
+        backgroundColor: colors.background 
     },
+
+    // Header Styles
     header: {
         flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+        paddingTop: 8,
+    },
+    backButton: {
+        width: 40,
+        height: 40,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingTop: spacing.base,
-        paddingBottom: spacing.base,
-        marginBottom: spacing.small,
-        marginHorizontal: spacing.base,
+        backgroundColor: JP_THEME.paperWhite, 
+        borderRadius: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
     },
-    title: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: colors.text,
-        textAlign: 'center',
-        flex: 1,
-        marginHorizontal: spacing.small,
+    headerTitleContainer: {
+        alignItems: 'center',
+    },
+    toriiContainer: {
+        position: 'absolute',
+        top: -15,
+        opacity: 0.5,
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: JP_THEME.ink,
+        textTransform: 'capitalize',
+    },
+    headerSubtitle: {
+        fontSize: 14,
+        fontWeight: '700',
+        marginTop: 2,
+        letterSpacing: 0.5,
+    },
+
+    // List & Grid Styles
+    scrollContent: {
+        paddingHorizontal: GRID_PADDING,
+        paddingTop: 10,
+        // paddingBottom jest teraz nadpisywany dynamicznie w komponencie
     },
     levelsRow: {
         justifyContent: 'space-between',
-        marginBottom: spacing.small,
+        marginBottom: ITEM_MARGIN,
     },
+
+    // Level Card Styles
     levelCard: {
+        backgroundColor: JP_THEME.paperWhite,
         borderRadius: 12,
-        borderWidth: 2,
-        height: ITEM_WIDTH,
+        borderWidth: 1,
+        height: ITEM_WIDTH, 
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
+        // Shadow
+        shadowColor: JP_THEME.primary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
         shadowRadius: 4,
-        elevation: 3,
+        elevation: 2,
         overflow: 'hidden',
+        position: 'relative',
+    },
+    colorStrip: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 6,
+        opacity: 0.8,
     },
     levelNumber: {
-        fontSize: 30,
-        fontWeight: '700',
+        fontSize: 24,
+        fontWeight: '800',
+        color: JP_THEME.ink,
+        fontVariant: ['tabular-nums'],
     },
+
+    // Footer
     footerLoader: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: spacing.large,
-        gap: spacing.small,
+        paddingVertical: 20,
+        gap: 8,
     },
     loadingMoreText: {
-        fontSize: 14,
-        color: colors.textMuted,
-        marginLeft: spacing.small,
+        fontSize: 12,
+        color: JP_THEME.textMuted,
+        fontWeight: '600',
     },
 });
-

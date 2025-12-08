@@ -3,7 +3,6 @@ import {
     Animated,
     Image,
     Keyboard,
-    KeyboardAvoidingView,
     Platform,
     ScrollView,
     StyleSheet,
@@ -12,15 +11,15 @@ import {
     View,
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import { KeyboardAvoidingView, KeyboardProvider } from 'react-native-keyboard-controller';
 import MessageBubble, {MessageBubbleProps} from '../components/chatbot/MessageBubble'
 import ChatInput from '../components/chatbot/ChatInput';
 import {chatbotColors} from '../theme/styles';
 import {useTranslation} from 'react-i18next';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {loadUser, User} from '../utils/user';
 import {Menu, MenuOption, MenuOptions, MenuTrigger} from 'react-native-popup-menu';
 import {Feather} from '@expo/vector-icons';
-
 
 const AI_SENSEI_AVATAR = require('../../assets/ai-sensei-avatar.jpeg');
 
@@ -41,7 +40,7 @@ const ChatbotLoadingIndicator: React.FC<{ text: string }> = ({ text }) => {
         Animated.loop(
             Animated.timing(rotateAnim, {
                 toValue: 1,
-                duration: 1500,
+                duration: 1000,
                 useNativeDriver: true,
             })
         ).start();
@@ -58,7 +57,7 @@ const ChatbotLoadingIndicator: React.FC<{ text: string }> = ({ text }) => {
 
     return (
         <View style={styles.loadingBubbleContent}>
-            <Animated.View style={[styles.rotatingSquare, { transform: [{ rotate }] }]} />
+            <Animated.View style={[styles.loadingSpinner, { transform: [{ rotate }] }]} />
             <Text style={styles.loadingText}>
                 {text} 
             </Text>
@@ -69,6 +68,7 @@ const ChatbotLoadingIndicator: React.FC<{ text: string }> = ({ text }) => {
 
 const ChatbotScreen: React.FC<any> = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -88,9 +88,26 @@ const ChatbotScreen: React.FC<any> = () => {
 
   useEffect(() => {
     if (scrollViewRef.current) {
-      scrollViewRef.current.scrollToEnd({ animated: true });
+        setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
     }
   }, [messages, loading]); 
+
+  // --- NOWE: Efekt do scrollowania po otwarciu tłumaczenia ---
+  useEffect(() => {
+    if (showTranslation && scrollViewRef.current) {
+        // Sprawdzamy, czy to ostatnia wiadomość. Jeśli tak, scrollujemy na dół.
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage && lastMessage.id === showTranslation.messageId) {
+            // Małe opóźnienie, aby animacja LayoutAnimation zdążyła powiększyć widok
+            setTimeout(() => {
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+            }, 250); 
+        }
+    }
+  }, [showTranslation, messages]);
+  // ------------------------------------------------------------
 
   const [user, setUser] = useState<User | null>(null);
   
@@ -118,6 +135,7 @@ const ChatbotScreen: React.FC<any> = () => {
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInputText('');
+    setShowTranslation(null); // Ukryj poprzednie tłumaczenia przy nowej wiadomości
 
     try {
       setLoading(true)
@@ -185,35 +203,32 @@ const ChatbotScreen: React.FC<any> = () => {
       setShowTranslation({ messageId, translation: t('chat.translation_not_available') });
     }
   };
-    ;
-
+    
 
   return (
+    <KeyboardProvider>
       <SafeAreaView style={styles.fullScreen} edges={['top', 'left', 'right']}>
-          <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : "height"}
-              style={styles.fullScreen}
-              keyboardVerticalOffset={90}
-          >
-        <Menu style={styles.infoMenu}>
-          <MenuTrigger>
-            <Feather name="info" size={22} color={chatbotColors.mutedForeground} />
-          </MenuTrigger>
-          <MenuOptions optionsContainerStyle={styles.tooltipContainer}>
-            <MenuOption onSelect={() => {}} disabled={true}>
-              <Text style={styles.tooltipText}>
-                {t('chat.sessionInfo')}
-              </Text>
-            </MenuOption>
-          </MenuOptions>
-        </Menu>
+            <Menu style={styles.infoMenu}>
+              <MenuTrigger>
+                <Feather name="info" size={22} color={chatbotColors.mutedForeground} />
+              </MenuTrigger>
+              <MenuOptions optionsContainerStyle={styles.tooltipContainer}>
+                <MenuOption onSelect={() => {}} disabled={true}>
+                  <Text style={styles.tooltipText}>
+                    {t('chat.sessionInfo')}
+                  </Text>
+                </MenuOption>
+              </MenuOptions>
+            </Menu>
 
-              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={{ flex: 1 }}>
                   <ScrollView
                       ref={scrollViewRef}
                       style={styles.scrollView}
                       contentContainerStyle={styles.scrollContentContainer}
                       keyboardShouldPersistTaps="handled"
+                      keyboardDismissMode="interactive"
                   >
                       {messages.map((message) => (
                           <MessageBubble
@@ -240,23 +255,36 @@ const ChatbotScreen: React.FC<any> = () => {
                           </View>
                       )}
                   </ScrollView>
-              </TouchableWithoutFeedback>
+                </View>
+            </TouchableWithoutFeedback>
 
-        <ChatInput 
-          inputText={inputText}
-          setInputText={setInputText}
-          sendMessage={sendMessage}
-          placeholder={t('chat.placeholder')}
-          disabled={loading} 
-        />
-          </KeyboardAvoidingView>
+            <KeyboardAvoidingView
+                behavior="padding"
+                style={styles.inputContainer}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 35}
+            >
+                <ChatInput 
+                inputText={inputText}
+                setInputText={setInputText}
+                sendMessage={sendMessage}
+                placeholder={t('chat.placeholder')}
+                disabled={loading} 
+                />
+
+                <View style={{ height: insets.bottom, backgroundColor: chatbotColors.background }} />
+            </KeyboardAvoidingView>
+
       </SafeAreaView>
+    </KeyboardProvider>
   );
 };
 
 const styles = StyleSheet.create({
   fullScreen: {
     flex: 1,
+    backgroundColor: chatbotColors.background,
+  },
+  inputContainer: {
     backgroundColor: chatbotColors.background,
   },
   
@@ -290,7 +318,7 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     padding: 5,
     paddingTop: 0,
-      paddingBottom: 10,
+    paddingBottom: 20, 
   },
   loadingRow: {
     marginBottom: 16,
@@ -333,11 +361,13 @@ const styles = StyleSheet.create({
     minWidth: 70, 
     backgroundColor: chatbotColors.card,
   },
-  rotatingSquare: {
-    width: 12,
-    height: 12,
-      backgroundColor: chatbotColors.primary,
-      borderRadius: 2,
+  loadingSpinner: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    borderTopColor: chatbotColors.primary,
   },
   loadingBubbleContent: {
       flexDirection: 'row',

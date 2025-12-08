@@ -341,7 +341,7 @@ export default function LearningSessionScreen({navigation}: any) {
         <View style={styles.progressInfo}>
           <Text style={styles.progressLabel}>Progress</Text>
           <Text style={styles.progressValue}>
-            {completedKanji} / {totalKanji}
+              {Math.min(completedKanji + 1, totalKanji)} / {totalKanji}
           </Text>
         </View>
         <View style={{width: 50}} />

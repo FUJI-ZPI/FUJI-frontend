@@ -100,7 +100,7 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
   return (
     <Drawer.Navigator
       drawerContent={(props) => (
-        <DrawerContent {...props} navItems={navItems} />
+        <DrawerContent {...props} navItems={navItems} onLogout={onLogout} />
     )}
       screenOptions={{
         headerTitleAlign: 'center',

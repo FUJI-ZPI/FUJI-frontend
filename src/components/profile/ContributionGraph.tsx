@@ -1,16 +1,31 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native'; 
+import { useFocusEffect } from '@react-navigation/native';
+
+// --- THEME CONSTANTS ---
+const JP_THEME = {
+  bg: '#FDFBF7',         
+  ink: '#1F2937',        
+  primary: '#4673aa',    
+  accent: '#f74f73',     
+  paperWhite: '#FFFFFF',
+  textMuted: '#64748b',
+  red100: '#FECDD3',
+  red200: '#FDA4AF',
+  red300: '#FB7185',
+  red400: '#F43F5E',
+  red500: '#E11D48',
+};
 
 export interface ContributionGraphProps {
   values: { [date: string]: number };
   selectedDate?: string | null;
   onDayPress: (date: string, count: number) => void;
-  daysBack?: number; 
+  daysBack?: number;
 }
 
-// Helper do formatowania daty lokalnej YYYY-MM-DD (zamiast toISOString)
+// Helper: Format YYYY-MM-DD
 const getLocalDateString = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -22,270 +37,283 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
   values,
   selectedDate,
   onDayPress,
-  daysBack = 111,
+  daysBack = 120, // Ilość dni wstecz
 }) => {
-  
   const [currentEndDate, setCurrentEndDate] = useState(new Date());
 
   useFocusEffect(
     useCallback(() => {
-      setCurrentEndDate(new Date());
+      // Ustawiamy "dzisiaj" na koniec dnia
+      const now = new Date();
+      now.setHours(23, 59, 59, 999);
+      setCurrentEndDate(now);
     }, [])
   );
 
-  const { weeks, months, stride } = useMemo(() => {
-    const weeksData = [];
-    const monthsData = [];
+  const { weeks, months } = useMemo(() => {
+    const monthsMap = new Map<number, string>();
     
+    // 1. Obliczamy liczbę pełnych kolumn (tygodni) potrzebnych do wyświetlenia 'daysBack'
+    // Zaokrąglamy w górę, aby mieć pełne kolumny po 7 kratek
+    const weeksCount = Math.ceil(daysBack / 7);
+    const totalGridCells = weeksCount * 7;
+
+    // 2. Data początkowa: Cofamy się o (totalGridCells - 1) dni od currentEndDate.
+    // Dzięki temu currentEndDate wyląduje dokładnie w ostatniej komórce (index 6 w ostatniej kolumnie).
+    const startDate = new Date(currentEndDate);
+    startDate.setDate(startDate.getDate() - (totalGridCells - 1));
+    
+    const generatedWeeks = [];
     let currentWeek = [];
-    const anchorDate = new Date(currentEndDate);
-    const STRIDE = 18; 
 
-    for (let i = daysBack; i >= 0; i--) {
-      const d = new Date(anchorDate);
-      d.setDate(d.getDate() - i);
-      
-      // POPRAWKA 1: Używamy lokalnej daty zamiast ISO (które przesuwa strefę czasową)
-      const dateStr = getLocalDateString(d);
-      
-      const count = values[dateStr] || 0;
-      
-      let level = 0;
-      if (count > 0) level = count <= 2 ? 1 : count <= 5 ? 2 : count <= 10 ? 3 : 4;
-
-      currentWeek.push({ date: dateStr, count, level, dayOfMonth: d.getDate() });
-
-      if (currentWeek.length === 7 || i === 0) {
-        weeksData.push(currentWeek);
+    // 3. Generujemy dni
+    for (let i = 0; i < totalGridCells; i++) {
+        const d = new Date(startDate);
+        d.setDate(d.getDate() + i);
         
-        const firstDayOfWeek = currentWeek[0];
-        if (firstDayOfWeek.dayOfMonth <= 7) {
-            const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const dateObj = new Date(firstDayOfWeek.date);
-            const monthName = MONTHS[dateObj.getMonth()];
-            monthsData.push({ index: weeksData.length - 1, label: monthName });
+        const dateStr = getLocalDateString(d);
+        const count = values[dateStr] || 0;
+        let level = 0;
+        if (count > 0) level = count <= 2 ? 1 : count <= 5 ? 2 : count <= 10 ? 3 : 4;
+
+        currentWeek.push({ date: dateStr, count, level, dayObj: d });
+
+        // Jeśli tydzień ma 7 dni, zamykamy go i dodajemy do listy
+        if (currentWeek.length === 7) {
+            generatedWeeks.push(currentWeek);
+            
+            // Logika etykiet miesięcy (sprawdzamy pierwszy dzień kolumny)
+            const firstDayOfWeek = currentWeek[0].dayObj;
+            const monthName = firstDayOfWeek.toLocaleDateString('en-US', { month: 'short' });
+            
+            const prevMonthName = generatedWeeks.length > 1 
+                ? generatedWeeks[generatedWeeks.length - 2][0].dayObj.toLocaleDateString('en-US', { month: 'short' }) 
+                : '';
+            
+            // Wyświetlamy miesiąc tylko jeśli się zmienił względem poprzedniej kolumny
+            if (monthName !== prevMonthName) {
+                monthsMap.set(generatedWeeks.length - 1, monthName);
+            }
+
+            currentWeek = [];
         }
-        
-        currentWeek = [];
-      }
     }
-    return { weeks: weeksData, months: monthsData, stride: STRIDE };
+
+    return { weeks: generatedWeeks, months: monthsMap };
   }, [values, daysBack, currentEndDate]);
 
-  const getBackgroundColor = (level: number) => {
-    const palette = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'];
-    return palette[level] || palette[0];
+  const getActivityColor = (level: number) => {
+    switch (level) {
+      case 0: return '#F1F5F9';
+      case 1: return JP_THEME.red100;
+      case 2: return JP_THEME.red200;
+      case 3: return JP_THEME.red300;
+      case 4: return JP_THEME.red500;
+      default: return '#F1F5F9';
+    }
   };
 
   const handlePrev = () => {
     const newDate = new Date(currentEndDate);
-    newDate.setDate(newDate.getDate() - daysBack);
+    newDate.setDate(newDate.getDate() - 90);
     setCurrentEndDate(newDate);
   };
 
   const handleNext = () => {
     const newDate = new Date(currentEndDate);
-    newDate.setDate(newDate.getDate() + daysBack);
-    
-    // POPRAWKA 2: Nie zerujemy godzin (setHours(0,0,0,0)), 
-    // bo to powodowało cofnięcie daty przy konwersji.
+    newDate.setDate(newDate.getDate() + 90);
     const today = new Date(); 
-
-    if (newDate > today) {
-        setCurrentEndDate(today);
-    } else {
-        setCurrentEndDate(newDate);
-    }
+    today.setHours(23, 59, 59, 999);
+    
+    if (newDate > today) setCurrentEndDate(today);
+    else setCurrentEndDate(newDate);
   };
 
   const isLatest = useMemo(() => {
-      const today = new Date();
-      // Tutaj zerowanie jest OK, bo służy tylko do porównania logicznego, a nie generowania daty
-      today.setHours(0,0,0,0);
-      const checkDate = new Date(currentEndDate);
-      checkDate.setHours(0,0,0,0);
-      
+      const today = new Date(); today.setHours(0,0,0,0);
+      const checkDate = new Date(currentEndDate); checkDate.setHours(0,0,0,0);
       return checkDate.getTime() >= today.getTime();
   }, [currentEndDate]);
 
-  const currentYear = currentEndDate.getFullYear();
+  const startDateDisplay = weeks[0]?.[0]?.dayObj;
+  // Ostatni dzień to zawsze ostatnia kratka ostatniego tygodnia
+  const lastWeek = weeks[weeks.length - 1];
+  const endDateDisplay = lastWeek?.[6]?.dayObj;
+
+  // Stałe indeksy wierszy (0-6)
+  const rowsIndices = [0, 1, 2, 3, 4, 5, 6];
 
   return (
-    <View style={styles.container}>
-      {/* Nagłówek */}
-      <View style={styles.headerRow}>
-         <View style={styles.titleContainer}>
-             <TouchableOpacity onPress={handlePrev} style={styles.arrowBtn} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-                <Ionicons name="chevron-back" size={20} color="#64748b" />
-             </TouchableOpacity>
-             
-             <View style={styles.titleTextContainer}>
-                <Text style={styles.title}>Activity Log</Text>
-                <Text style={styles.yearText}>{currentYear}</Text>
-             </View>
-             
-             <TouchableOpacity 
-                onPress={handleNext} 
-                style={styles.arrowBtn} 
-                disabled={isLatest}
-                hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
-             >
-                <Ionicons 
-                    name="chevron-forward" 
-                    size={20} 
-                    color={isLatest ? "#e2e8f0" : "#64748b"} 
-                />
-             </TouchableOpacity>
-         </View>
+    <View style={styles.cardContainer}>
+      
+      {/* HEADER */}
+      <View style={styles.cardHeader}>
+        <View style={styles.titleRow}>
+           <View>
+            <Text style={styles.titleMain}>Activity Log</Text>
+           </View>
+        </View>
 
-         <View style={styles.legend}>
-            <Text style={styles.legendText}>Less</Text>
-            {[0, 2, 4].map(l => (
-                <View key={l} style={[styles.legendBox, { backgroundColor: getBackgroundColor(l)}]} />
-            ))}
-            <Text style={styles.legendText}>More</Text>
+        <View style={styles.controlsRow}>
+            <TouchableOpacity onPress={handlePrev} style={styles.arrowBtn} hitSlop={10}>
+               <Ionicons name="chevron-back" size={16} color={JP_THEME.textMuted} />
+            </TouchableOpacity>
+            
+            <Text style={styles.dateRangeText}>
+               {startDateDisplay ? `${startDateDisplay.toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${endDateDisplay?.toLocaleDateString('en-US', {month:'short', day:'numeric'})}` : ''}
+            </Text>
+
+            <TouchableOpacity onPress={handleNext} style={styles.arrowBtn} disabled={isLatest} hitSlop={10}>
+               <Ionicons name="chevron-forward" size={16} color={isLatest ? "#E2E8F0" : JP_THEME.textMuted} />
+            </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* CONTENT (GRID) */}
+      <View style={styles.gridWrapper}>
+            <View>
+               {/* Month Labels Row */}
+               <View style={styles.monthsRow}>
+                  {weeks.map((_, index) => (
+                      <View key={index} style={styles.monthLabelContainer}>
+                          <Text style={[styles.monthLabelText, { opacity: months.has(index) ? 1 : 0 }]}>
+                              {months.get(index) || ' '}
+                          </Text>
+                      </View>
+                  ))}
+               </View>
+
+               {/* The Grid */}
+               <View style={styles.gridContainer}>
+                   {rowsIndices.map((rowIndex) => (
+                       <View key={rowIndex} style={styles.dayRow}>                           
+                           {weeks.map((week, weekIndex) => {
+                               // Pobieramy dzień z danego tygodnia dla danego wiersza
+                               const dayData = week[rowIndex];
+                               
+                               // Zabezpieczenie (choć przy pełnej siatce zawsze powinno być ok)
+                               if (!dayData) return <View key={weekIndex} style={styles.emptyBox} />;
+                               
+                               const isSelected = selectedDate === dayData.date;
+
+                               return (
+                                   <TouchableOpacity
+                                       key={`${weekIndex}-${rowIndex}`}
+                                       onPress={() => onDayPress(dayData.date, dayData.count)}
+                                       activeOpacity={0.7}
+                                       style={[
+                                           styles.box,
+                                           { backgroundColor: getActivityColor(dayData.level) },
+                                           isSelected && styles.selectedBox
+                                       ]}
+                                   />
+                               );
+                           })}
+                       </View>
+                   ))}
+               </View>
+            </View>
+
+         {/* Legend */}
+         <View style={styles.legendContainer}>
+             <Text style={styles.legendLabel}>少</Text>
+             {[0, 1, 2, 3, 4].map(l => (
+                 <View key={l} style={[styles.legendBox, { backgroundColor: getActivityColor(l) }]} />
+             ))}
+             <Text style={styles.legendLabel}>多</Text>
          </View>
       </View>
 
-      {/* Wykres */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
-        contentContainerStyle={styles.scrollContent} 
-      >
-        <View>
-            <View style={styles.monthsRow}>
-            {months.map((m, i) => (
-                <Text key={i} style={[styles.monthLabel, { left: m.index * 18 }]}>
-                    {m.label}
-                </Text>
-            ))}
-            </View>
-
-            <View style={styles.grid}>
-            {weeks.map((week, wIndex) => (
-                <View key={wIndex} style={styles.column}>
-                {week.map((day: any) => {
-                    const isSelected = selectedDate === day.date;
-                    return (
-                    <TouchableOpacity
-                        key={day.date}
-                        style={[
-                            styles.box,
-                            { backgroundColor: getBackgroundColor(day.level) },
-                            isSelected && styles.selectedBox 
-                        ]}
-                        activeOpacity={0.6}
-                        onPress={() => onDayPress(day.date, day.count)}
-                    />
-                    );
-                })}
-                </View>
-            ))}
-            </View>
-        </View>
-      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    borderRadius: 24,
+  cardContainer: {
+    backgroundColor: JP_THEME.paperWhite,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
     marginBottom: 24,
-    shadowColor: "#000", 
-    shadowOffset: { width: 0, height: 4 }, 
-    shadowOpacity: 0.06, 
-    shadowRadius: 12, 
+    overflow: 'hidden',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
     elevation: 3,
   },
-  headerRow: { 
-      flexDirection: 'row', 
-      justifyContent: 'space-between', 
-      alignItems: 'center', 
-      marginBottom: 20, 
-      paddingHorizontal: 4 
-  },
-  titleContainer: {
+  
+  // Header
+  cardHeader: {
       flexDirection: 'row',
+      justifyContent: 'space-between',
       alignItems: 'center',
-      gap: 12, 
-      backgroundColor: '#f8fafc', 
-      paddingVertical: 6,
-      paddingHorizontal: 10,
-      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: '#F8FAFC'
   },
-  titleTextContainer: {
-      flexDirection: 'row',
-      alignItems: 'baseline', 
-      gap: 6
-  },
-  title: { 
-      fontSize: 14, 
-      fontWeight: '700', 
-      color: '#334155' 
-  },
-  yearText: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: '#94a3b8' 
-  },
-  arrowBtn: {
-      padding: 2,
+  titleRow: { flexDirection: 'row', alignItems: 'center' },
+  titleMain: { fontSize: 16, fontWeight: '700', color: JP_THEME.ink },
+  
+  controlsRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  arrowBtn: { padding: 4 },
+  dateRangeText: { fontSize: 11, color: JP_THEME.textMuted, minWidth: 80, textAlign: 'center', fontWeight: '500' },
+
+  // Grid Wrapper
+  gridWrapper: {
+      padding: 16,
+      backgroundColor: '#FFF',
   },
   
-  scrollContent: {
-      flexGrow: 1,
-      justifyContent: 'center',
-      paddingHorizontal: 10, 
-  },
-
   monthsRow: { 
       flexDirection: 'row', 
-      height: 20, 
-      position: 'relative', 
-      marginBottom: 6 
-  },
-  monthLabel: { 
-      position: 'absolute', 
-      fontSize: 11, 
-      color: '#94a3b8', 
-      fontWeight: '600' 
-  },
-  grid: { 
-      flexDirection: 'row', 
+      marginLeft: 0, // Usunięto margines, bo nie ma etykiet dni po lewej
+      marginBottom: 6, 
       gap: 4 
   },
-  column: { 
-      flexDirection: 'column', 
-      gap: 4 
+  monthLabelContainer: {
+      width: 14, 
+      overflow: 'visible',
+      alignItems: 'center',
   },
+  monthLabelText: {
+      fontSize: 9, 
+      color: JP_THEME.textMuted, 
+      fontWeight: '600',
+      width: 40,
+      textAlign: 'left',
+      marginLeft: -2,
+  },
+
+  gridContainer: { flexDirection: 'column', gap: 4 }, 
+  dayRow: { flexDirection: 'row', alignItems: 'center', gap: 4 }, 
+  
+  // --- BOX STYLING ---
   box: { 
       width: 14, 
       height: 14, 
-      borderRadius: 4 
+      borderRadius: 3,
+      justifyContent: 'center', 
+      alignItems: 'center' 
   },
+  emptyBox: { width: 14, height: 14 },
   selectedBox: { 
-    borderColor: '#334155', 
-    borderWidth: 2, 
-    zIndex: 10
+      borderWidth: 2, 
+      borderColor: JP_THEME.ink,
+      transform: [{scale: 1.15}],
+      zIndex: 10
   },
-  legend: { 
+
+  // Legend
+  legendContainer: { 
       flexDirection: 'row', 
+      justifyContent: 'flex-end', 
       alignItems: 'center', 
-      gap: 4 
+      gap: 4, 
+      marginTop: 12, 
+      paddingRight: 4 
   },
-  legendBox: { 
-      width: 10, 
-      height: 10, 
-      borderRadius: 3 
-  },
-  legendText: { 
-      fontSize: 10, 
-      color: '#94a3b8',
-      fontWeight: '500'
-  }
+  legendLabel: { fontSize: 10, color: JP_THEME.textMuted, fontWeight: '600' },
+  legendBox: { width: 10, height: 10, borderRadius: 2 },
 });
