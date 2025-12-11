@@ -100,7 +100,7 @@ function AppDrawer({ onLogout }: { onLogout: () => void }) {
   return (
     <Drawer.Navigator
       drawerContent={(props) => (
-        <DrawerContent {...props} navItems={navItems} onLogout={onLogout} />
+        <DrawerContent {...props} navItems={navItems} />
     )}
       screenOptions={{
         headerTitleAlign: 'center',
@@ -153,7 +153,6 @@ export default function AppNavigator() {
     setIsAuthenticated(false);
   };
 
-    // Inicjalizacja powiadomień push gdy użytkownik jest zalogowany
     usePushNotifications();
 
 useEffect(() => {

@@ -33,16 +33,13 @@ export interface NavItem {
 
 export type ScreenComponentType = ComponentType<any>;
 
-// 1. Dodajemy onLogout do interfejsu propsów
 export interface DrawerContentProps {
   navigation: any;
   state: any;
   navItems: NavItem[];
-  onLogout: () => void; 
 }
 
-// 2. Pobieramy onLogout z propsów
-export const DrawerContent = ({ navigation, state, navItems, onLogout}: DrawerContentProps) => {
+export const DrawerContent = ({ navigation, state, navItems}: DrawerContentProps) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   
@@ -123,15 +120,6 @@ export const DrawerContent = ({ navigation, state, navItems, onLogout}: DrawerCo
         </View>
 
         </DrawerContentScrollView>
-
-        {/* FOOTER - LOGOUT */}
-        <View style={[styles.footer, { paddingBottom: 24 + insets.bottom }]}>
-            {/* 3. Podpinamy funkcję onLogout pod onPress */}
-            <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-                <Ionicons name="log-out-outline" size={20} color="#D32F2F" style={{ marginRight: 8 }} />
-                <Text style={styles.logoutText}>{t('drawer.logout')}</Text>
-            </TouchableOpacity>
-        </View>
     </View>
   );
 };

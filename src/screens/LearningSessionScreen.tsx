@@ -408,7 +408,7 @@ export default function LearningSessionScreen({navigation}: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#F5F7FA'},
+  container: {flex: 1, backgroundColor: '#f2f7f5'},
   contentContainer: {padding: 16},
   header: {
     flexDirection: 'row',

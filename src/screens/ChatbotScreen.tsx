@@ -33,6 +33,7 @@ interface Message {
   note?: string;
 }
 
+
 const ChatbotLoadingIndicator: React.FC<{ text: string }> = ({ text }) => {
     const rotateAnim = useRef(new Animated.Value(0)).current;
 
@@ -203,6 +204,16 @@ const ChatbotScreen: React.FC<any> = () => {
       setShowTranslation({ messageId, translation: t('chat.translation_not_available') });
     }
   };
+
+  const getKeyboardOffset = () => {
+    if (Platform.OS === 'ios') {
+        return 90;
+    }
+
+    const isGestureNavigation = insets.bottom < 30;
+    
+    return 35 + (isGestureNavigation ? 30 : 0);
+};
     
 
   return (
@@ -261,7 +272,7 @@ const ChatbotScreen: React.FC<any> = () => {
             <KeyboardAvoidingView
                 behavior="padding"
                 style={styles.inputContainer}
-                keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 35}
+                keyboardVerticalOffset={getKeyboardOffset()}
             >
                 <ChatInput 
                 inputText={inputText}

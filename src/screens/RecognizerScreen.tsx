@@ -31,28 +31,10 @@ const ITEMS_PER_ROW = 5;
 const GRID_PADDING = 70; 
 const ITEM_WIDTH = (width - GRID_PADDING - (ITEM_MARGIN * (ITEMS_PER_ROW - 1))) / ITEMS_PER_ROW;
 
-// --- HEADER ILLUSTRATION (TORII MINIMAL) ---
-const HeaderTorii = () => (
-  <View style={styles.toriiContainer} pointerEvents="none">
-    <Svg width="100" height="50" viewBox="0 0 120 60" style={{ opacity: 0.6 }}>
-       <Defs>
-          <SvgLinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={JP_THEME.accent} stopOpacity="1" />
-            <Stop offset="1" stopColor="#c23b22" stopOpacity="1" />
-          </SvgLinearGradient>
-       </Defs>
-       <Path d="M 10 20 Q 60 10 110 20 L 112 28 Q 60 18 8 28 Z" fill="url(#grad)" />
-       <Rect x="25" y="28" width="6" height="30" rx="1" fill="#c0392b" />
-       <Rect x="89" y="28" width="6" height="30" rx="1" fill="#c0392b" />
-    </Svg>
-  </View>
-);
-
 type RecognizedKanjiDto = { uuid: string; character: string; };
 type Stroke = { points: Point[]; };
 type Point = {x: number; y: number};
 
-// --- COMPONENTS ---
 
 const KanjiCandidatesGrid = ({ kanjiList, onSelectKanji }: { kanjiList: RecognizedKanjiDto[]; onSelectKanji: (item: RecognizedKanjiDto) => void; }) => {
     return (
@@ -162,16 +144,8 @@ export default function RecognizerScreen({ navigation }: { navigation: any }) {
     <View style={styles.container}>
         <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
             
-            {/* Header */}
-            <View style={styles.header}>
-                <HeaderTorii />
-                <Text style={styles.headerTitle}>Recognizer</Text>
-                <Text style={styles.headerSubtitle}>Draw characters</Text>
-            </View>
-
             <GestureHandlerRootView style={styles.contentContainer}>
                 
-                {/* 1. CANVAS (Washi Paper Style) */}
                 <View style={styles.canvasWrapper}>
                     <PanGestureHandler onGestureEvent={onGestureEvent} onHandlerStateChange={onHandlerStateChange} minDist={1}>
                         <View style={styles.canvasContainer}>
@@ -189,7 +163,7 @@ export default function RecognizerScreen({ navigation }: { navigation: any }) {
                                         key={i}
                                         d={pointsToPath(stroke.points)}
                                         stroke={JP_THEME.ink}
-                                        strokeWidth={8}
+                                        strokeWidth={4}
                                         fill="none"
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
@@ -200,7 +174,7 @@ export default function RecognizerScreen({ navigation }: { navigation: any }) {
                                     <Path
                                         d={pointsToPath(currentStroke)}
                                         stroke="#10B981"
-                                        strokeWidth={8}
+                                        strokeWidth={4}
                                         fill="none"
                                         strokeLinecap="round"
                                         strokeLinejoin="round"

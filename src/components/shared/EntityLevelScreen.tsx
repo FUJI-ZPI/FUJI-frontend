@@ -8,17 +8,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-// 1. ZMIANA IMPORTU: Usunięto SafeAreaView, dodano hook
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from "react-native-svg";
 
-// Importy z Twojego projektu
 import { colors } from '../../theme/styles';
 import { EntityType, LevelStyleConfig, useEntityLevels } from '../../hooks/useEntityLevels';
 
-// --- THEME CONSTANTS ---
 const JP_THEME = {
   ink: '#1F2937',        // Sumi Ink
   primary: '#4673aa',    // Fuji Blue
@@ -30,25 +27,21 @@ const JP_THEME = {
 
 const { width } = Dimensions.get('window');
 
-// Konfiguracja Gridu
 const GRID_PADDING = 24;
 const ITEM_MARGIN = 10;
 const ITEMS_PER_ROW = 4;
 const ITEM_WIDTH = (width - (GRID_PADDING * 2) - (ITEM_MARGIN * (ITEMS_PER_ROW - 1))) / ITEMS_PER_ROW;
 
-// --- HEADER ILLUSTRATION (TORII) ---
 const HeaderTorii = () => (
   <View style={styles.toriiContainer} pointerEvents="none">
-    <Svg width="120" height="60" viewBox="0 0 120 60" style={{ opacity: 0.6 }}>
+    <Svg width="160" height="80" viewBox="0 0 120 60" style={{ opacity: 0.6 }}>
        <Defs>
           <SvgLinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={JP_THEME.accent} stopOpacity="1" />
             <Stop offset="1" stopColor="#c23b22" stopOpacity="1" />
           </SvgLinearGradient>
        </Defs>
-       {/* Daszek */}
        <Path d="M 10 20 Q 60 10 110 20 L 112 28 Q 60 18 8 28 Z" fill="url(#grad)" />
-       {/* Filary */}
        <Rect x="25" y="28" width="6" height="30" rx="1" fill="#c0392b" />
        <Rect x="89" y="28" width="6" height="30" rx="1" fill="#c0392b" />
     </Svg>
@@ -128,7 +121,6 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
     };
 
     return (
-        // 3. ZMIANA GLÓWNEGO KONTENERA NA VIEW + PADDINGI
         <View 
             style={[
                 styles.container, 
@@ -136,13 +128,10 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
                     paddingTop: insets.top,
                     paddingLeft: insets.left,
                     paddingRight: insets.right
-                    // Bottom nie dodajemy tutaj, bo chcemy żeby lista wchodziła pod spód,
-                    // obsłużymy to w contentContainerStyle listy.
                 }
             ]}
         >
             
-            {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity 
                     onPress={() => navigation.goBack()} 
@@ -160,17 +149,14 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
                     </Text>
                 </View>
 
-                {/* Pusty widok dla balansu flex */}
                 <View style={{ width: 40 }} /> 
             </View>
 
-            {/* Grid */}
             <FlatList
                 key={ITEMS_PER_ROW.toString()}
                 data={displayedLevels}
                 keyExtractor={item => item.toString()}
                 numColumns={ITEMS_PER_ROW}
-                // 4. DODANIE INSETS.BOTTOM DO LISTY
                 contentContainerStyle={[
                     styles.scrollContent,
                     { paddingBottom: insets.bottom + 20 }
@@ -199,7 +185,6 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
                                     },
                                 ]}>
                                 
-                                {/* Kolorowy pasek na górze karty */}
                                 <View style={[styles.colorStrip, { backgroundColor: style.color }]} />
                                 
                                 <Text style={styles.levelNumber}>
@@ -220,7 +205,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.background 
     },
 
-    // Header Styles
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -251,30 +235,27 @@ const styles = StyleSheet.create({
         opacity: 0.5,
     },
     headerTitle: {
-        fontSize: 20,
+        fontSize: 25,
         fontWeight: '800',
         color: JP_THEME.ink,
         textTransform: 'capitalize',
     },
     headerSubtitle: {
-        fontSize: 14,
+        fontSize: 25,
         fontWeight: '700',
         marginTop: 2,
         letterSpacing: 0.5,
     },
 
-    // List & Grid Styles
     scrollContent: {
         paddingHorizontal: GRID_PADDING,
         paddingTop: 10,
-        // paddingBottom jest teraz nadpisywany dynamicznie w komponencie
     },
     levelsRow: {
         justifyContent: 'space-between',
         marginBottom: ITEM_MARGIN,
     },
 
-    // Level Card Styles
     levelCard: {
         backgroundColor: JP_THEME.paperWhite,
         borderRadius: 12,
@@ -282,7 +263,6 @@ const styles = StyleSheet.create({
         height: ITEM_WIDTH, 
         justifyContent: 'center',
         alignItems: 'center',
-        // Shadow
         shadowColor: JP_THEME.primary,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
@@ -306,7 +286,6 @@ const styles = StyleSheet.create({
         fontVariant: ['tabular-nums'],
     },
 
-    // Footer
     footerLoader: {
         flexDirection: 'row',
         justifyContent: 'center',

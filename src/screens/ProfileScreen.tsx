@@ -407,6 +407,21 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
                   )}
               </Card>
           )}
+
+        <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={handleLogoutPress}
+            style={styles.logoutButtonContainer}
+          >
+            <Card>
+              <View style={styles.logoutContent}>
+                <Ionicons name="log-out-outline" size={22} color="#c0392b" />
+                <Text style={styles.logoutText}>{t("drawer.logout")}</Text>
+              </View>
+            </Card>
+          </TouchableOpacity>
+
+
         </View>
 
         <Modal

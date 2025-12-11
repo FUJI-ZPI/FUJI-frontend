@@ -37,7 +37,7 @@ const ITEM_MARGIN = 12;
 // --- HEADER ILLUSTRATION (TORII) ---
 const HeaderTorii = () => (
   <View style={styles.toriiContainer} pointerEvents="none">
-    <Svg width="100" height="50" viewBox="0 0 120 60" style={{ opacity: 0.6 }}>
+    <Svg width="160" height="80" viewBox="0 0 120 60" style={{ opacity: 0.6 }}>
        <Defs>
           <SvgLinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={JP_THEME.accent} stopOpacity="1" />
@@ -182,7 +182,11 @@ export const EntityListScreen: React.FC<EntityListScreenProps> = ({
                     <HeaderTorii />
                     <Text style={styles.headerTitle}>{t('Level {{level}}', { level })}</Text>
                     <Text style={styles.headerSubtitle}>
-                        {config.entityType === 'kanji' ? 'Kanji List' : 'Radicals List'}
+                        {config.entityType === 'kanji' 
+                            ? 'Kanji List' 
+                            : config.entityType === 'vocabulary' 
+                                ? 'Vocabulary List' 
+                                : 'Radicals List'}
                     </Text>
                 </View>
 
@@ -269,8 +273,8 @@ const styles = StyleSheet.create({
     },
     headerTitleContainer: { alignItems: 'center' },
     toriiContainer: { position: 'absolute', top: -15, opacity: 0.5 },
-    headerTitle: { fontSize: 20, fontWeight: '800', color: JP_THEME.ink },
-    headerSubtitle: { fontSize: 12, color: JP_THEME.textMuted, fontWeight: '600', marginTop: 2, textTransform: 'uppercase' },
+    headerTitle: { fontSize: 25, fontWeight: '800', color: JP_THEME.ink },
+    headerSubtitle: { fontSize: 20, color: JP_THEME.textMuted, fontWeight: '600', marginTop: 2, textTransform: 'uppercase' },
 
     // List & Grid Styles
     scrollContent: {

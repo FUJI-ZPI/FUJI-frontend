@@ -8,25 +8,50 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import {colors, spacing, themeStyles} from '../theme/styles';
 import * as SecureStore from 'expo-secure-store';
 import {Card} from '../components/ui/Card';
 import {MnemonicTooltipButton} from '../components/ui/MnemonicTooltipButton';
 
-import Svg, {Path} from 'react-native-svg';
+import Svg, {Path, Defs, LinearGradient as SvgLinearGradient, Stop, Rect} from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedProps,
   withTiming,
-  useAnimatedStyle,
   withDelay,
   Easing,
 } from 'react-native-reanimated';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-const ReanimatedView = Animated.createAnimatedComponent(View);
+
+// --- THEME CONSTANTS ---
+const JP_THEME = {
+  ink: '#1F2937',
+  primary: '#4673aa',
+  accent: '#f74f73',
+  paperWhite: '#FFFFFF',
+  sand: '#E5E0D6',
+  textMuted: '#64748b',
+};
+
+// --- HEADER ILLUSTRATION (TORII 160x80) ---
+const HeaderTorii = () => (
+  <View style={localStyles.toriiContainer} pointerEvents="none">
+    <Svg width="160" height="80" viewBox="0 0 120 60" style={{ opacity: 0.6 }}>
+       <Defs>
+          <SvgLinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={JP_THEME.accent} stopOpacity="1" />
+            <Stop offset="1" stopColor="#c23b22" stopOpacity="1" />
+          </SvgLinearGradient>
+       </Defs>
+       <Path d="M 10 20 Q 60 10 110 20 L 112 28 Q 60 18 8 28 Z" fill="url(#grad)" />
+       <Rect x="25" y="28" width="6" height="30" rx="1" fill="#c0392b" />
+       <Rect x="89" y="28" width="6" height="30" rx="1" fill="#c0392b" />
+    </Svg>
+  </View>
+);
 
 interface Meaning {
   meaning: string;
@@ -96,7 +121,6 @@ interface ScreenProps {
 
 const primaryGreen = '#10B981';
 const accentBlue = '#3B82F6';
-const vocabYellow = '#F59E0B';
 
 const TabButton: React.FC<{
   icon: any;
@@ -125,27 +149,16 @@ const TabButton: React.FC<{
   </TouchableOpacity>
 );
 
-const typeColors = {
-  radical: accentBlue,
-  kanji: primaryGreen,
-  vocabulary: vocabYellow,
-};
-
 const RelatedSubjectTile: React.FC<{
   character: string;
   onPress: () => void;
-  type: 'radical' | 'kanji' | 'vocabulary';
-}> = ({character, onPress, type}) => (
+}> = ({character, onPress}) => (
 <TouchableOpacity
     onPress={onPress}
-    style={[localStyles.kanjiTile, {borderColor: typeColors[type]}]}>
+    style={localStyles.kanjiTile}>
     <Text
-      style={[
-        localStyles.kanjiTileCharacter,
-        {color: typeColors[type]},
-        type === 'vocabulary' && {fontSize: 22}, 
-      ]}
-      numberOfLines={type === 'vocabulary' ? 3 : 1}
+      style={localStyles.kanjiTileCharacter}
+      numberOfLines={1}
       adjustsFontSizeToFit>
       {character}
     </Text>
@@ -286,6 +299,8 @@ const AnimatedKanji: React.FC<AnimatedKanjiProps> = ({
 
 const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
   const {kanjiUuid} = route.params;
+  
+  const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<KanjiDetailsDto | null>(null);
@@ -294,23 +309,6 @@ const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
   const [kanjiDisplayMode, setKanjiDisplayMode] = useState<
     'character' | 'animation'
   >('character');
-
-  const boxOpacity = useSharedValue(0);
-  const boxScale = useSharedValue(0.8);
-
-  useEffect(() => {
-    if (!loading && data) {
-      boxOpacity.value = withTiming(1, {duration: 400});
-      boxScale.value = withTiming(1, {duration: 300});
-    }
-  }, [loading, data]);
-
-  const animatedCharacterBoxStyle = useAnimatedStyle(() => {
-    return {
-      opacity: boxOpacity.value,
-      transform: [{scale: boxScale.value}],
-    };
-  });
 
   const fetchKanjiDetails = async (uuid: string) => {
     setLoading(true);
@@ -344,24 +342,20 @@ const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
   };
 
   useEffect(() => {
-    // Odśwież dane, jeśli zmieni się kanjiUuid (np. przy nawigacji do podobnego kanji)
     fetchKanjiDetails(kanjiUuid);
   }, [kanjiUuid]);
 
-  // --- Nowe funkcje nawigacji ---
-
   const navigateToRadical = (radicalUuid: string) => {
-    navigation.navigate('Radicals', { // Nazwa stosu Radicals
+    navigation.navigate('Radicals', { 
       screen: 'RadicalDetail',
       params: {
         radicalUuid: radicalUuid,
-        character: '', // Placeholder
+        character: '', 
       },
     });
   };
 
   const navigateToKanji = (uuid: string) => {
-    // Użyj 'push', aby móc nawigować do podobnego kanji z ekranu kanji
     navigation.push('KanjiDetail', {
       kanjiUuid: uuid,
       character: '',
@@ -369,32 +363,30 @@ const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
   };
 
   const navigateToVocabulary = (vocabularyUuid: string) => {
-    navigation.navigate('Vocabulary', { // Nazwa stosu Vocabulary
+    navigation.navigate('Vocabulary', { 
       screen: 'VocabularyDetail',
       params: {
         vocabularyUuid: vocabularyUuid,
-        character: '', // Placeholder
+        character: '', 
       },
     });
   };
 
   if (loading) {
     return (
-      <SafeAreaView
-        style={[themeStyles.flex1, localStyles.centered]}>
+      <View style={[localStyles.centered, {paddingTop: insets.top}]}>
         <ActivityIndicator size="large" color={primaryGreen} />
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error || !data) {
     return (
-      <SafeAreaView
-        style={[themeStyles.flex1, localStyles.centered]}>
+      <View style={[localStyles.centered, {paddingTop: insets.top}]}>
         <Text style={localStyles.errorText}>
           Error: {error || 'Data not found.'}
         </Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -413,7 +405,6 @@ const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
   const kunyomiReadings = kanjiData.readings.filter(r => r.type === 'kunyomi');
   const nanoriReadings = kanjiData.readings.filter(r => r.type === 'nanori');
 
-  // Nowe listy powiązanych elementów
   const componentRadicals = data.componentRadicals || [];
   const relatedVocabulary = data.relatedVocabulary || [];
   const visuallySimilarKanji = data.visuallySimilarKanji || [];
@@ -522,7 +513,6 @@ const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
               <RelatedSubjectTile
                 key={radical.uuid}
                 character={radical.character}
-                type="radical"
                 onPress={() => navigateToRadical(radical.uuid)}
               />
             ))}
@@ -537,7 +527,6 @@ const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
               <RelatedSubjectTile
                 key={kanji.uuid}
                 character={kanji.character}
-                type="kanji"
                 onPress={() => navigateToKanji(kanji.uuid)}
               />
             ))}
@@ -552,7 +541,6 @@ const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
               <RelatedSubjectTile
                 key={vocab.uuid}
                 character={vocab.characters}
-                type="vocabulary"
                 onPress={() => navigateToVocabulary(vocab.uuid)}
               />
             ))}
@@ -570,23 +558,39 @@ const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
   );
 
   return (
-    <SafeAreaView
-      style={[themeStyles.flex1, {backgroundColor: colors.background}]}
-      edges={['bottom', 'left', 'right']}>
-      <ScrollView contentContainerStyle={localStyles.scrollContent}>
-        <View style={localStyles.header}>
+    <View
+      style={[
+        themeStyles.flex1, 
+        {
+            backgroundColor: colors.background,
+            paddingTop: insets.top,
+            paddingLeft: insets.left,
+            paddingRight: insets.right
+        }
+    ]}>
+      
+      <View style={localStyles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={localStyles.backButton}>
-            <Ionicons name="arrow-back" size={20} color={colors.text} />
-            <Text style={localStyles.backButtonText}>Back</Text>
+            <Ionicons name="arrow-back" size={20} color={JP_THEME.ink} />
           </TouchableOpacity>
-          <Text style={localStyles.title}>Kanji Details</Text>
-          <View style={{width: 60}} />
-        </View>
+          
+          <View style={localStyles.headerTitleContainer}>
+                <HeaderTorii />
+                <Text style={localStyles.headerTitle}>Kanji Details</Text>
+                <Text style={localStyles.headerSubtitle}>{primaryMeaning}</Text>
+          </View>
 
-        <ReanimatedView
-          style={[localStyles.characterBox, animatedCharacterBoxStyle]}>
+          <View style={{width: 40}} />
+      </View>
+
+      <ScrollView contentContainerStyle={[
+          localStyles.scrollContent, 
+          { paddingBottom: insets.bottom + 20 }
+        ]}>
+        
+        <View style={localStyles.characterBox}>
           <View style={localStyles.displayModeToggle}>
             <TouchableOpacity
               style={[
@@ -649,7 +653,7 @@ const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
             {kanjiDisplayMode === 'animation' && (
               <AnimatedKanji
                 size={90}
-                color={accentBlue}
+                color={primaryGreen}
                 isActive={kanjiDisplayMode === 'animation'}
                 paths={data.svgPath}
               />
@@ -663,7 +667,7 @@ const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
               mnemonicText={kanjiData.reading_mnemonic}
             />
           </View>
-        </ReanimatedView>
+        </View>
 
         <View style={localStyles.tabContainer}>
           <TabButton
@@ -692,7 +696,7 @@ const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
           {activeTab === 'related' && renderRelatedTab()}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -701,18 +705,47 @@ const localStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: spacing.base,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 8,
   },
   backButton: {
-    flexDirection: 'row',
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: spacing.small,
+    backgroundColor: JP_THEME.paperWhite, 
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  backButtonText: {fontSize: 16, marginLeft: 4, color: colors.text},
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
+  headerTitleContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toriiContainer: {
+    position: 'absolute',
+    top: -15, 
+    left: '50%', 
+    transform: [{ translateX: -80 }], 
+    opacity: 0.5,
+    // POPRAWKA: Usunięto zIndex: -1, teraz brama będzie widoczna
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: JP_THEME.ink,
+    textAlign: 'center',
+  },
+  headerSubtitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 2,
+    color: JP_THEME.primary,
+    textTransform: 'capitalize',
     textAlign: 'center',
   },
   centered: {
@@ -775,7 +808,7 @@ const localStyles = StyleSheet.create({
   characterText: {
     fontSize: 90,
     fontWeight: '400',
-    color: accentBlue,
+    color: primaryGreen,
   },
   svgKanji: {
     position: 'absolute',
@@ -811,6 +844,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.base * 4,
     gap: spacing.base,
+    paddingTop: 10,
   },
   tabContentContainer: {
     gap: spacing.base,
@@ -896,14 +930,14 @@ const localStyles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.base,
-    justifyContent: 'flex-start',
+    justifyContent: 'center', 
     marginTop: spacing.base,
   },
   kanjiTile: {
     backgroundColor: colors.lightBackground,
     padding: spacing.base,
     borderRadius: 8,
-    borderWidth: 2,
+    borderWidth: 1, 
     borderColor: colors.border,
     alignItems: 'center',
     width: 90,
@@ -912,13 +946,9 @@ const localStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   kanjiTileCharacter: {
-    fontSize: 32,
+    fontSize: 40,
+    color: primaryGreen,
     marginBottom: 4,
-  },
-  kanjiTileText: {
-    marginTop: 0,
-    fontSize: 12,
-    fontWeight: '600',
   },
   mnemonicIconTouchable: {padding: 4},
   tooltipContent: {
