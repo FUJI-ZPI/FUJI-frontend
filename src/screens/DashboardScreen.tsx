@@ -1,16 +1,16 @@
-import React, {useCallback, useState} from 'react';
-import {Dimensions, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {LinearGradient} from 'expo-linear-gradient';
-import {useTranslation} from 'react-i18next';
-import {FujiIllustration} from '../components/dashboard/FujiIllustration';
-import {colors, themeStyles} from '../theme/styles';
-import {FlyingClouds} from '../components/dashboard/FlyingClouds';
-import {CloudStatCard} from '../components/dashboard/CloudStatCard';
-import {loadUser, User} from '../utils/user';
-import {useFocusEffect} from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
+import { FujiIllustration } from '../components/dashboard/FujiIllustration';
+import { colors, themeStyles } from '../theme/styles';
+import { FlyingClouds } from '../components/dashboard/FlyingClouds';
+import { CloudStatCard } from '../components/dashboard/CloudStatCard';
+import { loadUser, User } from '../utils/user';
+import { useFocusEffect } from '@react-navigation/native';
 import * as SecureStore from 'expo-secure-store';
-import {useToast} from '../hooks/use-toast';
+import { useToast } from '../hooks/use-toast';
 
 interface ScreenProps {
     navigation: any;
@@ -29,21 +29,44 @@ interface UserLevelDto {
     level: number;
 }
 
-const {width: screenWidth} = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get('window');
 const SVG_VIEWBOX_WIDTH = 320.0216;
 const SVG_VIEWBOX_HEIGHT = 346.01524;
 const ASPECT_RATIO = SVG_VIEWBOX_HEIGHT / SVG_VIEWBOX_WIDTH;
 const FUJI_HEIGHT = screenWidth * ASPECT_RATIO;
 
-export const DashboardScreen: React.FC<ScreenProps> = ({navigation}: any) => {
-    const {t} = useTranslation();
+export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
+    const { t } = useTranslation();
     const [user, setUser] = useState<User | null>(null);
 
     const [dailyStreak, setDailyStreak] = useState<number>(0);
     const [kanjiLearned, setKanjiLearned] = useState<number>(0);
     const [userLevel, setUserLevel] = useState<number>(1);
+    const [kanjiRemaining, setKanjiRemaining] = useState<number | null>(null);
+    const [campProgressData, setCampProgressData] = useState<Record<number, number>>({});
+    const CAMP_LEVELS = [10, 20, 30, 40, 50, 60];
 
-    const {toast} = useToast();
+    const { toast } = useToast();
+
+    const fetchWithAuth = async <T,>(endpoint: string): Promise<T> => {
+        const token = await SecureStore.getItemAsync('accessToken');
+        console.log(token)
+        if (!token) throw new Error('No token');
+
+        const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}${endpoint}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/json'
+            },
+        });
+
+        if (!response.ok) {
+            const body = await response.text().catch(() => '');
+            throw new Error(`API Error: ${response.status} ${body}`);
+        }
+
+        return response.json();
+    };
 
     useFocusEffect(
         useCallback(() => {
@@ -51,30 +74,14 @@ export const DashboardScreen: React.FC<ScreenProps> = ({navigation}: any) => {
 
             async function init() {
                 const u = await loadUser();
+                let currentLvl = 1;
                 if (isActive && u) {
                     setUser(u);
-                    if (u.level) setUserLevel(u.level);
-                }
-
-                const fetchWithAuth = async <T, >(endpoint: string): Promise<T> => {
-                    const token = await SecureStore.getItemAsync('accessToken');
-                    console.log(token)
-                    if (!token) throw new Error('No token');
-
-                    const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}${endpoint}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            Accept: 'application/json'
-                        },
-                    });
-
-                    if (!response.ok) {
-                        const body = await response.text().catch(() => '');
-                        throw new Error(`API Error: ${response.status} ${body}`);
+                    if (u.level) {
+                        setUserLevel(u.level);
+                        currentLvl = u.level;
                     }
-
-                    return response.json();
-                };
+                }
 
                 try {
                     const data = await fetchWithAuth<DailyStreakDto>('/api/v1/progress/daily-streak');
@@ -102,6 +109,27 @@ export const DashboardScreen: React.FC<ScreenProps> = ({navigation}: any) => {
                 } catch (err) {
                     console.warn('Error fetching user level:', err);
                 }
+
+                fetchWithAuth<{ amount: number }>(`/api/v1/progress/kanji-remaining?level=${currentLvl + 1}`)
+                    .then(d => isActive && setKanjiRemaining(d.amount)).catch(() => { });
+
+                const promises = CAMP_LEVELS.map(async (lvl) => {
+                    try {
+                        const res = await fetchWithAuth<{ amount: number }>(`/api/v1/progress/kanji-remaining?level=${lvl}`);
+                        return { level: lvl, amount: res.amount };
+                    } catch (err) {
+                        console.warn('Error fetching camp remaining kanji:', err);
+                    }
+                });
+
+                Promise.all(promises).then((results) => {
+                    if (!isActive) return;
+                    const newMap: Record<number, number> = {};
+                    results.forEach(r => {
+                        if (r) newMap[r.level] = r.amount;
+                    });
+                    setCampProgressData(newMap);
+                });
             }
 
             init();
@@ -116,18 +144,18 @@ export const DashboardScreen: React.FC<ScreenProps> = ({navigation}: any) => {
     const handleLearningSession = () => navigation.navigate('LearningSession');
 
     return (
-        <View style={{flex: 1}}>
+        <View style={{ flex: 1 }}>
             <LinearGradient
                 colors={['#ffd1ffb6', '#fad0c48a']}
-                start={{x: 0, y: 0}}
-                end={{x: 0, y: 0.4}}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 0.4 }}
                 style={StyleSheet.absoluteFillObject}
             />
 
             <SafeAreaView style={styles.mainContainer} edges={['left', 'right']}>
 
                 <View style={styles.absoluteStatsContainer} pointerEvents="none">
-                    <View style={{position: 'absolute', top: 160, right: -55}}>
+                    <View style={{ position: 'absolute', top: 160, right: -55 }}>
                         <CloudStatCard
                             cloudType={2}
                             iconName="flame"
@@ -135,10 +163,10 @@ export const DashboardScreen: React.FC<ScreenProps> = ({navigation}: any) => {
                             iconColor={colors.warning}
                             value={dailyStreak}
                             label={t('common.streak_label')}
-                            contentStyle={{paddingRight: 72, paddingTop: 5}}
+                            contentStyle={{ paddingRight: 72, paddingTop: 5 }}
                         />
                     </View>
-                    <View style={{position: 'absolute', top: 175, left: 0}} pointerEvents="none">
+                    <View style={{ position: 'absolute', top: 175, left: 0 }} pointerEvents="none">
                         <CloudStatCard
                             cloudType={1}
                             iconName="book-open"
@@ -146,7 +174,7 @@ export const DashboardScreen: React.FC<ScreenProps> = ({navigation}: any) => {
                             iconColor={colors.secondary}
                             value={kanjiLearned}
                             label={t('common.kanji_learned_label')}
-                            contentStyle={{paddingRight: 72, paddingTop: 20}}
+                            contentStyle={{ paddingRight: 72, paddingTop: 20 }}
                         />
                     </View>
                 </View>
@@ -154,20 +182,22 @@ export const DashboardScreen: React.FC<ScreenProps> = ({navigation}: any) => {
                 <View>
                     <View style={[styles.header, themeStyles.paddingContainer]}>
                         <Text style={styles.headerTitle}>
-                            {t('dashboard.greeting', {userName: user?.name?.split(' ')[0]})}
+                            {t('dashboard.greeting', { userName: user?.name?.split(' ')[0] })}
                         </Text>
                         <Text style={themeStyles.textSubtitle}>{t('dashboard.subtitle')}</Text>
                     </View>
                 </View>
 
-                <FlyingClouds/>
+                <FlyingClouds />
 
                 <View>
                     <View style={styles.mountainContainer}>
-                        <View style={{width: '100%', height: FUJI_HEIGHT}} pointerEvents='auto'>
+                        <View style={{ width: '100%', height: FUJI_HEIGHT }} pointerEvents='auto'>
                             <FujiIllustration
                                 currentLevel={userLevel}
                                 maxLevel={60}
+                                kanjiRemaining={kanjiRemaining}
+                                campProgressData={campProgressData}
                             />
                         </View>
                     </View>
@@ -175,12 +205,12 @@ export const DashboardScreen: React.FC<ScreenProps> = ({navigation}: any) => {
                     <View style={styles.grassSection}>
                         <View style={styles.buttonRow}>
                             <TouchableOpacity style={[styles.buttonBase, styles.buttonSecondary]}
-                                              onPress={handleLearningSession}>
+                                onPress={handleLearningSession}>
                                 <Text style={styles.buttonTextSecondary}>Learning</Text>
                                 <Text style={styles.buttonTextSecondary}>Session</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.buttonBase, styles.buttonPrimary]}
-                                              onPress={handleReviewSession}>
+                                onPress={handleReviewSession}>
                                 <Text style={styles.buttonTextPrimary}>Review</Text>
                                 <Text style={styles.buttonTextPrimary}>Session</Text>
                             </TouchableOpacity>
@@ -274,7 +304,7 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         paddingLeft: themeStyles.paddingContainer.padding,
         paddingRight: themeStyles.paddingContainer.padding - 5,
-        borderRadius: 26,
+        borderRadius: 999,
         elevation: 6,
         alignItems: 'center',
         justifyContent: 'center',
@@ -304,7 +334,7 @@ const styles = StyleSheet.create({
         color: 'black',
         fontWeight: '600',
         fontSize: 27,
-        transform: [{translateY: -5}]
+        transform: [{ translateY: -5 }]
     },
     iconCircle: {
         width: 35,
