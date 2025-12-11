@@ -1,6 +1,24 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Animated, Image, Pressable, StyleSheet, Text, View} from 'react-native';
+import {
+  Animated,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+  Easing
+} from 'react-native';
 import {chatbotColors} from '../../theme/styles';
+
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 interface Message {
   id: string;
@@ -40,41 +58,68 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   ];
   
   const isTranslationActive = showTranslation?.messageId === message.id;
-    const isAI = !isUser;
+  const isAI = !isUser;
 
-    const [isTranslationRendered, setIsTranslationRendered] = useState(false);
-    const anim = useRef(new Animated.Value(0)).current;
+  const [isTranslationRendered, setIsTranslationRendered] = useState(false);
+  const anim = useRef(new Animated.Value(0)).current;
 
-    useEffect(() => {
-        if (isTranslationActive) {
-            setIsTranslationRendered(true);
-            Animated.timing(anim, {
-                toValue: 1,
-                duration: 150,
-                useNativeDriver: true,
-            }).start();
-        } else {
-            Animated.timing(anim, {
-                toValue: 0,
-                duration: 150,
-                useNativeDriver: true,
-            }).start(() => {
-                setIsTranslationRendered(false);
-            });
-        }
-    }, [isTranslationActive, anim]);
+  useEffect(() => {
+    // LayoutAnimation zajmuje się przesuwaniem sąsiednich elementów
+    LayoutAnimation.configureNext({
+        duration: 300,
+        create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+        update: { type: LayoutAnimation.Types.easeInEaseOut },
+        delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity }
+    });
 
-    const animatedStyle = {
-        opacity: anim,
-        transform: [
-            {
-                scale: anim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.96, 1],
-                }),
-            },
-        ],
-    };
+    if (isTranslationActive) {
+      setIsTranslationRendered(true);
+      // Animacja wejścia: "Wyskoczenie"
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.back(1.7)), // Lekkie odbicie przy otwieraniu
+      }).start();
+    } else {
+      // Animacja wyjścia: "Wessanie" z powrotem
+      Animated.timing(anim, {
+        toValue: 0,
+        duration: 250, // Nieco szybciej przy zamykaniu dla lepszego feelingu
+        useNativeDriver: true,
+        // Używamy Easing.in(Easing.back), żeby karta "cofnęła się" w ten sam sposób
+        easing: Easing.in(Easing.back(1.0)), 
+      }).start(() => {
+        setIsTranslationRendered(false);
+      });
+    }
+  }, [isTranslationActive, anim]);
+
+  const animatedStyle = {
+    opacity: anim,
+    transform: [
+      {
+        translateY: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-25, 0], // Większy zakres ruchu dla wyraźniejszego efektu
+        }),
+      },
+      {
+        scale: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.8, 1],
+        }),
+      },
+      // Dodajemy skalowanie Y, aby karta "zgniatała się" przy zamykaniu
+      // Dzięki temu tekst i tło znikają spójnie w górę
+      {
+        scaleY: anim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.5, 1],
+        })
+      }
+    ],
+  };
 
   return (
     <View style={styles.messageGroupContainer}>
@@ -95,6 +140,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 <Pressable
                     onLongPress={() => isTranslatable && handleLongPress(message.id, message.text)}
                     onPress={() => isTranslatable && handleLongPress(message.id, message.text)}
+                    delayLongPress={200}
                 >
                     <View style={bubbleStyles}>
                         <View style={styles.innerBubbleContent}>
@@ -126,7 +172,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
                 <View style={[styles.translationBubble, isUser ? styles.userTranslation : styles.aiTranslationContent]}>
                     <View style={styles.translationIconContainer}>
-                        <Text style={styles.translationIconText}>文A</Text> 
+                        <Text style={styles.translationIconText}>EN</Text> 
                     </View>
                     <Text style={styles.translationText}>{showTranslation?.translation}</Text>
                 </View>
@@ -148,9 +194,11 @@ const styles = StyleSheet.create({
   },
   translationRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginTop: 8,
+    alignItems: 'flex-start', // Ważne: flex-start, aby animacja scaleY "wciągała" do góry
+    marginTop: 2, 
     maxWidth: '100%',
+    zIndex: -1,
+    overflow: 'hidden', // Kluczowe: Ukrywa zawartość podczas animacji zmniejszania
   },
   aiRow: {
     justifyContent: 'flex-start',
@@ -211,19 +259,21 @@ const styles = StyleSheet.create({
   },
   messageBubble: {
     padding: 12,
-    borderRadius: 12,
-    elevation: 2, 
+    borderRadius: 16, 
+    elevation: 1, 
     shadowColor: '#000', 
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 2,
     maxWidth: '85%',
   },
   aiBubble: {
     backgroundColor: chatbotColors.card,
+    borderTopLeftRadius: 4, 
   },
   userBubble: {
     backgroundColor: chatbotColors.primary,
+    borderTopRightRadius: 4, 
   },
   messageText: {
     fontSize: 16,
@@ -235,65 +285,71 @@ const styles = StyleSheet.create({
     color: chatbotColors.primaryForeground,
   },
   japaneseText: {
-    fontSize: 18,
+    fontSize: 17,
     lineHeight: 24,
     fontWeight: '500',
   },
   nonJapaneseText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
   },
   metadataRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    marginTop: 5,
+    marginTop: 4,
   },
   aiTimestamp: {
     fontSize: 10,
     color: chatbotColors.mutedForeground,
+    opacity: 0.8,
   },
   userTimestamp: {
     fontSize: 10,
-    color: `${chatbotColors.primaryForeground}A0`, 
+    color: `${chatbotColors.primaryForeground}`, 
+    opacity: 0.8,
   },
   translationBubble: {
-    backgroundColor: chatbotColors.card,
-    padding: 16,
+    backgroundColor: "#fff", 
+    borderColor: chatbotColors.card, 
+    borderWidth: 1,
+    padding: 12,
+    paddingHorizontal: 16,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    elevation: 2, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
     maxWidth: '85%', 
-    flexShrink: 1, 
+    flexShrink: 1,
+    marginTop: 2,
   },
   translationIconContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12,
-    marginTop: 2,
+    marginRight: 10,
+    marginTop: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   translationIconText: {
-    fontSize: 14,
-    color: chatbotColors.translationBorder,
+    fontSize: 10,
+    color: chatbotColors.mutedForeground,
     fontWeight: 'bold',
   },
   aiTranslationContent: {
     alignSelf: 'flex-start',
+    borderTopLeftRadius: 2,
   },
   userTranslation: {
     alignSelf: 'flex-end',
+    borderTopRightRadius: 2,
   },
   translationText: {
-    fontSize: 16, 
+    fontSize: 15, 
     color: chatbotColors.foreground,
     flex: 1,
     lineHeight: 22,
-    fontWeight: '500',
+    fontStyle: 'italic', 
   },
 });
 

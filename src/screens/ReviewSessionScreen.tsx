@@ -172,11 +172,9 @@ export default function ReviewSessionScreen({navigation}: any) {
       setCurrentKanjiIndex(prev => prev + 1);
       setShowCharacterHint(false); 
     } else {
-      const averageScore =
-        completedKanji > 0 ? Math.round(sessionScore / completedKanji) : 0;
       toast({
         title: 'Review Session Complete! 🎊',
-        description: `Average accuracy: ${averageScore}%. Great work!`,
+        description: `Great work!`,
         variant: 'success',
       });
       navigation.goBack();
@@ -236,7 +234,7 @@ export default function ReviewSessionScreen({navigation}: any) {
         <View style={styles.progressInfo}>
           <Text style={styles.progressLabel}>Progress</Text>
           <Text style={styles.progressValue}>
-            {completedKanji} / {totalKanji}
+              {Math.min(completedKanji + 1, totalKanji)} / {totalKanji}
           </Text>
         </View>
         <View style={{width: 50}} />
@@ -307,7 +305,7 @@ export default function ReviewSessionScreen({navigation}: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#F5F7FA'},
+  container: {flex: 1, backgroundColor: '#f2f7f5'},
   contentContainer: {padding: 16},
   header: {
     flexDirection: 'row',

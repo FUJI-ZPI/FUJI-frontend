@@ -8,13 +8,43 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+// 1. Hook insets
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import {colors, spacing, themeStyles} from '../theme/styles';
 import * as SecureStore from 'expo-secure-store';
 import {Card} from '../components/ui/Card';
 import {MnemonicTooltipButton} from '../components/ui/MnemonicTooltipButton';
 import {Audio} from 'expo-av';
+// 2. Importy SVG
+import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from "react-native-svg";
+
+// --- THEME CONSTANTS ---
+const JP_THEME = {
+  ink: '#1F2937',
+  primary: '#4673aa',
+  accent: '#f74f73',
+  paperWhite: '#FFFFFF',
+  sand: '#E5E0D6',
+  textMuted: '#64748b',
+};
+
+// --- HEADER ILLUSTRATION (TORII 160x80) ---
+const HeaderTorii = () => (
+  <View style={localStyles.toriiContainer} pointerEvents="none">
+    <Svg width="160" height="80" viewBox="0 0 120 60" style={{ opacity: 0.6 }}>
+       <Defs>
+          <SvgLinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={JP_THEME.accent} stopOpacity="1" />
+            <Stop offset="1" stopColor="#c23b22" stopOpacity="1" />
+          </SvgLinearGradient>
+       </Defs>
+       <Path d="M 10 20 Q 60 10 110 20 L 112 28 Q 60 18 8 28 Z" fill="url(#grad)" />
+       <Rect x="25" y="28" width="6" height="30" rx="1" fill="#c0392b" />
+       <Rect x="89" y="28" width="6" height="30" rx="1" fill="#c0392b" />
+    </Svg>
+  </View>
+);
 
 interface Meaning {
   meaning: string;
@@ -94,7 +124,7 @@ const TabButton: React.FC<{
     <Ionicons
       name={icon}
       size={18}
-      color={isActive ? accentBlue : colors.textMuted}
+      color={isActive ? primaryGreen : colors.textMuted}
     />
     <Text style={[localStyles.tabLabel, isActive && localStyles.tabLabelActive]}>
       {label}
@@ -167,6 +197,8 @@ const CollapsibleSection: React.FC<{
 
 const VocabularyDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
   const {vocabularyUuid} = route.params;
+
+  const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<VocabularyDetailsDto | null>(null);
@@ -279,21 +311,17 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
 
   if (loading)
     return (
-      <SafeAreaView
-        style={[themeStyles.flex1, localStyles.centered]}
-        edges={['bottom', 'left', 'right']}>
+      <View style={[localStyles.centered, {paddingTop: insets.top}]}>
         <ActivityIndicator size="large" color={primaryGreen} />
-      </SafeAreaView>
+      </View>
     );
   if (error || !data)
     return (
-      <SafeAreaView
-        style={[themeStyles.flex1, localStyles.centered]}
-        edges={['bottom', 'left', 'right']}>
+      <View style={[localStyles.centered, {paddingTop: insets.top}]}>
         <Text style={localStyles.errorText}>
           Error: {error || 'Data not found.'}
         </Text>
-      </SafeAreaView>
+      </View>
     );
 
   const vocabData = data.details.data;
@@ -409,21 +437,43 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
   );
 
   return (
-    <SafeAreaView
-      style={[themeStyles.flex1, {backgroundColor: colors.background}]}
-      edges={['bottom', 'left', 'right']}>
-      <ScrollView contentContainerStyle={localStyles.scrollContent}>
-        <View style={localStyles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={localStyles.backButton}>
-            <Ionicons name="arrow-back" size={20} color={colors.text} />
-            <Text style={localStyles.backButtonText}>Back</Text>
-          </TouchableOpacity>
-          <Text style={localStyles.title}>Vocabulary Details</Text>
-          <View style={{width: 60}} />
-        </View>
+    // GŁÓWNY WRAPPER Z PADDINGAMI
+    <View style={[
+      themeStyles.flex1, 
+      {
+        backgroundColor: colors.background,
+        paddingTop: insets.top,
+        paddingLeft: insets.left,
+        paddingRight: insets.right
+      }
+    ]}>
+      
+      {/* ZMIANA: Nagłówek wyciągnięty PRZED ScrollView */}
+      <View style={localStyles.header}>
+            <TouchableOpacity 
+                onPress={() => navigation.goBack()} 
+                style={localStyles.backButton}
+                activeOpacity={0.7}
+            >
+                <Ionicons name="arrow-back" size={20} color={JP_THEME.ink} />
+            </TouchableOpacity>
+            
+            <View style={localStyles.headerTitleContainer}>
+                <HeaderTorii />
+                <Text style={localStyles.headerTitle}>Vocabulary Details</Text>
+                <Text style={localStyles.headerSubtitle}>{primaryMeaning}</Text>
+            </View>
 
+            <View style={{ width: 40 }} /> 
+      </View>
+
+      <ScrollView 
+        contentContainerStyle={[
+          localStyles.scrollContent, 
+          { paddingBottom: insets.bottom + 20 }
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={localStyles.characterBox}>
           <Text style={localStyles.characterText}>{data.characters}</Text>
           <View style={localStyles.readingContainer}>
@@ -515,29 +565,61 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
           {activeTab === 'kanji' && renderKanjiTab()}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const localStyles = StyleSheet.create({
+  // STYLE HEADER - DOPASOWANE DO LISTY
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: spacing.base,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 8,
   },
   backButton: {
-    flexDirection: 'row',
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: spacing.small,
+    backgroundColor: JP_THEME.paperWhite, 
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  backButtonText: {fontSize: 16, marginLeft: 4, color: colors.text},
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
+  headerTitleContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toriiContainer: {
+    position: 'absolute',
+    top: -15, 
+    left: '50%', 
+    transform: [{ translateX: -80 }], 
+    opacity: 0.5,
+    // Brak zIndex: -1 aby było widoczne
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: JP_THEME.ink,
     textAlign: 'center',
   },
+  headerSubtitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 2,
+    color: JP_THEME.primary,
+    textTransform: 'capitalize',
+    textAlign: 'center',
+  },
+
+  // POZOSTAŁE STYLE BEZ ZMIAN
   centered: {
     flex: 1,
     justifyContent: 'center',
@@ -611,6 +693,7 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.base * 4,
     gap: spacing.base,
+    paddingTop: 10, 
   },
   tabContentContainer: {
     gap: spacing.base,

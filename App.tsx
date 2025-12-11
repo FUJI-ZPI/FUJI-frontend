@@ -153,7 +153,6 @@ export default function AppNavigator() {
     setIsAuthenticated(false);
   };
 
-    // Inicjalizacja powiadomień push gdy użytkownik jest zalogowany
     usePushNotifications();
 
 useEffect(() => {

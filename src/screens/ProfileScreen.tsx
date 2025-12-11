@@ -14,6 +14,30 @@ import { useToast } from '../hooks/use-toast';
 import { themeStyles, colors, spacing } from '../theme/styles';
 import { User, loadUser } from '../utils/user';
 
+// --- DEFINICJA KOLORÓW Z TWOJEGO PRZYKŁADU ---
+const primaryGreen = '#10B981';
+const accentBlue = '#3B82F6';
+
+// --- NOWY KOMPONENT TAB BUTTON ---
+const TabButton: React.FC<{
+  icon: any;
+  label: string;
+  isActive: boolean;
+  onPress: () => void;
+}> = ({icon, label, isActive, onPress}) => (
+  <TouchableOpacity
+    style={[styles.tabButton, isActive && styles.tabButtonActive]}
+    onPress={onPress}>
+    <Ionicons
+      name={icon}
+      size={18}
+      color={isActive ? primaryGreen : colors.textMuted}
+    />
+    <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+      {label}
+    </Text>
+  </TouchableOpacity>
+);
 
 interface DailyActivityStat {
   date: string;
@@ -42,7 +66,6 @@ const pointsArrayToPath = (points: number[][]) => {
   return points.map((p, i) => (i === 0 ? `M ${p[0]} ${p[1]}` : `L ${p[0]} ${p[1]}`)).join(" ");
 };
 
-// Helper do formatowania godziny (np. 14:30)
 const formatTime = (isoString: string) => {
   if (!isoString) return "";
   const date = new Date(isoString);
@@ -115,7 +138,6 @@ interface ScreenProps {
     onLogout: () => void;
 }
 
-// Stałe do paginacji
 const INITIAL_VISIBLE_ITEMS = 8;
 const ITEMS_PER_PAGE = 4;
 
@@ -130,7 +152,9 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedCount, setSelectedCount] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<'LESSON' | 'REVIEW'>('REVIEW');
+  
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const [visibleItemsCount, setVisibleItemsCount] = useState(INITIAL_VISIBLE_ITEMS);
 
@@ -167,6 +191,8 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
   };
 
   const fetchDailyHistory = async (dateStr: string) => {
+      if (isLoadingHistory) return;
+      
       setIsLoadingHistory(true);
       try {
           const data: DailyActivityDetail[] = await fetchWithAuth(`/api/v1/activity/history/${dateStr}`);
@@ -196,22 +222,38 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
   useFocusEffect(
     useCallback(() => {
         const initData = async () => {
-            await loadUser().then(u => u && setUser(u));
-            const map = await fetchStats();
-            const todayStr = new Date().toISOString().split('T')[0];
-            const targetDate = selectedDate || todayStr;
+            try {
+                const userDataPromise = loadUser();
+                const statsPromise = fetchStats();
 
-            if (!selectedDate) {
-                setSelectedDate(targetDate);
+                const [userData, map] = await Promise.all([userDataPromise, statsPromise]);
+                
+                if (userData) setUser(userData);
+
+                if (!selectedDate) {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    setSelectedDate(todayStr);
+                    setSelectedCount(map[todayStr] || 0);
+                }
+            } catch (error) {
+                console.error("Initialization error:", error);
+            } finally {
+                setIsInitialLoading(false);
             }
-            
-            setSelectedCount(map[targetDate] || 0);
-            await fetchDailyHistory(targetDate);
         };
 
         initData();
-    }, [selectedDate]) 
+    }, [])
   );
+
+  useEffect(() => {
+      if (selectedDate) {
+          fetchDailyHistory(selectedDate);
+          if (activityMap[selectedDate] !== undefined) {
+              setSelectedCount(activityMap[selectedDate]);
+          }
+      }
+  }, [selectedDate]);
 
   useEffect(() => {
     setVisibleItemsCount(INITIAL_VISIBLE_ITEMS);
@@ -230,6 +272,8 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
   };
 
   const handleKanjiPress = (item: DailyActivityDetail) => {
+      if (modalLoading || kanjiModalVisible) return;
+
       setKanjiModalVisible(true);
       fetchActivityDetails(item.activityUuid);
   };
@@ -246,7 +290,6 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
 
   const filteredItems = useMemo(() => {
       const items = dailyHistory.filter(i => i.type === activeTab);
-      // Sortowanie od najnowszych (wg timestampu)
       return items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [dailyHistory, activeTab]);
 
@@ -255,6 +298,19 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
   }, [filteredItems, visibleItemsCount]);
 
   const hasMoreItems = filteredItems.length > visibleItemsCount;
+
+  if (isInitialLoading) {
+      return (
+          <View style={styles.emptyContainer}>
+              <ActivityIndicator size="large" color="#10B981" />
+              <Text style={styles.emptyText}>Loading profile...</Text>
+          </View>
+      );
+  }
+
+  // Liczniki dla zakładek
+  const reviewCount = dailyHistory.filter(i => i.type === 'REVIEW').length;
+  const lessonCount = dailyHistory.filter(i => i.type === 'LESSON').length;
 
   return (
       <ScrollView style={themeStyles.flex1} contentContainerStyle={styles.scrollContent}>
@@ -282,29 +338,24 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
                   </View>
 
                   {selectedCount > 0 && (
-                    <View style={styles.tabsRow}>
-                        <TouchableOpacity 
-                            style={[styles.tabButton, activeTab === 'REVIEW' && styles.activeTabButton]}
+                    <View style={styles.tabContainer}>
+                        <TabButton 
+                            icon="repeat-outline"
+                            label={`Reviews (${reviewCount})`}
+                            isActive={activeTab === 'REVIEW'}
                             onPress={() => setActiveTab('REVIEW')}
-                        >
-                            <Text style={[styles.tabText, activeTab === 'REVIEW' && styles.activeTabText]}>
-                                Reviews ({dailyHistory.filter(i => i.type === 'REVIEW').length})
-                            </Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity 
-                            style={[styles.tabButton, activeTab === 'LESSON' && styles.activeTabButton]}
+                        />
+                        <TabButton 
+                            icon="book-outline"
+                            label={`Lessons (${lessonCount})`}
+                            isActive={activeTab === 'LESSON'}
                             onPress={() => setActiveTab('LESSON')}
-                        >
-                            <Text style={[styles.tabText, activeTab === 'LESSON' && styles.activeTabText]}>
-                                Lessons ({dailyHistory.filter(i => i.type === 'LESSON').length})
-                            </Text>
-                        </TouchableOpacity>
+                        />
                     </View>
                   )}
 
                   {isLoadingHistory ? (
-                      <ActivityIndicator size="small" color={colors.primary} style={{ margin: 20 }} />
+                      <ActivityIndicator size="small" color={primaryGreen} style={{ margin: 20 }} />
                   ) : selectedCount > 0 ? (
                       <View>
                           <View style={styles.chipsGrid}>
@@ -314,11 +365,13 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
                                         key={item.activityUuid} 
                                         style={[
                                             styles.chip, 
+                                            // Kolory tła w zależności od poprawności
                                             Math.round(item.accuracy * 100) >= 70 ? styles.chipOk : styles.chipMiss
                                         ]}
                                         activeOpacity={0.7}
                                         onPress={() => handleKanjiPress(item)}
                                       >
+                                          {/* ZMIANA: PRZYWRÓCONO WYŚWIETLANIE CZASU */}
                                           <View style={styles.chipHeader}>
                                               <Text style={styles.chipTime}>
                                                   {formatTime(item.timestamp)}
@@ -355,7 +408,7 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
               </Card>
           )}
 
-          <TouchableOpacity
+        <TouchableOpacity
             activeOpacity={0.8}
             onPress={handleLogoutPress}
             style={styles.logoutButtonContainer}
@@ -367,6 +420,7 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
               </View>
             </Card>
           </TouchableOpacity>
+
 
         </View>
 
@@ -380,7 +434,7 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
                 <Pressable style={styles.modalContent} onPress={() => {}}>
                     
                     {modalLoading ? (
-                        <ActivityIndicator size="large" color={colors.primary} />
+                        <ActivityIndicator size="large" color={primaryGreen} />
                     ) : playbackDetails ? (
                         <>
                             <View style={styles.modalHeader}>
@@ -422,6 +476,21 @@ const ProfileScreen: React.FC<ScreenProps> = ({ navigation, onLogout }) => {
 const styles = StyleSheet.create({
   scrollContent: { backgroundColor: colors.background, paddingBottom: 40 },
   
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    backgroundColor: '#F5F7FA',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 24, 
+    textAlign: 'center',
+    marginTop: 16 
+  },
+
   canvasContainer: {
     borderWidth: 2,
     borderColor: '#E5E7EB',
@@ -455,24 +524,49 @@ const styles = StyleSheet.create({
   detailsDate: { fontSize: 18, fontWeight: '700', color: colors.text },
   detailsSubtitle: { fontSize: 14, color: colors.textMuted, marginTop: 2 },
   
-  tabsRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#f0f0f0', marginBottom: 12 },
-  tabButton: { paddingVertical: 8, paddingHorizontal: 12, marginRight: 8, borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  activeTabButton: { borderBottomColor: colors.primary || '#3498db' },
-  tabText: { fontSize: 14, color: colors.textMuted, fontWeight: '500' },
-  activeTabText: { color: colors.primary || '#3498db', fontWeight: '700' },
+  // Style dla Tabs
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F9FAFB', 
+    padding: spacing.small,
+    borderRadius: 12,
+    gap: spacing.small,
+    marginBottom: 16, 
+  },
+  tabButton: {
+    alignItems: 'center',
+    paddingVertical: spacing.small,
+    paddingHorizontal: spacing.base,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8, 
+    flex: 1,
+  },
+  tabButtonActive: {
+    backgroundColor: '#D1FAE5',
+  },
+  tabLabel: {
+    fontSize: 14, 
+    color: colors.textMuted
+  },
+  tabLabelActive: {
+    color: primaryGreen, 
+    fontWeight: '600'
+  },
+
   emptyTabParams: { color: colors.textMuted, fontStyle: 'italic', padding: 8 },
 
   chipsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   
   chip: { 
       width: '22%', 
-      aspectRatio: 1, // Kwadratowy kształt
-      backgroundColor: '#f8f9fa', 
+      aspectRatio: 1, 
+      backgroundColor: '#fff', 
       borderRadius: 10, 
-      // justifyContent: 'space-between', // Rozkład góra-dół
       padding: 4,
       borderWidth: 1, 
-      borderColor: '#eee' 
+      borderColor: '#eee',
   },
   chipOk: { backgroundColor: '#f0fdf4', borderColor: '#dcfce7' }, 
   chipMiss: { backgroundColor: '#fef2f2', borderColor: '#fee2e2' }, 
@@ -482,13 +576,7 @@ const styles = StyleSheet.create({
       justifyContent: 'space-between',
       alignItems: 'center',
       width: '100%',
-      height: 14, // Stała wysokość nagłówka
-  },
-  newDot: { 
-      width: 6, 
-      height: 6, 
-      borderRadius: 3, 
-      backgroundColor: '#3498db' 
+      height: 14, 
   },
   chipTime: {
       fontSize: 9,
@@ -500,10 +588,10 @@ const styles = StyleSheet.create({
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      marginTop: -4 // Lekka korekta optyczna
+      marginTop: -4 
   },
   chipChar: { fontSize: 20, fontWeight: '700', color: '#333', marginBottom: 2 },
-  chipMeaning: { fontSize: 9, color: '#666', textAlign: 'center' }, // Mniejszy font dla znaczenia
+  chipMeaning: { fontSize: 9, color: '#666', textAlign: 'center' },
 
   showMoreButton: {
       flexDirection: 'row',
@@ -522,7 +610,6 @@ const styles = StyleSheet.create({
   },
 
   emptyState: { padding: 10, alignItems: 'center' },
-  emptyText: { color: colors.textMuted, fontStyle: 'italic' },
 
   logoutButtonContainer: { marginTop: spacing.base },
   logoutContent: { ...themeStyles.flexRow, ...themeStyles.gap8, alignItems: 'center', justifyContent: 'center' },
