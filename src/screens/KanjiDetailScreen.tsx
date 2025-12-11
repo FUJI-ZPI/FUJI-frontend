@@ -604,7 +604,7 @@ const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
                 size={18}
                 color={
                   kanjiDisplayMode === 'character'
-                    ? accentBlue
+                    ? primaryGreen
                     : colors.textMuted
                 }
               />
@@ -629,7 +629,7 @@ const KanjiDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
                 size={18}
                 color={
                   kanjiDisplayMode === 'animation'
-                    ? accentBlue
+                    ? primaryGreen
                     : colors.textMuted
                 }
               />
@@ -787,14 +787,14 @@ const localStyles = StyleSheet.create({
     gap: 8,
   },
   toggleButtonActive: {
-    backgroundColor: '#E0F2FE',
+    backgroundColor: '#D1FAE5',
   },
   toggleLabel: {
     fontSize: 14,
     color: colors.textMuted,
   },
   toggleLabelActive: {
-    color: accentBlue,
+    color: primaryGreen,
     fontWeight: '600',
   },
   kanjiDisplayArea: {

@@ -267,25 +267,13 @@ export default function LearningSessionScreen({navigation}: any) {
       setCurrentKanjiIndex(prev => prev + 1);
       setAnimationKey(prev => prev + 1);
     } else {
-      const averageScore =
-        completedKanji > 0 ? Math.round(sessionScore / completedKanji) : 0;
       toast({
         title: 'Session Complete! 🎊',
-        description: `Average accuracy: ${averageScore}%. Great work!`,
+        description: `Great work!`,
         variant: 'success',
       });
       navigation.goBack();
     }
-  };
-
-  const restartSession = () => {
-    setCurrentKanjiIndex(0);
-    setSessionScore(0);
-    setCompletedKanji(0);
-    setShowResult(false);
-    setLastAccuracy(0);
-    setAnimationKey(prev => prev + 1);
-    toast({title: 'Session restarted', variant: 'info'});
   };
 
   if (isLoading) {

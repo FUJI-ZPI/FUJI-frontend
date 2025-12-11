@@ -124,7 +124,7 @@ const TabButton: React.FC<{
     <Ionicons
       name={icon}
       size={18}
-      color={isActive ? accentBlue : colors.textMuted}
+      color={isActive ? primaryGreen : colors.textMuted}
     />
     <Text style={[localStyles.tabLabel, isActive && localStyles.tabLabelActive]}>
       {label}

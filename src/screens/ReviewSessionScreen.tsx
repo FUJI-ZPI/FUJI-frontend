@@ -172,11 +172,9 @@ export default function ReviewSessionScreen({navigation}: any) {
       setCurrentKanjiIndex(prev => prev + 1);
       setShowCharacterHint(false); 
     } else {
-      const averageScore =
-        completedKanji > 0 ? Math.round(sessionScore / completedKanji) : 0;
       toast({
         title: 'Review Session Complete! 🎊',
-        description: `Average accuracy: ${averageScore}%. Great work!`,
+        description: `Great work!`,
         variant: 'success',
       });
       navigation.goBack();
