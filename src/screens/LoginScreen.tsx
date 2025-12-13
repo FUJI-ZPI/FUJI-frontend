@@ -9,139 +9,139 @@ import {User} from '../utils/user';
 const FUJI_LOGO = require('../../assets/fuji-logo-kanji.jpeg');
 const GOOGLE_LOGO = require('../../assets/google-icon.png')
 
-const LoginScreen = ({ navigation, onLogin }: any) => {
-  const [loading, setLoading] = useState(false);
-  const { t } = useTranslation();
+const LoginScreen = ({navigation, onLogin}: any) => {
+    const [loading, setLoading] = useState(false);
+    const {t} = useTranslation();
     const {toast} = useToast();
 
-  useEffect(() => {
-    GoogleSignin.configure({
-        webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
-        offlineAccess: true,
-    });
-  }, []);
+    useEffect(() => {
+        GoogleSignin.configure({
+            webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
+            offlineAccess: true,
+        });
+    }, []);
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    try {
-      await GoogleSignin.signOut();
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      const userInfo = await GoogleSignin.signIn();
-      const idToken = userInfo.data?.idToken;
-      if (!idToken) throw new Error('No idToken from Google.');
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        try {
+            await GoogleSignin.signOut();
+            await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
+            const userInfo = await GoogleSignin.signIn();
+            const idToken = userInfo.data?.idToken;
+            if (!idToken) throw new Error('No idToken from Google.');
 
-      const res = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: idToken }),
-      });
+            const res = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/auth/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({token: idToken}),
+            });
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      
-      const data = await res.json();
-      await SecureStore.setItemAsync('accessToken', data.access);
-      await SecureStore.setItemAsync('refreshToken', data.refresh);
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
 
-      const user: User = {
-        name: userInfo.data?.user?.name || "",
-        email: userInfo.data?.user?.email || "",
-        photo: userInfo.data?.user?.photo || "",
-      };
+            const data = await res.json();
+            await SecureStore.setItemAsync('accessToken', data.access);
+            await SecureStore.setItemAsync('refreshToken', data.refresh);
 
-      await SecureStore.setItemAsync('user', JSON.stringify(user));
+            const user: User = {
+                name: userInfo.data?.user?.name || "",
+                email: userInfo.data?.user?.email || "",
+                photo: userInfo.data?.user?.photo || "",
+            };
 
-        toast({title: 'You have successfully logged in via Google.', variant: 'success'});
-      onLogin();
-    } catch (error) {
-      console.error('Error logging in to the backend:', error);
-      Alert.alert('Login error', String(error));
-    } finally {
-      setLoading(false);
-    }
-  };
+            await SecureStore.setItemAsync('user', JSON.stringify(user));
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <Image source={FUJI_LOGO} style={styles.logo} />
-        <Text style={styles.title}>{t("login.card_title")}</Text>
-        <Text style={styles.subtitle}>{t("login.card_description")}</Text>
+            toast({title: 'You have successfully logged in via Google.', variant: 'success'});
+            onLogin();
+        } catch (error) {
+            console.error('Error logging in to the backend:', error);
+            Alert.alert('Login error', String(error));
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        <TouchableOpacity
-          disabled={loading}
-          onPress={handleGoogleLogin}
-          style={styles.googleButton}
-        >
-          <Image source={GOOGLE_LOGO} style={styles.googleIcon} />
-          <Text style={styles.googleText}>{t("login.button")}</Text>
-        </TouchableOpacity>
-    
-        {loading && <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />}
-      </View>
-    </View>
-  );
+    return (
+        <View style={styles.container}>
+            <View style={styles.card}>
+                <Image source={FUJI_LOGO} style={styles.logo}/>
+                <Text style={styles.title}>{t("login.card_title")}</Text>
+                <Text style={styles.subtitle}>{t("login.card_description")}</Text>
+
+                <TouchableOpacity
+                    disabled={loading}
+                    onPress={handleGoogleLogin}
+                    style={styles.googleButton}
+                >
+                    <Image source={GOOGLE_LOGO} style={styles.googleIcon}/>
+                    <Text style={styles.googleText}>{t("login.button")}</Text>
+                </TouchableOpacity>
+
+                {loading && <ActivityIndicator size="large" color="#000" style={{marginTop: 20}}/>}
+            </View>
+        </View>
+    );
 };
 
 export default LoginScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#e5eee9ff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-  },
-  card: {
-    backgroundColor: 'white',
-    width: '90%',
-    borderRadius: 16,
-      padding: 30,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#579170ff',
-  },
-  subtitle: {
-    fontSize: 12,
-    textAlign: 'center',
-    color: '#64748b',
-    marginBottom: 24,
-    marginTop: 6,
-  },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    height: 48,
-    paddingHorizontal: 12,
-    justifyContent: 'center',
-    width: '100%',
-  },
-  googleIcon: {
-    width: 20,
-    height: 20.5,
-    marginRight: 12,
-  },
-  googleText: {
-    color: '#111827',
-    fontWeight: '500',
-    fontSize: 16,
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#e5eee9ff',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+    },
+    card: {
+        backgroundColor: 'white',
+        width: '90%',
+        borderRadius: 16,
+        padding: 30,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        elevation: 5,
+    },
+    logo: {
+        width: 80,
+        height: 80,
+        marginBottom: 20,
+    },
+    title: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#579170ff',
+    },
+    subtitle: {
+        fontSize: 12,
+        textAlign: 'center',
+        color: '#64748b',
+        marginBottom: 24,
+        marginTop: 6,
+    },
+    googleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#d1d5db',
+        borderRadius: 8,
+        height: 48,
+        paddingHorizontal: 12,
+        justifyContent: 'center',
+        width: '100%',
+    },
+    googleIcon: {
+        width: 20,
+        height: 20.5,
+        marginRight: 12,
+    },
+    googleText: {
+        color: '#111827',
+        fontWeight: '500',
+        fontSize: 16,
+    },
 });

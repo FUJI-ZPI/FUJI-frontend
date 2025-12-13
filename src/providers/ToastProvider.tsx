@@ -3,7 +3,7 @@ import {StyleSheet} from 'react-native';
 import Toast, {BaseToast, ErrorToast, InfoToast} from 'react-native-toast-message';
 
 interface ToastProviderProps {
-  children: ReactNode;
+    children: ReactNode;
 }
 
 interface ToastContextType {
@@ -50,7 +50,7 @@ const toastConfig = {
     ),
 };
 
-const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
+const ToastProvider: React.FC<ToastProviderProps> = ({children}) => {
     const showToast = (options: { title: string; description?: string; variant?: 'success' | 'error' | 'info' }) => {
         Toast.show({
             type: options.variant === 'error' ? 'error' : options.variant === 'success' ? 'success' : 'info',
@@ -68,12 +68,12 @@ const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
         toast: showToast,
     };
 
-  return (
-      <ToastContext.Provider value={contextValue}>
-      {children}
-          <Toast config={toastConfig}/>
-      </ToastContext.Provider>
-  );
+    return (
+        <ToastContext.Provider value={contextValue}>
+            {children}
+            <Toast config={toastConfig}/>
+        </ToastContext.Provider>
+    );
 };
 
 const styles = StyleSheet.create({
