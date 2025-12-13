@@ -378,7 +378,6 @@ const ProfileScreen: React.FC<ScreenProps> = ({navigation, onLogout}) => {
                                                 activeOpacity={0.7}
                                                 onPress={() => handleKanjiPress(item)}
                                             >
-                                                {/* ZMIANA: PRZYWRÓCONO WYŚWIETLANIE CZASU */}
                                                 <View style={styles.chipHeader}>
                                                     <Text style={styles.chipTime}>
                                                         {formatTime(item.timestamp)}

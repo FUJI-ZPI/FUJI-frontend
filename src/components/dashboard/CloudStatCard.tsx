@@ -83,7 +83,6 @@ export const CloudStatCard: React.FC<CloudStatCardProps> = ({
                     ))}
                 </G>
             </Svg>
-            {/* Kontener na zawartość statystyk */}
             <View style={[styles.content, contentStyle]}>
                 <View style={styles.topRow}>
                     <IconComponent name={iconName} size={styles.value.fontSize} color={iconColor}/>

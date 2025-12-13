@@ -285,11 +285,8 @@ const RadicalDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
             }
         ]}>
 
-            {/* ZMIANA: NAGŁÓWEK WYCIĄGNIĘTY PRZED ScrollView.
-         Teraz pozycja strzałki "Back" jest niezależna od paddingu contentu ScrollView
-         i będzie identyczna jak w EntityListScreen.
-      */}
-            <View style={localStyles.header}>
+
+        <View style={localStyles.header}>
                 <TouchableOpacity
                     onPress={() => navigation.goBack()}
                     style={localStyles.backButton}
@@ -304,7 +301,6 @@ const RadicalDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
                     <Text style={localStyles.headerSubtitle}>{primaryMeaning}</Text>
                 </View>
 
-                {/* Pusty widok dla równowagi */}
                 <View style={{width: 40}}/>
             </View>
 
@@ -315,7 +311,6 @@ const RadicalDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
                 ]}
                 showsVerticalScrollIndicator={false}
             >
-                {/* RESZTA TREŚCI */}
                 <View style={localStyles.characterBox}>
                     <Text style={localStyles.characterText}>{data.character || '?'}</Text>
                 </View>

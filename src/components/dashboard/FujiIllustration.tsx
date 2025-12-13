@@ -211,7 +211,6 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                             strokeDashoffset={pathLength - (pathLength * (currentLevel - 1)) / (maxLevel - 1 || 1)}
                         />
 
-                        {/* Kamienie milowe */}
                         {milestonePositions.map((m) => {
                             const isPassed = currentLevel >= m.level;
                             const pillWidth = 26;
@@ -236,7 +235,6 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                                         {m.icon || m.level}
                                     </TextSvg>
                                     <G transform="translate(0, 18)">
-                                        {/* Tło pastylki */}
                                         <Rect
                                             x={-pillWidth / 2}
                                             y={-pillHeight / 1.5}
@@ -245,7 +243,6 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                                             rx={pillHeight / 2}
                                             fill={isPassed ? "#FFFF00" : "#ffffffb6"}
                                         />
-                                        {/* Tekst Levelu */}
                                         <TextSvg
                                             x="0"
                                             y="1"
@@ -261,7 +258,6 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                             );
                         })}
 
-                        {/* Awatar gracza */}
                         <G>
                             <Circle
                                 cx={playerPos.x}
@@ -273,11 +269,9 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                             />
                         </G>
 
-                        {/* Dymek nad graczem */}
                         <G
                             transform={`translate(${playerPos.x - bubbleWidth / 2}, ${playerPos.y - 37})`}
                         >
-                            {/* Tło dymka */}
                             <Rect
                                 x="0"
                                 y="0"
@@ -302,7 +296,6 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                                 fontWeight="bold"
                                 textAnchor="middle"
                             >
-                                {/* Dwa oddzielne TSpany dla różnych rozmiarów */}
                                 <TSpan dx={-2} fontSize="11">🏆</TSpan>
                                 <TSpan fontSize="11" dx={isTwoDigit ? 0.5 : -0.5}>{currentLevel}</TSpan>
                             </TextSvg>
@@ -421,7 +414,6 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                                             alignItems: 'center',
                                         }}
                                     >
-                                        {/* Transparent hitbox */}
                                         <View style={{width: 26, height: 26}}/>
                                     </TouchableOpacity>
                                 </Tooltip>
@@ -429,7 +421,6 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                         );
                     })}
 
-                    {/* Tooltip dla gracza */}
                     <View
                         style={{
                             position: 'absolute',
@@ -516,7 +507,6 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                                     alignItems: 'center',
                                 }}
                             >
-                                {/* Transparent hitbox */}
                                 <View style={{width: 26, height: 26}}/>
                             </TouchableOpacity>
                         </Tooltip>

@@ -63,7 +63,6 @@ export const DrawerContent = ({navigation, state, navItems}: DrawerContentProps)
                 showsVerticalScrollIndicator={false}
             >
 
-                {/* HEADER SECTION */}
                 <View style={[styles.headerSection, {paddingTop: insets.top + 20}]}>
                     <View style={styles.brandContainer}>
                         <Image
@@ -93,7 +92,6 @@ export const DrawerContent = ({navigation, state, navItems}: DrawerContentProps)
                     </TouchableOpacity>
                 </View>
 
-                {/* NAVIGATION ITEMS */}
                 <View style={styles.navSection}>
                     {navItems.map((item) => {
                         const routeName = item.id;

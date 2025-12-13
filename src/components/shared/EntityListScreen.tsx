@@ -149,7 +149,6 @@ export const EntityListScreen: React.FC<EntityListScreenProps> = ({
                 }
             ]}
         >
-            {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity
                     onPress={onBack}
@@ -174,7 +173,6 @@ export const EntityListScreen: React.FC<EntityListScreenProps> = ({
                 <View style={{width: 40}}/>
             </View>
 
-            {/* Grid */}
             <FlatList
                 key={itemsPerRow.toString()}
                 data={displayedItems}

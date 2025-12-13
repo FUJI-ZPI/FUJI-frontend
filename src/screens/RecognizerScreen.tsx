@@ -166,14 +166,13 @@ export default function RecognizerScreen({navigation}: { navigation: any }) {
                                            minDist={1}>
                             <View style={styles.canvasContainer}>
                                 <Svg width="100%" height="100%">
-                                    {/* Guide Lines (Dashed Sand Color) */}
-                                    <Path
+
+                                <Path
                                         d={`M ${CANVAS_SIZE / 2} 0 L ${CANVAS_SIZE / 2} ${CANVAS_SIZE} M 0 ${CANVAS_SIZE / 2} L ${CANVAS_SIZE} ${CANVAS_SIZE / 2}`}
                                         stroke={JP_THEME.sand}
                                         strokeWidth={1}
                                         strokeDasharray="10, 10"
                                     />
-                                    {/* User Strokes (Sumi Ink) */}
                                     {strokes.map((stroke, i) => (
                                         <Path
                                             key={i}
@@ -185,7 +184,6 @@ export default function RecognizerScreen({navigation}: { navigation: any }) {
                                             strokeLinejoin="round"
                                         />
                                     ))}
-                                    {/* Current Stroke (Wet Ink/Primary) */}
                                     {currentStroke.length > 0 && (
                                         <Path
                                             d={pointsToPath(currentStroke)}
@@ -202,7 +200,6 @@ export default function RecognizerScreen({navigation}: { navigation: any }) {
                         </PanGestureHandler>
                     </View>
 
-                    {/* 2. RESULTS AREA */}
                     <View style={styles.resultsContainer}>
                         {isLoading ? (
                             <View style={styles.centerState}>
@@ -223,7 +220,6 @@ export default function RecognizerScreen({navigation}: { navigation: any }) {
                         )}
                     </View>
 
-                    {/* 3. BUTTONS (Pill Style) */}
                     <View style={styles.buttonsContainer}>
                         <TouchableOpacity
                             style={[styles.buttonBase, styles.buttonSecondary]}

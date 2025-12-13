@@ -23,7 +23,7 @@ export const CustomHeaderTitle: React.FC = () => {
                 style={styles.logo}
             />
             <Text style={styles.title}>
-                FUJI {/* <-- NAZWA APLIKACJI */}
+                FUJI
             </Text>
         </TouchableOpacity>
     );
