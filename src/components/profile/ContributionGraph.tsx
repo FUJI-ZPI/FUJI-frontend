@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 
-// --- THEME CONSTANTS ---
 const JP_THEME = {
   bg: '#FDFBF7',         
   ink: '#1F2937',        
@@ -25,7 +24,6 @@ export interface ContributionGraphProps {
   daysBack?: number;
 }
 
-// Helper: Format YYYY-MM-DD
 const getLocalDateString = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -37,13 +35,13 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
   values,
   selectedDate,
   onDayPress,
-  daysBack = 120, // Ilość dni wstecz
+  daysBack = 120,
 }) => {
   const [currentEndDate, setCurrentEndDate] = useState(new Date());
 
   useFocusEffect(
     useCallback(() => {
-      // Ustawiamy "dzisiaj" na koniec dnia
+
       const now = new Date();
       now.setHours(23, 59, 59, 999);
       setCurrentEndDate(now);
@@ -53,20 +51,15 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
   const { weeks, months } = useMemo(() => {
     const monthsMap = new Map<number, string>();
     
-    // 1. Obliczamy liczbę pełnych kolumn (tygodni) potrzebnych do wyświetlenia 'daysBack'
-    // Zaokrąglamy w górę, aby mieć pełne kolumny po 7 kratek
     const weeksCount = Math.ceil(daysBack / 7);
     const totalGridCells = weeksCount * 7;
 
-    // 2. Data początkowa: Cofamy się o (totalGridCells - 1) dni od currentEndDate.
-    // Dzięki temu currentEndDate wyląduje dokładnie w ostatniej komórce (index 6 w ostatniej kolumnie).
     const startDate = new Date(currentEndDate);
     startDate.setDate(startDate.getDate() - (totalGridCells - 1));
     
     const generatedWeeks = [];
     let currentWeek = [];
 
-    // 3. Generujemy dni
     for (let i = 0; i < totalGridCells; i++) {
         const d = new Date(startDate);
         d.setDate(d.getDate() + i);
@@ -78,11 +71,9 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
 
         currentWeek.push({ date: dateStr, count, level, dayObj: d });
 
-        // Jeśli tydzień ma 7 dni, zamykamy go i dodajemy do listy
         if (currentWeek.length === 7) {
             generatedWeeks.push(currentWeek);
             
-            // Logika etykiet miesięcy (sprawdzamy pierwszy dzień kolumny)
             const firstDayOfWeek = currentWeek[0].dayObj;
             const monthName = firstDayOfWeek.toLocaleDateString('en-US', { month: 'short' });
             
@@ -90,7 +81,6 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
                 ? generatedWeeks[generatedWeeks.length - 2][0].dayObj.toLocaleDateString('en-US', { month: 'short' }) 
                 : '';
             
-            // Wyświetlamy miesiąc tylko jeśli się zmienił względem poprzedniej kolumny
             if (monthName !== prevMonthName) {
                 monthsMap.set(generatedWeeks.length - 1, monthName);
             }
@@ -136,17 +126,16 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
   }, [currentEndDate]);
 
   const startDateDisplay = weeks[0]?.[0]?.dayObj;
-  // Ostatni dzień to zawsze ostatnia kratka ostatniego tygodnia
+
   const lastWeek = weeks[weeks.length - 1];
   const endDateDisplay = lastWeek?.[6]?.dayObj;
 
-  // Stałe indeksy wierszy (0-6)
+
   const rowsIndices = [0, 1, 2, 3, 4, 5, 6];
 
   return (
     <View style={styles.cardContainer}>
       
-      {/* HEADER */}
       <View style={styles.cardHeader}>
         <View style={styles.titleRow}>
            <View>
@@ -169,10 +158,8 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
         </View>
       </View>
 
-      {/* CONTENT (GRID) */}
       <View style={styles.gridWrapper}>
             <View>
-               {/* Month Labels Row */}
                <View style={styles.monthsRow}>
                   {weeks.map((_, index) => (
                       <View key={index} style={styles.monthLabelContainer}>
@@ -183,15 +170,12 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
                   ))}
                </View>
 
-               {/* The Grid */}
                <View style={styles.gridContainer}>
                    {rowsIndices.map((rowIndex) => (
                        <View key={rowIndex} style={styles.dayRow}>                           
                            {weeks.map((week, weekIndex) => {
-                               // Pobieramy dzień z danego tygodnia dla danego wiersza
                                const dayData = week[rowIndex];
                                
-                               // Zabezpieczenie (choć przy pełnej siatce zawsze powinno być ok)
                                if (!dayData) return <View key={weekIndex} style={styles.emptyBox} />;
                                
                                const isSelected = selectedDate === dayData.date;
@@ -214,7 +198,6 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
                </View>
             </View>
 
-         {/* Legend */}
          <View style={styles.legendContainer}>
              <Text style={styles.legendLabel}>少</Text>
              {[0, 1, 2, 3, 4].map(l => (
@@ -243,7 +226,6 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   
-  // Header
   cardHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -260,7 +242,6 @@ const styles = StyleSheet.create({
   arrowBtn: { padding: 4 },
   dateRangeText: { fontSize: 11, color: JP_THEME.textMuted, minWidth: 80, textAlign: 'center', fontWeight: '500' },
 
-  // Grid Wrapper
   gridWrapper: {
       padding: 16,
       backgroundColor: '#FFF',
@@ -268,7 +249,7 @@ const styles = StyleSheet.create({
   
   monthsRow: { 
       flexDirection: 'row', 
-      marginLeft: 0, // Usunięto margines, bo nie ma etykiet dni po lewej
+      marginLeft: 0,
       marginBottom: 6, 
       gap: 4 
   },
@@ -289,8 +270,7 @@ const styles = StyleSheet.create({
   gridContainer: { flexDirection: 'column', gap: 4 }, 
   dayRow: { flexDirection: 'row', alignItems: 'center', gap: 4 }, 
   
-  // --- BOX STYLING ---
-  box: { 
+  box: {
       width: 14, 
       height: 14, 
       borderRadius: 3,
@@ -305,8 +285,7 @@ const styles = StyleSheet.create({
       zIndex: 10
   },
 
-  // Legend
-  legendContainer: { 
+  legendContainer: {
       flexDirection: 'row', 
       justifyContent: 'flex-end', 
       alignItems: 'center', 

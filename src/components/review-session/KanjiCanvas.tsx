@@ -15,8 +15,8 @@ import * as SecureStore from 'expo-secure-store';
 type Point = {x: number; y: number};
 
 interface KanjiCanvasProps {
-  kanjiUuid: string;          // <--- NOWE
-  isLearningSession: boolean; // <--- NOWE
+  kanjiUuid: string;
+  isLearningSession: boolean;
   targetKanji: string;
   referenceStrokes: number[][][];
   onComplete: (accuracy: number) => void;
@@ -48,8 +48,8 @@ const pointsToPath = (points: Point[]): string => {
 };
 
 const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
-  kanjiUuid,          // <--- props
-  isLearningSession,  // <--- props
+  kanjiUuid,
+  isLearningSession,
   targetKanji,
   referenceStrokes,
   onComplete,
@@ -82,7 +82,6 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
     resetCanvas();
   }, [targetKanji]);
 
-  // --- ZMIANA: Nowy endpoint ---
   const checkKanjiAccuracyAPI = async (
     payload: any,
   ): Promise<KanjiAccuracyResult | null> => {
@@ -91,7 +90,6 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
       if (!token) {
         throw new Error('Authorization token not found.');
       }
-      // Zmiana na endpoint checker
       const url = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/checker/kanji`;
       const response = await fetch(url, {
         method: 'POST',
@@ -184,7 +182,6 @@ const KanjiCanvas: React.FC<KanjiCanvasProps> = ({
       return stroke.map(point => [point.x, point.y]);
     });
 
-    // --- ZMIANA: Payload z danymi do checkera ---
     const payload = {
       kaniUuid: kanjiUuid,
       userStrokes: formattedPaths,

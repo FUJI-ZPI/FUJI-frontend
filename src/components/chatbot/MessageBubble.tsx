@@ -64,7 +64,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // LayoutAnimation zajmuje się przesuwaniem sąsiednich elementów
+
     LayoutAnimation.configureNext({
         duration: 300,
         create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
@@ -74,20 +74,20 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
     if (isTranslationActive) {
       setIsTranslationRendered(true);
-      // Animacja wejścia: "Wyskoczenie"
+
       Animated.timing(anim, {
         toValue: 1,
         duration: 300,
         useNativeDriver: true,
-        easing: Easing.out(Easing.back(1.7)), // Lekkie odbicie przy otwieraniu
+        easing: Easing.out(Easing.back(1.7)),
       }).start();
     } else {
-      // Animacja wyjścia: "Wessanie" z powrotem
+
       Animated.timing(anim, {
         toValue: 0,
-        duration: 250, // Nieco szybciej przy zamykaniu dla lepszego feelingu
+        duration: 250,
         useNativeDriver: true,
-        // Używamy Easing.in(Easing.back), żeby karta "cofnęła się" w ten sam sposób
+
         easing: Easing.in(Easing.back(1.0)), 
       }).start(() => {
         setIsTranslationRendered(false);
@@ -101,7 +101,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       {
         translateY: anim.interpolate({
           inputRange: [0, 1],
-          outputRange: [-25, 0], // Większy zakres ruchu dla wyraźniejszego efektu
+          outputRange: [-25, 0],
         }),
       },
       {
@@ -110,8 +110,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           outputRange: [0.8, 1],
         }),
       },
-      // Dodajemy skalowanie Y, aby karta "zgniatała się" przy zamykaniu
-      // Dzięki temu tekst i tło znikają spójnie w górę
+
+
       {
         scaleY: anim.interpolate({
             inputRange: [0, 1],
@@ -194,11 +194,11 @@ const styles = StyleSheet.create({
   },
   translationRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start', // Ważne: flex-start, aby animacja scaleY "wciągała" do góry
+    alignItems: 'flex-start',
     marginTop: 2, 
     maxWidth: '100%',
     zIndex: -1,
-    overflow: 'hidden', // Kluczowe: Ukrywa zawartość podczas animacji zmniejszania
+    overflow: 'hidden',
   },
   aiRow: {
     justifyContent: 'flex-start',

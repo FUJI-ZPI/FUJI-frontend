@@ -95,20 +95,16 @@ const ChatbotScreen: React.FC<any> = () => {
     }
   }, [messages, loading]); 
 
-  // --- NOWE: Efekt do scrollowania po otwarciu tłumaczenia ---
   useEffect(() => {
     if (showTranslation && scrollViewRef.current) {
-        // Sprawdzamy, czy to ostatnia wiadomość. Jeśli tak, scrollujemy na dół.
         const lastMessage = messages[messages.length - 1];
         if (lastMessage && lastMessage.id === showTranslation.messageId) {
-            // Małe opóźnienie, aby animacja LayoutAnimation zdążyła powiększyć widok
             setTimeout(() => {
                 scrollViewRef.current?.scrollToEnd({ animated: true });
             }, 250); 
         }
     }
   }, [showTranslation, messages]);
-  // ------------------------------------------------------------
 
   const [user, setUser] = useState<User | null>(null);
   
@@ -142,7 +138,6 @@ const ChatbotScreen: React.FC<any> = () => {
       setLoading(true)
       const accessToken = await SecureStore.getItemAsync('accessToken');
       if (!accessToken) {
-        console.error("Brak tokenu dostępu.");
         return;
       }
 

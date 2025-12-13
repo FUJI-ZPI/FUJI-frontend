@@ -23,12 +23,11 @@ export const FlyingClouds: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       const id = Date.now();
-      const y = Math.random() * (SCREEN_HEIGHT * 0.35); // tylko górna część ekranu
-      const size = 0.5 + Math.random() * 1.3; // losowa wielkość
+      const y = Math.random() * (SCREEN_HEIGHT * 0.35);
+      const size = 0.5 + Math.random() * 1.3;
       const variant = Math.random() > 0.5 ? 1 : 2;
       const anim = new Animated.Value(SCREEN_WIDTH + 150);
 
-      // paralaksa — duże chmury lecą wolniej, małe szybciej
       const baseDuration = 16000;
       const speed = baseDuration * (1 + size * 0.8);
 
@@ -37,7 +36,7 @@ export const FlyingClouds: React.FC = () => {
         ? KANJI_SIGNS[Math.floor(Math.random() * KANJI_SIGNS.length)]
         : undefined;
 
-      const zIndex = Math.round(10 + size * 10); // większe bliżej (nad innymi)
+      const zIndex = Math.round(10 + size * 10);
 
       const newCloud: Cloud = { id, y, size, speed, kanji, variant, anim, zIndex };
       setClouds(prev => [...prev, newCloud]);
@@ -50,7 +49,7 @@ export const FlyingClouds: React.FC = () => {
       }).start(() => {
         setClouds(prev => prev.filter(c => c.id !== id));
       });
-    }, 5500 + Math.random() * 7000);    // częstotliwość generowania chmur (nowa chmura co 5.5 do (5.5 + 7) sekuny)
+    }, 5500 + Math.random() * 7000);
 
     return () => clearInterval(interval);
   }, []);

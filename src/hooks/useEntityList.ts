@@ -89,7 +89,6 @@ export function useEntityList<T extends EntityItem>({
     const loadMore = () => {
         if (displayedCount < items.length && !loadingMore) {
             setLoadingMore(true);
-            // Symulacja krótkiego opóźnienia dla lepszego UX
             setTimeout(() => {
                 setDisplayedCount(prev => Math.min(prev + itemsPerPage, items.length));
                 setLoadingMore(false);

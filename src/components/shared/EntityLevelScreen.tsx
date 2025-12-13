@@ -17,9 +17,9 @@ import { colors } from '../../theme/styles';
 import { EntityType, LevelStyleConfig, useEntityLevels } from '../../hooks/useEntityLevels';
 
 const JP_THEME = {
-  ink: '#1F2937',        // Sumi Ink
-  primary: '#4673aa',    // Fuji Blue
-  accent: '#f74f73',     // Sun Red
+  ink: '#1F2937',
+  primary: '#4673aa',
+  accent: '#f74f73',
   paperWhite: '#FFFFFF',
   sand: '#E5E0D6',
   textMuted: '#64748b',
@@ -67,7 +67,6 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
     config,
 }) => {
     const { t } = useTranslation();
-    // 2. INICJALIZACJA HOOKA
     const insets = useSafeAreaInsets();
     
     const { entityName, totalLevels, levelsPerLoad, getLevelStyle, onSelectLevel } = config;
@@ -83,7 +82,6 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
         getLevelStyle,
     });
 
-    // Oblicz styl nagłówka na podstawie środka widocznego zakresu
     const getMidpointLevel = () => {
         const mid = Math.floor((visibleRange.min + visibleRange.max) / 2);
         return Math.max(1, Math.min(mid, totalLevels));

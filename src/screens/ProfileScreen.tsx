@@ -14,11 +14,9 @@ import { useToast } from '../hooks/use-toast';
 import { themeStyles, colors, spacing } from '../theme/styles';
 import { User, loadUser } from '../utils/user';
 
-// --- DEFINICJA KOLORÓW Z TWOJEGO PRZYKŁADU ---
 const primaryGreen = '#10B981';
 const accentBlue = '#3B82F6';
 
-// --- NOWY KOMPONENT TAB BUTTON ---
 const TabButton: React.FC<{
   icon: any;
   label: string;
@@ -72,7 +70,6 @@ const formatTime = (isoString: string) => {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 };
 
-// --- KOMPONENT VIEWERA ---
 interface KanjiCanvasViewerProps {
   size?: number;
   userStrokes?: number[][][];

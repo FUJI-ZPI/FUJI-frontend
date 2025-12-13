@@ -130,8 +130,6 @@ export default function ReviewSessionScreen({navigation}: any) {
     }
   };
 
-  // --- USUNIĘTO funkcje increaseFamiliarity / decreaseFamiliarity (backend robi to teraz) ---
-
   const currentCard = practiceKanjiList[currentKanjiIndex];
   const currentKanji = currentCard?.kanji; 
   const totalKanji = practiceKanjiList.length;
@@ -145,7 +143,6 @@ export default function ReviewSessionScreen({navigation}: any) {
     
     setShowCharacterHint(true);
 
-    // Tylko wyświetlanie Toasta - logika SRS wykonana już przez Canvas/Backend
     if (accuracy >= 70) {
       toast({
         title: accuracy >= 90 ? 'Excellent! 🎉' : 'Good job! 👍',
@@ -160,7 +157,6 @@ export default function ReviewSessionScreen({navigation}: any) {
       });
     }
 
-    // Automatyczne przejście po 2.5s
     setTimeout(() => {
       nextKanji();
     }, 2500);
@@ -289,10 +285,8 @@ export default function ReviewSessionScreen({navigation}: any) {
         </Card>
       ) : (
         <KanjiCanvas
-          // --- ZMIANA: Przekazujemy ID i flagę sesji ---
           kanjiUuid={currentKanji.uuid}
           isLearningSession={false}
-          
           targetKanji={currentKanji.character}
           referenceStrokes={currentKanji.referenceStrokes}
           onComplete={handleKanjiComplete}

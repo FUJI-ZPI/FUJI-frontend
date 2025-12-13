@@ -26,7 +26,6 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-// --- Komponenty do Animacji SVG ---
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const AnimatedStroke: React.FC<{
@@ -109,7 +108,6 @@ const AnimatedKanji: React.FC<AnimatedKanjiProps> = ({
   );
 };
 
-// --- Interfejsy ---
 interface Meaning {
   meaning: string;
   primary: boolean;
@@ -221,7 +219,6 @@ export default function LearningSessionScreen({navigation}: any) {
     }
   };
 
-  // --- LOGIKA: Usunięto funkcję addCardToSrs (Backend robi to automatycznie) ---
 
   const currentKanji = practiceKanjiList[currentKanjiIndex];
   const totalKanji = practiceKanjiList.length;
@@ -254,7 +251,6 @@ export default function LearningSessionScreen({navigation}: any) {
       });
     }
 
-    // --- LOGIKA: Nie wywołujemy SRS tutaj. Backend zapisał wynik po otrzymaniu rysunku. ---
 
     setTimeout(() => {
       nextKanji();
@@ -380,10 +376,8 @@ export default function LearningSessionScreen({navigation}: any) {
         </Card>
       ) : (
         <KanjiCanvas
-          // --- LOGIKA: Przekazujemy ID i flagę lekcji ---
           kanjiUuid={currentKanji.uuid}
           isLearningSession={true}
-          
           targetKanji={currentKanji.character}
           referenceStrokes={currentKanji.referenceStrokes}
           onComplete={handleKanjiComplete}

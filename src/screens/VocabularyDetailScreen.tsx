@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-// 1. Hook insets
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import {colors, spacing, themeStyles} from '../theme/styles';
@@ -16,10 +15,8 @@ import * as SecureStore from 'expo-secure-store';
 import {Card} from '../components/ui/Card';
 import {MnemonicTooltipButton} from '../components/ui/MnemonicTooltipButton';
 import {Audio} from 'expo-av';
-// 2. Importy SVG
 import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from "react-native-svg";
 
-// --- THEME CONSTANTS ---
 const JP_THEME = {
   ink: '#1F2937',
   primary: '#4673aa',
@@ -29,7 +26,6 @@ const JP_THEME = {
   textMuted: '#64748b',
 };
 
-// --- HEADER ILLUSTRATION (TORII 160x80) ---
 const HeaderTorii = () => (
   <View style={localStyles.toriiContainer} pointerEvents="none">
     <Svg width="160" height="80" viewBox="0 0 120 60" style={{ opacity: 0.6 }}>
@@ -215,7 +211,6 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
         throw new Error('Authentication token not found. Please log in again.');
       const headers = {Authorization: `Bearer ${token}`};
       const url = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/vocabulary/details/${uuid}`;
-      console.log('Fetching from URL:', url);
       const res = await fetch(url, {headers});
       if (!res.ok) {
         if (res.status === 401 || res.status === 403)
@@ -261,7 +256,6 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
         throw new Error('Authentication token not found. Please log in again.');
       }
       const audioUrl = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/v1/files/download/${filename}`;
-      console.log(`🔊 [AUDIO] Fetching audio from: ${audioUrl}`);
       const response = await fetch(audioUrl, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -287,7 +281,6 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
       );
       setSound(newSound);
       await newSound.playAsync();
-      console.log(`🔊 [AUDIO] Playing: ${filename}`);
     } catch (error) {
       console.error('Error playing audio:', error);
       Alert.alert(
@@ -437,7 +430,6 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
   );
 
   return (
-    // GŁÓWNY WRAPPER Z PADDINGAMI
     <View style={[
       themeStyles.flex1, 
       {
@@ -448,7 +440,6 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
       }
     ]}>
       
-      {/* ZMIANA: Nagłówek wyciągnięty PRZED ScrollView */}
       <View style={localStyles.header}>
             <TouchableOpacity 
                 onPress={() => navigation.goBack()} 
@@ -570,7 +561,6 @@ const VocabularyDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
 };
 
 const localStyles = StyleSheet.create({
-  // STYLE HEADER - DOPASOWANE DO LISTY
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -602,7 +592,6 @@ const localStyles = StyleSheet.create({
     left: '50%', 
     transform: [{ translateX: -80 }], 
     opacity: 0.5,
-    // Brak zIndex: -1 aby było widoczne
   },
   headerTitle: {
     fontSize: 22,
@@ -619,7 +608,6 @@ const localStyles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // POZOSTAŁE STYLE BEZ ZMIAN
   centered: {
     flex: 1,
     justifyContent: 'center',

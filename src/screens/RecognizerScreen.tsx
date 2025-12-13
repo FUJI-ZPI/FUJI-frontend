@@ -9,17 +9,14 @@ import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from
 import * as SecureStore from 'expo-secure-store';
 import { Ionicons } from '@expo/vector-icons';
 
-// Import kolorów z Twojego projektu (to "zielonkawe" tło)
 import { colors } from '../theme/styles';
 
-// --- THEME CONSTANTS (Elementy UI w stylu Zen) ---
 const JP_THEME = {
-  // Nie używamy tu bg, bo bierzemy colors.background
-  ink: '#1F2937',        // Sumi Ink
-  primary: '#4673aa',    // Fuji Blue
-  accent: '#f74f73',     // Sun Red
-  sand: '#E5E0D6',       // Guide lines
-  paperWhite: '#FFFFFF', // Canvas background
+  ink: '#1F2937',
+  primary: '#4673aa',
+  accent: '#f74f73',
+  sand: '#E5E0D6',
+  paperWhite: '#FFFFFF',
   textMuted: '#64748b',
 };
 
@@ -67,7 +64,6 @@ const KanjiCandidatesGrid = ({ kanjiList, onSelectKanji }: { kanjiList: Recogniz
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, max));
 
-// --- MAIN SCREEN ---
 
 export default function RecognizerScreen({ navigation }: { navigation: any }) {
   const [strokes, setStrokes] = useState<Stroke[]>([]);
@@ -240,18 +236,18 @@ export default function RecognizerScreen({ navigation }: { navigation: any }) {
 const styles = StyleSheet.create({
   container: { 
       flex: 1,
-      backgroundColor: colors.background // TUTAJ przywrócone oryginalne tło
+      backgroundColor: colors.background
   },
   safeArea: { flex: 1 },
   contentContainer: { flex: 1, paddingHorizontal: 16, alignItems: "center" },
   
-  // Header
+
   header: { alignItems: 'center', marginBottom: 16, marginTop: 4 },
   toriiContainer: { position: 'absolute', top: -15, opacity: 0.5 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: JP_THEME.ink },
   headerSubtitle: { fontSize: 12, color: JP_THEME.textMuted, fontWeight: '600', textTransform: 'uppercase' },
 
-  // Canvas (Washi Style)
+
   canvasWrapper: {
     width: CANVAS_SIZE,
     height: CANVAS_SIZE,
@@ -269,11 +265,11 @@ const styles = StyleSheet.create({
   },
   canvasContainer: { flex: 1 },
 
-  // Results
+
   resultsContainer: {
     width: '100%',
     height: 200,
-    backgroundColor: 'rgba(255,255,255,0.6)', // Glassmorphism
+    backgroundColor: 'rgba(255,255,255,0.6)',
     borderRadius: 20,
     padding: 16,
     marginBottom: 10,
@@ -283,7 +279,6 @@ const styles = StyleSheet.create({
   centerState: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 8 },
   loadingText: { color: JP_THEME.textMuted, fontWeight: '600' },
 
-  // Buttons
   buttonsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -294,7 +289,7 @@ const styles = StyleSheet.create({
   buttonBase: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 24, // Pill shape
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
@@ -317,9 +312,8 @@ const candidateStyles = StyleSheet.create({
     vocabGrid: { paddingBottom: 10 },
     vocabCard: {
         marginBottom: ITEM_MARGIN,
-        marginRight: ITEM_MARGIN, // Handled by list logic
+        marginRight: ITEM_MARGIN,
     },
-    // Styl kafelka (Ema / Stamp)
     cardInner: {
         flex: 1,
         justifyContent: 'center',

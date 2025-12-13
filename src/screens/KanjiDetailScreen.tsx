@@ -732,7 +732,6 @@ const localStyles = StyleSheet.create({
     left: '50%', 
     transform: [{ translateX: -80 }], 
     opacity: 0.5,
-    // POPRAWKA: Usunięto zIndex: -1, teraz brama będzie widoczna
   },
   headerTitle: {
     fontSize: 22,

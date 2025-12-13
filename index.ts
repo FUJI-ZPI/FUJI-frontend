@@ -8,11 +8,8 @@ try {
     const messaging = require('@react-native-firebase/messaging').default;
 
     messaging().setBackgroundMessageHandler(async (remoteMessage: any) => {
-        console.log('Message handled in the background!', remoteMessage);
     });
 } catch (error) {
-    console.log('Firebase messaging not available or not configured:', error);
-    // Aplikacja może działać normalnie bez Firebase
 }
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);

@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-// 1. Hook insets
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import {colors, spacing, themeStyles} from '../theme/styles';
@@ -18,7 +17,6 @@ import {MnemonicTooltipButton} from '../components/ui/MnemonicTooltipButton';
 
 import Svg, {Path, Defs, LinearGradient as SvgLinearGradient, Stop, Rect} from 'react-native-svg';
 
-// --- THEME CONSTANTS ---
 const JP_THEME = {
   ink: '#1F2937',
   primary: '#4673aa',
@@ -28,7 +26,6 @@ const JP_THEME = {
   textMuted: '#64748b',
 };
 
-// --- HEADER ILLUSTRATION (TORII 160x80) ---
 const HeaderTorii = () => (
   <View style={localStyles.toriiContainer} pointerEvents="none">
     <Svg width="160" height="80" viewBox="0 0 120 60" style={{ opacity: 0.6 }}>
@@ -45,7 +42,6 @@ const HeaderTorii = () => (
   </View>
 );
 
-// --- INTERFACES ---
 interface Meaning {
   meaning: string;
   primary: boolean;
@@ -100,7 +96,6 @@ interface ScreenProps {
   route: {params: {radicalUuid: string; character: string}};
 }
 
-// --- CONSTANTS & HELPER COMPONENTS ---
 const primaryGreen = '#10B981';
 const accentBlue = '#3B82F6';
 
@@ -163,11 +158,9 @@ const CollapsibleSection: React.FC<{
   );
 };
 
-// --- MAIN SCREEN ---
 const RadicalDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
   const {radicalUuid} = route.params;
   
-  // INICJALIZACJA HOOKA
   const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
@@ -359,15 +352,12 @@ const RadicalDetailScreen: React.FC<ScreenProps> = ({navigation, route}) => {
   );
 };
 
-// --- STYLES ---
-
 const localStyles = StyleSheet.create({
-  // HEADER STYLES - IDENTYCZNE JAK W ENTITY LIST
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16, // Padding nagłówka
+    paddingHorizontal: 16,
     paddingBottom: 16,
     paddingTop: 8,
   },

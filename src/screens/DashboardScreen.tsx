@@ -50,7 +50,6 @@ export const DashboardScreen: React.FC<ScreenProps> = ({ navigation }: any) => {
 
     const fetchWithAuth = async <T,>(endpoint: string): Promise<T> => {
         const token = await SecureStore.getItemAsync('accessToken');
-        console.log(token)
         if (!token) throw new Error('No token');
 
         const response = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_URL}${endpoint}`, {

@@ -19,7 +19,7 @@ const milestones = [
     { level: 30, label: 'Camp 3', icon: '⛏️' },
     { level: 40, label: 'Camp 4', icon: '🧗‍♂️' },
     { level: 50, label: 'Camp 5', icon: '❄️' },
-    { level: 60, label: 'Summit', icon: '🚩' }, // ☀️
+    { level: 60, label: 'Summit', icon: '🚩' },
 ];
 
 export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
@@ -68,16 +68,16 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
     }, [currentLevel, maxLevel]);
 
 
-    // Dynamiczne obliczanie szerokości dymka
+
     const isTwoDigit = currentLevel >= 10;
-    const bubbleWidth = isTwoDigit ? 34 : 28; // Szerszy dla 2 cyfr
+    const bubbleWidth = isTwoDigit ? 34 : 28;
     const bubbleHeight = 22;
     const bubbleCenterX = bubbleWidth / 2;
-    const bubbleCenterY = 15; // Pozycja Y tekstu w pionie
+    const bubbleCenterY = 15;
 
     const progressPathData = "m 185.27017,265.48059 c -3.12395,-2.34886 1.0356,4.47982 -7.23951,0.22382 -12.79186,-6.57902 -37.2043,-11.98595 -65.1511,-16.56827 C 74.127125,242.78206 33.68335,232.29688 35.7,209.525 c 2.205921,-24.90911 36.761208,-17.63618 88.87899,-21.95085 39.02464,-3.23073 71.86616,-7.57352 69.64601,-24.79915 -1.46986,-11.40428 -27.79822,-18.26915 -51.82224,-26.43172 -18.6678,-6.3427 -35.94423,-13.46896 -39.08496,-24.11747 -5.426065,-18.39685 49.91716,-34.187855 49.91716,-34.187855"
 
-    // Obliczenia dla ViewBox SVG
+
     const SVG_VIEWBOX_WIDTH = 320.0216;
     const SVG_VIEWBOX_HEIGHT = 346.01524;
 
@@ -186,7 +186,7 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                                         {/* Tekst Levelu */}
                                         <TextSvg
                                             x="0"
-                                            y="1" // 1
+                                            y="1"
                                             fontSize="7"
                                             fill={"#374151"}
                                             fontWeight="800"
@@ -226,18 +226,16 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                                 fill="#FFFFFF"
                             />
 
-                            {/* Wskaźnik dymka (trójkąt) */}
                             <Path
-                                // Symetryczny trójkąt na środku
+
                                 d={`M ${bubbleCenterX - 4},${bubbleHeight - 1} L ${bubbleCenterX + 4},${bubbleHeight - 1} L ${bubbleCenterX},${bubbleHeight + 7} z`}
                                 fill="#FFFFFF"
                             />
 
-                            {/* Tekst w dymku (Ikona + Level) */}
                             <TextSvg
-                                x={bubbleCenterX - 4} // Wyśrodkowany w poziomie
-                                y={bubbleCenterY} // Wyśrodkowany w pionie
-                                fontSize="11" // Domyślny rozmiar (dla numeru)
+                                x={bubbleCenterX - 4}
+                                y={bubbleCenterY}
+                                fontSize="11"
                                 fill="black"
                                 fontWeight="bold"
                                 textAnchor="middle"
@@ -251,12 +249,10 @@ export const FujiIllustration: React.FC<FujiIllustrationProps> = ({
                 )}
             </Svg>
 
-            {/* Tooltips jako nakładki absolutne */}
             {pathLength !== null && pathLength > 0 && (
                 <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} pointerEvents="box-none">
-                    {/* Tooltips dla kamieni milowych */}
                     {milestonePositions.map((m) => {
-                        // Konwersja współrzędnych SVG na procenty
+
                         const leftPercent = (m.x / SVG_VIEWBOX_WIDTH) * 100;
                         const topPercent = (m.y / SVG_VIEWBOX_HEIGHT) * 100;
                         const isReached = currentLevel >= m.level;
