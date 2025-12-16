@@ -1,31 +1,23 @@
-import React, { useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
-import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from "react-native-svg";
+import React, {useRef, useState} from 'react';
+import {ActivityIndicator, Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
+import {Ionicons} from '@expo/vector-icons';
+import Svg, {Defs, LinearGradient as SvgLinearGradient, Path, Rect, Stop} from "react-native-svg";
 
-import { colors } from '../../theme/styles';
-import { EntityType, LevelStyleConfig, useEntityLevels } from '../../hooks/useEntityLevels';
+import {colors} from '../../theme/styles';
+import {EntityType, LevelStyleConfig, useEntityLevels} from '../../hooks/useEntityLevels';
 
 const JP_THEME = {
-  ink: '#1F2937',        // Sumi Ink
-  primary: '#4673aa',    // Fuji Blue
-  accent: '#f74f73',     // Sun Red
-  paperWhite: '#FFFFFF',
-  sand: '#E5E0D6',
-  textMuted: '#64748b',
+    ink: '#1F2937',
+    primary: '#4673aa',
+    accent: '#f74f73',
+    paperWhite: '#FFFFFF',
+    sand: '#E5E0D6',
+    textMuted: '#64748b',
 };
 
-const { width } = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 
 const GRID_PADDING = 24;
 const ITEM_MARGIN = 10;
@@ -33,19 +25,19 @@ const ITEMS_PER_ROW = 4;
 const ITEM_WIDTH = (width - (GRID_PADDING * 2) - (ITEM_MARGIN * (ITEMS_PER_ROW - 1))) / ITEMS_PER_ROW;
 
 const HeaderTorii = () => (
-  <View style={styles.toriiContainer} pointerEvents="none">
-    <Svg width="160" height="80" viewBox="0 0 120 60" style={{ opacity: 0.6 }}>
-       <Defs>
-          <SvgLinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={JP_THEME.accent} stopOpacity="1" />
-            <Stop offset="1" stopColor="#c23b22" stopOpacity="1" />
-          </SvgLinearGradient>
-       </Defs>
-       <Path d="M 10 20 Q 60 10 110 20 L 112 28 Q 60 18 8 28 Z" fill="url(#grad)" />
-       <Rect x="25" y="28" width="6" height="30" rx="1" fill="#c0392b" />
-       <Rect x="89" y="28" width="6" height="30" rx="1" fill="#c0392b" />
-    </Svg>
-  </View>
+    <View style={styles.toriiContainer} pointerEvents="none">
+        <Svg width="160" height="80" viewBox="0 0 120 60" style={{opacity: 0.6}}>
+            <Defs>
+                <SvgLinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                    <Stop offset="0" stopColor={JP_THEME.accent} stopOpacity="1"/>
+                    <Stop offset="1" stopColor="#c23b22" stopOpacity="1"/>
+                </SvgLinearGradient>
+            </Defs>
+            <Path d="M 10 20 Q 60 10 110 20 L 112 28 Q 60 18 8 28 Z" fill="url(#grad)"/>
+            <Rect x="25" y="28" width="6" height="30" rx="1" fill="#c0392b"/>
+            <Rect x="89" y="28" width="6" height="30" rx="1" fill="#c0392b"/>
+        </Svg>
+    </View>
 );
 
 interface EntityLevelScreenConfig {
@@ -63,27 +55,25 @@ interface EntityLevelScreenProps {
 }
 
 export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
-    navigation,
-    config,
-}) => {
-    const { t } = useTranslation();
-    // 2. INICJALIZACJA HOOKA
+                                                                        navigation,
+                                                                        config,
+                                                                    }) => {
+    const {t} = useTranslation();
     const insets = useSafeAreaInsets();
-    
-    const { entityName, totalLevels, levelsPerLoad, getLevelStyle, onSelectLevel } = config;
+
+    const {entityName, totalLevels, levelsPerLoad, getLevelStyle, onSelectLevel} = config;
 
     const [visibleRange, setVisibleRange] = useState<{ min: number; max: number }>({
         min: 1,
         max: levelsPerLoad,
     });
 
-    const { displayedLevels, hasMore, loadingMore, loadMore } = useEntityLevels({
+    const {displayedLevels, hasMore, loadingMore, loadMore} = useEntityLevels({
         totalLevels,
         levelsPerLoad,
         getLevelStyle,
     });
 
-    // Oblicz styl nagłówka na podstawie środka widocznego zakresu
     const getMidpointLevel = () => {
         const mid = Math.floor((visibleRange.min + visibleRange.max) / 2);
         return Math.max(1, Math.min(mid, totalLevels));
@@ -91,12 +81,12 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
 
     const currentGroupStyle = getLevelStyle(getMidpointLevel());
 
-    const handleViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    const handleViewableItemsChanged = useRef(({viewableItems}: any) => {
         if (viewableItems.length > 0) {
             const visibleLevels = viewableItems.map((item: any) => item.item);
             const min = Math.min(...visibleLevels);
             const max = Math.max(...visibleLevels);
-            setVisibleRange({ min, max });
+            setVisibleRange({min, max});
         }
     }).current;
 
@@ -111,45 +101,45 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
     };
 
     const renderFooter = () => {
-        if (!loadingMore) return <View style={{ height: 40 }} />;
+        if (!loadingMore) return <View style={{height: 40}}/>;
         return (
             <View style={styles.footerLoader}>
-                <ActivityIndicator size="small" color="#10B981" />
+                <ActivityIndicator size="small" color="#10B981"/>
                 <Text style={styles.loadingMoreText}>Loading more...</Text>
             </View>
         );
     };
 
     return (
-        <View 
+        <View
             style={[
-                styles.container, 
-                { 
+                styles.container,
+                {
                     paddingTop: insets.top,
                     paddingLeft: insets.left,
                     paddingRight: insets.right
                 }
             ]}
         >
-            
+
             <View style={styles.header}>
-                <TouchableOpacity 
-                    onPress={() => navigation.goBack()} 
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
                     style={styles.backButton}
                     activeOpacity={0.7}
                 >
-                    <Ionicons name="arrow-back" size={20} color={JP_THEME.ink} />
+                    <Ionicons name="arrow-back" size={20} color={JP_THEME.ink}/>
                 </TouchableOpacity>
-                
+
                 <View style={styles.headerTitleContainer}>
-                    <HeaderTorii />
+                    <HeaderTorii/>
                     <Text style={styles.headerTitle}>{t(entityName) || entityName}</Text>
-                    <Text style={[styles.headerSubtitle, { color: currentGroupStyle.color }]}>
+                    <Text style={[styles.headerSubtitle, {color: currentGroupStyle.color}]}>
                         {currentGroupStyle.text}
                     </Text>
                 </View>
 
-                <View style={{ width: 40 }} /> 
+                <View style={{width: 40}}/>
             </View>
 
             <FlatList
@@ -159,7 +149,7 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
                 numColumns={ITEMS_PER_ROW}
                 contentContainerStyle={[
                     styles.scrollContent,
-                    { paddingBottom: insets.bottom + 20 }
+                    {paddingBottom: insets.bottom + 20}
                 ]}
                 columnWrapperStyle={styles.levelsRow}
                 onEndReached={handleLoadMore}
@@ -168,14 +158,14 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
                 viewabilityConfig={viewabilityConfig}
                 ListFooterComponent={renderFooter}
                 showsVerticalScrollIndicator={false}
-                renderItem={({ item: level }) => {
+                renderItem={({item: level}) => {
                     const style = getLevelStyle(level);
                     return (
                         <TouchableOpacity
                             key={level}
                             onPress={() => onSelectLevel(level)}
                             activeOpacity={0.7}
-                            style={{ width: ITEM_WIDTH }}
+                            style={{width: ITEM_WIDTH}}
                         >
                             <View
                                 style={[
@@ -184,9 +174,9 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
                                         borderColor: style.borderColor || style.color,
                                     },
                                 ]}>
-                                
-                                <View style={[styles.colorStrip, { backgroundColor: style.color }]} />
-                                
+
+                                <View style={[styles.colorStrip, {backgroundColor: style.color}]}/>
+
                                 <Text style={styles.levelNumber}>
                                     {level}
                                 </Text>
@@ -200,9 +190,9 @@ export const EntityLevelScreen: React.FC<EntityLevelScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-    container: { 
+    container: {
         flex: 1,
-        backgroundColor: colors.background 
+        backgroundColor: colors.background
     },
 
     header: {
@@ -218,10 +208,10 @@ const styles = StyleSheet.create({
         height: 40,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: JP_THEME.paperWhite, 
+        backgroundColor: JP_THEME.paperWhite,
         borderRadius: 20,
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: {width: 0, height: 1},
         shadowOpacity: 0.05,
         shadowRadius: 2,
         elevation: 1,
@@ -260,11 +250,11 @@ const styles = StyleSheet.create({
         backgroundColor: JP_THEME.paperWhite,
         borderRadius: 12,
         borderWidth: 1,
-        height: ITEM_WIDTH, 
+        height: ITEM_WIDTH,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: JP_THEME.primary,
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: {width: 0, height: 2},
         shadowOpacity: 0.05,
         shadowRadius: 4,
         elevation: 2,

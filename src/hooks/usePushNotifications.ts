@@ -11,7 +11,6 @@ export const usePushNotifications = () => {
     const [isFirebaseAvailable, setIsFirebaseAvailable] = useState(false);
 
     useEffect(() => {
-        // Sprawdź czy Firebase jest dostępny
         let messaging: any;
         let getMessaging: any;
         let getApp: any;
@@ -23,22 +22,17 @@ export const usePushNotifications = () => {
             getApp = firebaseApp.getApp;
             setIsFirebaseAvailable(true);
         } catch (error) {
-            console.log('Firebase messaging not available - skipping push notifications setup');
             setIsFirebaseAvailable(false);
-            return; // Wyjdź z hooka jeśli Firebase nie jest dostępny
+            return;
         }
 
-        // Inicjalizuj messaging z nowym API
         const messagingInstance = getMessaging ? getMessaging(getApp()) : messaging();
 
-        // Funkcja do wysyłania tokena na backend
         const sendTokenToBackend = async (token: string) => {
             try {
                 const accessToken = await SecureStore.getItemAsync('accessToken');
-                console.log("access token", accessToken);
 
                 if (!accessToken) {
-                    console.log('No access token found, skipping FCM token registration');
                     return;
                 }
 
@@ -50,12 +44,8 @@ export const usePushNotifications = () => {
                     },
                     body: JSON.stringify({fcmToken: token}),
                 });
-                console.log("FCm payload", JSON.stringify({fcmToken: token}),)
 
-                if (response.ok) {
-                    console.log('FCM token successfully sent to backend');
-                    console.log('Push notifications enabled!');
-                } else {
+                if (!response.ok) {
                     console.error('Failed to send FCM token to backend:', response.status);
                 }
             } catch (error) {
@@ -63,10 +53,8 @@ export const usePushNotifications = () => {
             }
         };
 
-        // Funkcja do żądania uprawnień z timeoutem
         const requestUserPermission = async () => {
             try {
-                // Na Androidzie 13+ (API 33+) musimy najpierw poprosić o POST_NOTIFICATIONS permission
                 if (Platform.OS === 'android' && Platform.Version >= 33) {
                     try {
                         const granted = await PermissionsAndroid.request(
@@ -74,11 +62,9 @@ export const usePushNotifications = () => {
                         );
 
                         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-                            console.log('POST_NOTIFICATIONS permission denied');
                             setPermissionStatus('denied');
                             return;
                         }
-                        console.log('POST_NOTIFICATIONS permission granted');
                     } catch (err) {
                         console.error('Error requesting POST_NOTIFICATIONS permission:', err);
                         setPermissionStatus('error');
@@ -86,7 +72,6 @@ export const usePushNotifications = () => {
                     }
                 }
 
-                // Dodatkowo użyj expo-notifications do uproszczenia obsługi
                 const {status: existingStatus} = await Notifications.getPermissionsAsync();
                 let finalStatus = existingStatus;
 
@@ -96,35 +81,24 @@ export const usePushNotifications = () => {
                 }
 
                 if (finalStatus !== 'granted') {
-                    console.log('Notification permission denied');
                     setPermissionStatus('denied');
                     return;
                 }
 
-                console.log('Notification permission granted');
                 setPermissionStatus('granted');
 
-                // Timeout aby nie blokować UI
-                const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Firebase initialization timeout')), 10000)
-                );
-
-                // Pobierz token FCM z timeoutem
                 const tokenPromise = messagingInstance.getToken();
                 const tokenTimeout = new Promise((_, reject) =>
                     setTimeout(() => reject(new Error('Token fetch timeout')), 10000)
                 );
 
                 const token = await Promise.race([tokenPromise, tokenTimeout]) as string;
-                console.log('FCM Token:', token);
                 setFcmToken(token);
 
-                // Wyślij token na backend
                 await sendTokenToBackend(token);
             } catch (error) {
                 console.error('Error requesting push notification permission:', error);
                 setPermissionStatus('error');
-                // Nie blokuj aplikacji - po prostu loguj błąd
             }
         };
 
@@ -132,14 +106,9 @@ export const usePushNotifications = () => {
         let unsubscribeBackground: (() => void) | undefined;
         let unsubscribeTokenRefresh: (() => void) | undefined;
 
-        // Uruchom asynchronicznie aby nie blokować renderowania
         const initializeFirebase = async () => {
             try {
-                // Funkcja do obsługi powiadomień na pierwszym planie (foreground)
                 unsubscribeForeground = messagingInstance.onMessage(async (remoteMessage: any) => {
-                    console.log('Foreground notification received:', remoteMessage);
-
-                    // Wyświetl powiadomienie jako Alert
                     if (remoteMessage.notification) {
                         Alert.alert(
                             remoteMessage.notification.title || 'Notification',
@@ -148,37 +117,14 @@ export const usePushNotifications = () => {
                     }
                 });
 
-                // Obsługa kliknięcia w powiadomienie gdy app był w tle (background)
                 unsubscribeBackground = messagingInstance.onNotificationOpenedApp((remoteMessage: any) => {
-                    console.log(
-                        'Notification caused app to open from background state:',
-                        remoteMessage
-                    );
-                    // Tutaj możesz dodać nawigację do odpowiedniego ekranu
                 });
 
-                // Sprawdź czy aplikacja została otwarta z powiadomienia (killed state)
-                messagingInstance
-                    .getInitialNotification()
-                    .then((remoteMessage: any) => {
-                        if (remoteMessage) {
-                            console.log(
-                                'Notification caused app to open from quit state:',
-                                remoteMessage
-                            );
-                            // Tutaj możesz dodać nawigację do odpowiedniego ekranu
-                        }
-                    })
-                    .catch((error: any) => {
-                        console.log('Error getting initial notification:', error);
-                    });
+                messagingInstance.getInitialNotification();
 
-                // Żądaj uprawnień
                 await requestUserPermission();
 
-                // Obsługa odświeżania tokena
                 unsubscribeTokenRefresh = messagingInstance.onTokenRefresh(async (token: string) => {
-                    console.log('FCM Token refreshed:', token);
                     setFcmToken(token);
                     await sendTokenToBackend(token);
                 });
@@ -187,12 +133,10 @@ export const usePushNotifications = () => {
             }
         };
 
-        // Uruchom po 1 sekundzie aby nie blokować initial render
         const timer = setTimeout(() => {
             initializeFirebase();
         }, 1000);
 
-        // Cleanup
         return () => {
             clearTimeout(timer);
             if (unsubscribeForeground) unsubscribeForeground();
